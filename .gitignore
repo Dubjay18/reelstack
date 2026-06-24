@@ -1,0 +1,27 @@
+# Env
+.env
+.env.local
+.env.*.local
+
+# Go
+apps/api/server
+apps/api/tmp/
+*.test
+
+# Node
+node_modules/
+apps/web/.next/
+apps/web/out/
+apps/web/.turbo/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp

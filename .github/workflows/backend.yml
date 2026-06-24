@@ -1,0 +1,56 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+  pull_request:
+    paths:
+      - 'apps/api/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: reelstack_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Run tests
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/reelstack_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-do-not-use-in-prod
+        run: go test ./... -v -race -timeout 120s
+
+      - name: Build check
+        working-directory: apps/api
+        run: CGO_ENABLED=0 go build ./cmd/server
