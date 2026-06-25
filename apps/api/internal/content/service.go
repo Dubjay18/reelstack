@@ -11,6 +11,7 @@ import (
 type IContentService interface {
 	GetListAvailability(ctx context.Context, items []ContentItem, countryCode string) (map[int][]StreamingProvider, error)
 	Search(ctx context.Context, query string) ([]SearchResult, error)
+	GetTrending(ctx context.Context) ([]SearchResult, error)
 	GetDetails(ctx context.Context, mediaType string, tmdbID int) (interface{}, error)
 }
 type ContentItem struct {
@@ -85,6 +86,10 @@ func (s *ContentService) GetListAvailability(ctx context.Context, items []Conten
 
 func (s *ContentService) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	return s.tmdbClient.Search(ctx, query)
+}
+
+func (s *ContentService) GetTrending(ctx context.Context) ([]SearchResult, error) {
+	return s.tmdbClient.GetTrending(ctx)
 }
 
 func (s *ContentService) GetDetails(ctx context.Context, mediaType string, tmdbID int) (interface{}, error) {

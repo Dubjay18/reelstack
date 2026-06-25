@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCreateList } from '@/lib/hooks/api'
+import { useCreateList, useSearchContent, useTrendingContent } from '@/lib/hooks/api'
 import { api } from '@/lib/api'
+import type { SearchResult } from '@/types'
 
 const PRIVACY_OPTIONS = [
   {
@@ -21,33 +22,61 @@ const PRIVACY_OPTIONS = [
   },
 ]
 
-const SUGGESTED_FILMS = [
-  { id: '1', title: 'Blade Runner 2049', year: '2017', poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDl4w_6z1PlLALYsaJ-p6MQpaAZISyhtetzJ19DKLP09D5JJQcYSI8EM8xvkTVUhXv9JBa2jOFwxdHsbpqIi3t-OolMrerxsC0Oc45aV1su6a4u31JTpQu3H_l5fateUCSn_bKDluiL_lLR-4CKLo_PRs3ktcHRLNf356pdYdTg1X9YelBjGS45j5wGT19X5UNrDVWxH1CMkaFJGq0DqHOwsI_EfKuTCPHC67f1g0bF89qQwuhU5gCQKdYxi3FVpCESAV6Iid6Vvvmv' },
-  { id: '2', title: 'Drive', year: '2011', poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDaUTplMpjOQYdQ8G4I8og5zNlh78SM8yfFC5nj3y5a85afABM8MMyRqDMhybbHqawSQGx_1Z_jhmoGiLOW-0WO43uAceQoWXEG1c931OHH9NkJBOcdyjApUUgXyMaoMLZ44qk14ieu4WCE10fMlN_29D3ECCGA_Z2zzkOhVNP9eXs9cNN9BIDA9zCjxZPZQLGfGDRpwRhgsm3GfY6DiCvheUudxDvrcqkYzKf7heydQQHmulez-ppuZP6y4tVkp_nHkPP2dhCgF6kI' },
-  { id: '3', title: 'Tron: Legacy', year: '2010', poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1XwhkPUr2pnXQuqN_NdZu4uxFyriV-sKLQNwZFTLZJypv-WBzUu2TRvjmHkCATLLTPFg-YjNFe_WBKL1hKGh_QMOKnDrNdJZBSil4hUySv-3ck2_1qJBimSYrl_BGjk7GSq9__GXYakQrcm3lKoPgs1j6pV-gvfs4qGou_at72My27L4AXMPRCitZU1Iy9bGZkIq7bKTMoLJ9jP-w6jhpePfMqufXdAGlZaNEBLhLYRfMP1FfZrG2qtTkO0smArdhwv2MxsKY_AoL' },
-  { id: '4', title: 'Nightcrawler', year: '2014', poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAyCH5sRVi_sDvMpfQvG1T1qcyXgXXzST09axiLK9ra8X87CjK6Kewyr4YKxKOZk2AgaegmlqvTjFpIssDFguZGG_LL8GfEZcxo-OoCQUiTxSu8XHgFqTLHV09ckCt_0Ci63FyHcDtfxFdjapkN3K5l-ZGaLelUMYEf0Iq4HH1ZBC_2vqtr5zU1QUyByGENr8ogbQ3gITktFzvbjAprAmZ5fJlz4HUTIFoId7Rbw_uktBSWMNFC6h5cpN57KCAl7Dwpa6c8jvuq8vX' },
-  { id: '5', title: 'Ex Machina', year: '2014', poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyQoL1x1fmc39ZSVDziGFiPudKyJgNX8KgIed3hTEPPMPnTlQGa3QnfXhkOnnF7j6EcO9qhBHEkHDePvig_ZemhmtrONBJ99CsQeAfgpS300g4q4mMGVjT6j8ppYcvgNSXne77PZV8Vl32R31T7JYfVv8A-4IkgCUvZd4R-FaMPQCSsA-KczewGW3HMNPEhj_eHZ7Eao3xy-fMlMY-5ooIYVdMQdwRj1E4n9GU2BShHaBNHF_79OHv21WpoItBCcokB0KowfMEiKDP' },
-  { id: '6', title: 'Neon Horizon', year: '2024', poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDif1DCjZcJq5kmZFhB27vqkSyrtwD-mmjcnkDG6dP6o1JW4ITaMJZ0Bltkgv9ewmCHfvVTKeZnHAtCP5QjIHB0LoV0q5_1rha5seYTJtx9F2Pkrt6EDFs7lxcCsVjp59kiltc5OHRwMVbQCawhCOz0svcElBWSORMgPpGIOw23lpwvFvOlrdJ-aax_Q2aQ8_6Gwv0PR3N9toXx6UIh2XHEvOww46qo_j1R5LGJt1SduH2fb1kVJ3ZcOw7JOMHAQ57Kq1wY3Ny86ZoN' },
-]
+interface FilmOption {
+  id: number
+  title: string
+  year: string
+  poster: string | null
+  media_type: 'movie' | 'tv'
+}
+
+function toFilmOption(r: SearchResult): FilmOption {
+  return {
+    id: r.id,
+    title: r.title,
+    year: r.year || '',
+    poster: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : null,
+    media_type: r.media_type,
+  }
+}
 
 export default function NewListPage() {
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [privacy, setPrivacy] = useState<'public' | 'private'>('public')
-  const [selectedFilms, setSelectedFilms] = useState<string[]>([])
+  const [selectedFilms, setSelectedFilms] = useState<FilmOption[]>([])
   const [filmSearch, setFilmSearch] = useState('')
+  const [debouncedFilmSearch, setDebouncedFilmSearch] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const createListMutation = useCreateList()
 
-  const filteredFilms = SUGGESTED_FILMS.filter(f =>
-    f.title.toLowerCase().includes(filmSearch.toLowerCase())
-  )
+  // Debounce film search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilmSearch(filmSearch)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [filmSearch])
 
-  const toggleFilm = (id: string) => {
+  const { data: searchResults, isLoading: searchLoading } = useSearchContent(debouncedFilmSearch)
+  const { data: trendingResults, isLoading: trendingLoading } = useTrendingContent()
+
+  // Films to display: real search results or trending as suggestions
+  const displayFilms: FilmOption[] = debouncedFilmSearch.trim()
+    ? (searchResults ?? []).map(toFilmOption)
+    : (trendingResults ?? []).slice(0, 12).map(toFilmOption)
+
+  const isLoadingFilms = debouncedFilmSearch.trim() ? searchLoading : trendingLoading
+
+  const isSelected = (id: number) => selectedFilms.some(f => f.id === id)
+
+  const toggleFilm = (film: FilmOption) => {
     setSelectedFilms(prev =>
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+      prev.some(f => f.id === film.id)
+        ? prev.filter(f => f.id !== film.id)
+        : [...prev, film]
     )
   }
 
@@ -70,29 +99,27 @@ export default function NewListPage() {
         onSuccess: async (newList) => {
           try {
             if (selectedFilms.length > 0) {
-              const promises = selectedFilms.map(filmId => {
-                const film = SUGGESTED_FILMS.find(f => f.id === filmId)
-                if (film) {
-                  return api.post(`/api/v1/lists/${newList.id}/items`, {
-                    tmdb_id: parseInt(film.id),
-                    media_type: 'movie',
-                    watched: false,
-                  })
-                }
-                return Promise.resolve()
-              })
+              const promises = selectedFilms.map(film =>
+                api.post(`/api/v1/lists/${newList.id}/items`, {
+                  tmdb_id: film.id,
+                  media_type: film.media_type,
+                  watched: false,
+                })
+              )
               await Promise.all(promises)
             }
             router.push(`/lists/${newList.id}`)
-          } catch (err: any) {
-            setError(err.message || 'List created, but failed to add some initial films.')
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'List created, but failed to add some initial films.'
+            setError(message)
             router.push(`/lists/${newList.id}`)
           } finally {
             setIsSubmitting(false)
           }
         },
-        onError: (err: any) => {
-          setError(err.message || 'Failed to create list. Please try again.')
+        onError: (err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Failed to create list. Please try again.'
+          setError(message)
           setIsSubmitting(false)
         }
       }
@@ -224,7 +251,7 @@ export default function NewListPage() {
               </label>
               
               {/* Film search */}
-              <div className="relative mb-md">
+              <div className="relative mb-sm">
                 <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
                 <input
                   type="text"
@@ -233,35 +260,68 @@ export default function NewListPage() {
                   placeholder="Search films..."
                   className="w-full bg-surface-container-low border border-outline-variant rounded-xl py-sm pl-xl pr-md font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 />
+                {filmSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setFilmSearch('')}
+                    className="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                )}
               </div>
 
+              {/* Section label */}
+              <p className="font-caption text-[11px] text-on-surface-variant/60 mb-md uppercase tracking-wider">
+                {debouncedFilmSearch.trim() ? 'Search results' : 'Trending now'}
+              </p>
+
               {/* Film Grid */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-sm">
-                {filteredFilms.map(film => {
-                  const selected = selectedFilms.includes(film.id)
-                  return (
-                    <button
-                      key={film.id}
-                      type="button"
-                      onClick={() => toggleFilm(film.id)}
-                      className={`group relative aspect-[2/3] rounded-lg overflow-hidden border transition-all ${
-                        selected ? 'border-primary shadow-[0_0_10px_rgba(79,219,200,0.25)]' : 'border-outline-variant/30 hover:border-outline-variant'
-                      }`}
-                    >
-                      <img src={film.poster} alt={film.title} className="w-full h-full object-cover" />
-                      <div className={`absolute inset-0 transition-opacity ${selected ? 'bg-primary/20' : 'bg-black/0 group-hover:bg-black/20'}`} />
-                      {selected && (
-                        <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                          <span className="material-symbols-outlined text-on-primary text-[12px] font-bold">check</span>
+              {isLoadingFilms ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-sm">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="aspect-[2/3] rounded-lg bg-surface-container border border-outline-variant/30 animate-pulse" />
+                  ))}
+                </div>
+              ) : displayFilms.length === 0 ? (
+                <p className="text-on-surface-variant font-body-sm text-body-sm py-md text-center">
+                  {debouncedFilmSearch.trim() ? 'No results found.' : 'No trending films available.'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-sm">
+                  {displayFilms.map(film => {
+                    const selected = isSelected(film.id)
+                    return (
+                      <button
+                        key={film.id}
+                        type="button"
+                        onClick={() => toggleFilm(film)}
+                        className={`group relative aspect-[2/3] rounded-lg overflow-hidden border transition-all ${
+                          selected ? 'border-primary shadow-[0_0_10px_rgba(79,219,200,0.25)]' : 'border-outline-variant/30 hover:border-outline-variant'
+                        }`}
+                      >
+                        {film.poster ? (
+                          <img src={film.poster} alt={film.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-surface-variant">
+                            <span className="material-symbols-outlined text-on-surface-variant text-[24px]">movie</span>
+                          </div>
+                        )}
+                        <div className={`absolute inset-0 transition-opacity ${selected ? 'bg-primary/20' : 'bg-black/0 group-hover:bg-black/20'}`} />
+                        {selected && (
+                          <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                            <span className="material-symbols-outlined text-on-primary text-[12px] font-bold">check</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-xs">
+                          <p className="font-mono text-[9px] text-white/80 line-clamp-2 leading-tight">{film.title}</p>
+                          {film.year && <p className="font-mono text-[8px] text-white/50">{film.year}</p>}
                         </div>
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-xs">
-                        <p className="font-mono text-[9px] text-white/80 line-clamp-2 leading-tight">{film.title}</p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
 
               {selectedFilms.length > 0 && (
                 <p className="mt-sm font-mono text-mono text-primary">

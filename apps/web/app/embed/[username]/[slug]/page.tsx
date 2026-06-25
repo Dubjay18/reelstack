@@ -86,7 +86,8 @@ export default function EmbedPage() {
     )
   }
 
-  const { list, items } = data
+  const list = data.list
+  const items = data.items ?? []
   const watchedCount = items.filter((f) => f.watched).length
 
   return (

@@ -183,6 +183,14 @@ export function useSearchContent(query: string) {
   })
 }
 
+export function useTrendingContent() {
+  return useQuery({
+    queryKey: ['trending'],
+    queryFn: () => api.get<SearchResult[]>('/api/v1/content/trending'),
+    staleTime: 60 * 60 * 1000, // 1 hour — matches Redis cache TTL
+  })
+}
+
 export function useStreamingAvailability(mediaType: string, tmdbId: number, country = 'US') {
   return useQuery({
     queryKey: ['streaming', mediaType, tmdbId, country],

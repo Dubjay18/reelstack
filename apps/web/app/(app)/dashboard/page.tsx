@@ -2,12 +2,15 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useUserLists } from '@/lib/hooks/api'
+import { useUserLists, useTrendingContent } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 
 export default function Page() {
   const { user, logout } = useAuth()
-  const { data: lists, isLoading } = useUserLists()
+  const { data: rawLists, isLoading } = useUserLists()
+  const lists = rawLists ?? []
+  const { data: rawTrendingMovies, isLoading: trendingLoading } = useTrendingContent()
+  const trendingMovies = rawTrendingMovies ?? []
   return (
     <div className="bg-background text-on-background flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
       {/* SideNavBar (Desktop) */}
@@ -89,84 +92,55 @@ export default function Page() {
       <main className="flex-1 w-full md:ml-[240px] pt-16 md:pt-0 pb-16 md:pb-0 h-screen overflow-y-auto">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl space-y-xl md:space-y-[48px]">
           
-          {/* RECENTLY ADDED Section */}
+          {/* TRENDING Section */}
           <section>
-            <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] mb-md uppercase">RECENTLY ADDED</h2>
+            <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] mb-md uppercase">Trending</h2>
             <div className="relative group">
               <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
               <div className="flex gap-md overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-sm">
-                
-                {/* Poster 1 */}
-                <Link href="/movie/1" className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors">
-                  <Image 
-                    className="w-full h-full object-cover" 
-                    alt="Neon Genesis movie poster" 
-                    src="/neon_genesis.png"
-                    fill
-                    sizes="(max-width: 768px) 120px, 160px"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">Neon Genesis</div>
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(74,225,118,0.6)]"></div>
-                </Link>
-
-                {/* Poster 2 */}
-                <Link href="/movie/3" className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors">
-                  <Image 
-                    className="w-full h-full object-cover" 
-                    alt="Echoes in Rain movie poster" 
-                    src="/echoes_rain.png"
-                    fill
-                    sizes="(max-width: 768px) 120px, 160px"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">Echoes in Rain</div>
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(79,219,200,0.6)]"></div>
-                </Link>
-
-                {/* Poster 3 */}
-                <Link href="/movie/2" className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors">
-                  <Image 
-                    className="w-full h-full object-cover" 
-                    alt="The Brutalist movie poster" 
-                    src="/brutalist_sun.png"
-                    fill
-                    sizes="(max-width: 768px) 120px, 160px"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">The Brutalist</div>
-                </Link>
-
-                {/* Poster 4 */}
-                <Link href="/movie/7" className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors">
-                  <Image 
-                    className="w-full h-full object-cover" 
-                    alt="Parallax View movie poster" 
-                    src="/thriller_poster.png"
-                    fill
-                    sizes="(max-width: 768px) 120px, 160px"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">Parallax View</div>
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(74,225,118,0.6)]"></div>
-                </Link>
-
-                {/* Poster 5 */}
-                <Link href="/movie/5" className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors">
-                  <Image 
-                    className="w-full h-full object-cover" 
-                    alt="Nowhere Fast movie poster" 
-                    src="/desert_dusk.png"
-                    fill
-                    sizes="(max-width: 768px) 120px, 160px"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">Nowhere Fast</div>
-                </Link>
-
+                {trendingLoading ? (
+                  // Loading skeletons
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl bg-surface-container border border-outline-variant/30 animate-pulse"
+                    />
+                  ))
+                ) : trendingMovies && trendingMovies.length > 0 ? (
+                  trendingMovies.slice(0, 10).map((movie) => (
+                    <Link
+                      key={movie.id}
+                      href={`/movie/${movie.id}?type=movie`}
+                      className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors"
+                    >
+                      {movie.poster_path ? (
+                        <Image
+                          className="w-full h-full object-cover"
+                          alt={`${movie.title} poster`}
+                          src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                          fill
+                          sizes="(max-width: 768px) 120px, 160px"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-surface-variant">
+                          <span className="material-symbols-outlined text-on-surface-variant text-[32px]">movie</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
+                      <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">{movie.title}</div>
+                      {movie.vote_average > 0 && (
+                        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded-md">
+                          <span className="font-mono text-[10px] text-primary flex items-center gap-0.5">
+                            <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                            {movie.vote_average.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-on-surface-variant font-body-sm text-body-sm py-md">No trending movies available right now.</p>
+                )}
               </div>
             </div>
           </section>
@@ -185,7 +159,7 @@ export default function Page() {
               </div>
             ) : !lists || lists.length === 0 ? (
               <div className="bg-surface-container-low border border-outline-variant rounded-xl p-lg text-center space-y-md">
-                <p className="text-on-surface-variant font-body-sm">You haven't created any lists yet.</p>
+                <p className="text-on-surface-variant font-body-sm">You haven&apos;t created any lists yet.</p>
                 <Link href="/lists/new" className="inline-block py-2 px-4 bg-primary text-background font-body-sm font-semibold rounded-md shadow-md hover:bg-primary-fixed transition-colors">
                   Create my first list
                 </Link>

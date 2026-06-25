@@ -80,16 +80,17 @@ function ListCard({ list }: { list: List }) {
 export default function ListsPage() {
   const { logout } = useAuth()
   const [activeTab, setActiveTab] = useState<'all' | 'public' | 'private'>('all')
-  const { data: lists = [], isLoading } = useUserLists()
+  const { data: rawLists, isLoading } = useUserLists()
+  const lists = rawLists ?? []
 
-  const filtered = lists.filter(l => {
+  const filtered = lists?.filter(l => {
     if (activeTab === 'public') return l.is_public
     if (activeTab === 'private') return !l.is_public
     return true
-  })
+  }) || []
 
-  const totalFilms = lists.reduce((a, b) => a + b.item_count, 0)
-  const totalWatched = lists.reduce((a, b) => a + b.watched_count, 0)
+  const totalFilms = lists?.reduce((a, b) => a + b.item_count, 0) ?? 0
+  const totalWatched = lists?.reduce((a, b) => a + b.watched_count, 0) ?? 0
 
   return (
     <div className="bg-background text-on-background min-h-screen flex antialiased">
@@ -155,7 +156,7 @@ export default function ListsPage() {
             <div>
               <h1 className="font-display-md text-display-md text-on-surface mb-xs">My Lists</h1>
               <div className="flex items-center gap-md font-mono text-mono text-on-surface-variant">
-                <span>{lists.length} lists</span>
+                <span>{lists?.length ?? 0} lists</span>
                 <span className="w-[3px] h-[3px] rounded-full bg-outline-variant" />
                 <span>{totalFilms} films</span>
                 <span className="w-[3px] h-[3px] rounded-full bg-outline-variant" />

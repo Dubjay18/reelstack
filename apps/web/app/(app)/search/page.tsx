@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useSearchContent } from '@/lib/hooks/api'
+import { useSearchContent, useTrendingContent } from '@/lib/hooks/api'
 
 interface FilmResult {
   id: string
@@ -14,133 +13,18 @@ interface FilmResult {
   poster: string
   director: string
   media_type?: 'movie' | 'tv'
-  watched?: boolean
 }
 
-const TRENDING_FILMS: FilmResult[] = [
-  {
-    id: '1',
-    title: 'Neon Horizon',
-    year: '2024',
-    genre: 'Sci-Fi',
-    rating: '8.4',
-    director: 'Elena Vane',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDif1DCjZcJq5kmZFhB27vqkSyrtwD-mmjcnkDG6dP6o1JW4ITaMJZ0Bltkgv9ewmCHfvVTKeZnHAtCP5QjIHB0LoV0q5_1rha5seYTJtx9F2Pkrt6EDFs7lxcCsVjp59kiltc5OHRwMVbQCawhCOz0svcElBWSORMgPpGIOw23lpwvFvOlrdJ-aax_Q2aQ8_6Gwv0PR3N9toXx6UIh2XHEvOww46qo_j1R5LGJt1SduH2fb1kVJ3ZcOw7JOMHAQ57Kq1wY3Ny86ZoN',
-  },
-  {
-    id: '2',
-    title: 'The Architect',
-    year: '2022',
-    genre: 'Thriller',
-    rating: '8.1',
-    director: 'M. Russo',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC0zvaBuqCwCZuidfXXn2KpkgpMFgk6nDOs0kXPK3Up7HqxRIFgU3xn8hKLg6vcvup50VZ_tsrvwomcrFD1a0KUgIegwEHRRlUw5lV4EDkDT-i2RY-3wLUQi4GYvo7QViLDc7j0edB7IvlKkRqwR-tMGePmX8b_TFEGjGGzerhIvYr5QlreXpHKkkoFXvZsV4sXVZVXnETp1xx7WkRyuOI5qL7NCSqcn8wo3DSpkvqoebvZkw3Ky8SQcjpnZTbTQ2XGUQJhIj13N8TU',
-  },
-  {
-    id: '3',
-    title: 'Liquid Memory',
-    year: '2023',
-    genre: 'Drama',
-    rating: '7.9',
-    director: 'K. Park',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDKgewQSRpcPLrCyQPiqYS9nwue_oHvtpCBEr5K9oNxLG5YFgB4vYs2mzYMT29TR_PWqIWZFoZ03rdDBcC_l73rcQiqkdU9VFGGk_M8zvfPRuYNV_X7ZHTQwnYQX3c6iCMmLRAShvwpZhzEsLgzx6UISPnjyQAageF3F8Mb0DcZbLIIFlGP_FggFdLk-UC4-LFLvGeT9I_SSlIScIeGAMBholB_BtvWD4x_4wpaD_nDEtFTBFLxVfKU8VYAbqIqfRYNB-n1Jyj-z1GV',
-  },
-  {
-    id: '4',
-    title: 'Blade Runner 2049',
-    year: '2017',
-    genre: 'Sci-Fi',
-    rating: '8.0',
-    director: 'Denis Villeneuve',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDl4w_6z1PlLALYsaJ-p6MQpaAZISyhtetzJ19DKLP09D5JJQcYSI8EM8xvkTVUhXv9JBa2jOFwxdHsbpqIi3t-OolMrerxsC0Oc45aV1su6a4u31JTpQu3H_l5fateUCSn_bKDluiL_lLR-4CKLo_PRs3ktcHRLNf356pdYdTg1X9YelBjGS45j5wGT19X5UNrDVWxH1CMkaFJGq0DqHOwsI_EfKuTCPHC67f1g0bF89qQwuhU5gCQKdYxi3FVpCESAV6Iid6Vvvmv',
-  },
-  {
-    id: '5',
-    title: 'Drive',
-    year: '2011',
-    genre: 'Neo-Noir',
-    rating: '7.8',
-    director: 'Nicolas Winding Refn',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDaUTplMpjOQYdQ8G4I8og5zNlh78SM8yfFC5nj3y5a85afABM8MMyRqDMhybbHqawSQGx_1Z_jhmoGiLOW-0WO43uAceQoWXEG1c931OHH9NkJBOcdyjApUUgXyMaoMLZ44qk14ieu4WCE10fMlN_29D3ECCGA_Z2zzkOhVNP9eXs9cNN9BIDA9zCjxZPZQLGfGDRpwRhgsm3GfY6DiCvheUudxDvrcqkYzKf7heydQQHmulez-ppuZP6y4tVkp_nHkPP2dhCgF6kI',
-  },
-  {
-    id: '6',
-    title: 'Tron: Legacy',
-    year: '2010',
-    genre: 'Sci-Fi',
-    rating: '6.8',
-    director: 'Joseph Kosinski',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1XwhkPUr2pnXQuqN_NdZu4uxFyriV-sKLQNwZFTLZJypv-WBzUu2TRvjmHkCATLLTPFg-YjNFe_WBKL1hKGh_QMOKnDrNdJZBSil4hUySv-3ck2_1qJBimSYrl_BGjk7GSq9__GXYakQrcm3lKoPgs1j6pV-gvfs4qGou_at72My27L4AXMPRCitZU1Iy9bGZkIq7bKTMoLJ9jP-w6jhpePfMqufXdAGlZaNEBLhLYRfMP1FfZrG2qtTkO0smArdhwv2MxsKY_AoL',
-  },
-  {
-    id: '7',
-    title: 'Nightcrawler',
-    year: '2014',
-    genre: 'Thriller',
-    rating: '7.9',
-    director: 'Dan Gilroy',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAyCH5sRVi_sDvMpfQvG1T1qcyXgXXzST09axiLK9ra8X87CjK6Kewyr4YKxKOZk2AgaegmlqvTjFpIssDFguZGG_LL8GfEZcxo-OoCQUiTxSu8XHgFqTLHV09ckCt_0Ci63FyHcDtfxFdjapkN3K5l-ZGaLelUMYEf0Iq4HH1ZBC_2vqtr5zU1QUyByGENr8ogbQ3gITktFzvbjAprAmZ5fJlz4HUTIFoId7Rbw_uktBSWMNFC6h5cpN57KCAl7Dwpa6c8jvuq8vX',
-  },
-  {
-    id: '8',
-    title: 'Ex Machina',
-    year: '2014',
-    genre: 'Sci-Fi',
-    rating: '7.7',
-    director: 'Alex Garland',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyQoL1x1fmc39ZSVDziGFiPudKyJgNX8KgIed3hTEPPMPnTlQGa3QnfXhkOnnF7j6EcO9qhBHEkHDePvig_ZemhmtrONBJ99CsQeAfgpS300g4q4mMGVjT6j8ppYcvgNSXne77PZV8Vl32R31T7JYfVv8A-4IkgCUvZd4R-FaMPQCSsA-KczewGW3HMNPEhj_eHZ7Eao3xy-fMlMY-5ooIYVdMQdwRj1E4n9GU2BShHaBNHF_79OHv21WpoItBCcokB0KowfMEiKDP',
-  },
-  {
-    id: '9',
-    title: 'Star-Bound',
-    year: '2024',
-    genre: 'Epic',
-    rating: '8.5',
-    director: 'A. Karev',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBya6HfPXyh9OMpIgurGYeMtBg1CnoUFFu4ddiDhUfuoZowGAvatHkJmPcWxZPpKS9ROeusN5GFN6Tug9p2JBVyWUNT1LDZsWHko1YNROeqk44VLKSFlkiwZXLb-rHxfH0ksIg54omqiOKtrSu0D2-HIS8NtCBnY9x2r7VMRzVOOV1NeFqZdjvy6ltJCTahuXSryriOISBLr3AovGI_LiiU38oGHvxuIJdEsa_RzhtYUi75V8eYgJ1AVOhgNBTIdLsSuTON5u15YEIV',
-  },
-  {
-    id: '10',
-    title: 'Transit Zero',
-    year: '2023',
-    genre: 'Noir',
-    rating: '8.0',
-    director: 'S. Okafor',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBTbM06JkewC13iQt5MkUmntZTu81KLmuX5V1m6g7lm5b0-omY0QndN2Huk9QiEQrwhEXG8GYyFjYhvpvtbyUv2io_-pXHcl0ocv2HjXcn-Hj2jqZ7sjBg3Zcdv1l9Pq-g8_A7W5btXnUAWQ3qz5ujbG4g4nrdkgqAlCGSJDrM_Ba9_-_wlNOVh5C_DsCNs7m-g60DqvpqMvaBu59SNtaIf8ZWZsXeN6seFbwNyNbhjQAF2DLgox39qenujLOMiu31F15JCxNX2IzNy',
-  },
-  {
-    id: '11',
-    title: 'Internal Logic',
-    year: '2021',
-    genre: 'Drama',
-    rating: '7.6',
-    director: 'P. Holt',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCJN6DqMgRU2pTZOlCcmReRAwj0Ogot16JKBbgqO7EkdSbPRnnCAAFbXzugBmuehzY4WfC9utfbewffXJxvolUJ-i-YOCf7ovz2Sj859QGvVBc3mq9Qej4O8SCRQeQAgnJIcpRaEiedHaZ6Yey4TWorsvEZCP_c44MC9TfBAHQqN8sZVNfwYlMddNw_WtHz24uGKmAEP1Mdboi2vbQAtRJiLjQWYMjHf9xCg2g5EIYdrmJvvij0VppCriyGwIePI8pAEenzLUmNNlTY',
-  },
-  {
-    id: '12',
-    title: 'Preserved State',
-    year: '2022',
-    genre: 'Art',
-    rating: '7.4',
-    director: 'L. Mora',
-    poster: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA5xS-nEpH5rjvcVwh3K43frSMYlmQlRLEyVVIcRz413M20u4zmi_4wPQ',
-  },
-]
-
-const GENRES = ['All', 'Sci-Fi', 'Thriller', 'Drama', 'Neo-Noir', 'Art', 'Epic', 'Noir']
+const GENRES = ['All', 'Movie', 'TV Show']
 const SORT_OPTIONS = ['Relevance', 'Rating (High)', 'Year (Newest)', 'Year (Oldest)']
 
 export default function SearchPage() {
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [activeGenre, setActiveGenre] = useState('All')
   const [activeSort, setActiveSort] = useState('Relevance')
-  const [results, setResults] = useState<FilmResult[]>(TRENDING_FILMS)
-  
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query)
@@ -149,6 +33,8 @@ export default function SearchPage() {
   }, [query])
 
   const { data: apiResults, isLoading: apiLoading } = useSearchContent(debouncedQuery)
+  const { data: trendingResults, isLoading: trendingLoading } = useTrendingContent()
+
   const isSearching = apiLoading && !!query.trim()
 
   // Focus the search input on mount
@@ -168,46 +54,52 @@ export default function SearchPage() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // Search + filter
-  useEffect(() => {
+  // Build the results list to display
+  const results: FilmResult[] = (() => {
     if (!query.trim()) {
-      let filtered = TRENDING_FILMS
-      if (activeGenre !== 'All') {
-        filtered = filtered.filter(f => f.genre === activeGenre)
-      }
-      if (activeSort === 'Rating (High)') {
-        filtered = [...filtered].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
-      } else if (activeSort === 'Year (Newest)') {
-        filtered = [...filtered].sort((a, b) => parseInt(b.year) - parseInt(a.year))
-      } else if (activeSort === 'Year (Oldest)') {
-        filtered = [...filtered].sort((a, b) => parseInt(a.year) - parseInt(b.year))
-      }
-      setResults(filtered)
-    } else if (apiResults) {
-      let mapped: FilmResult[] = apiResults.map(r => ({
+      // No search query — show trending
+      const raw = trendingResults ?? []
+      let mapped: FilmResult[] = raw.map(r => ({
         id: String(r.id),
         title: r.title,
         year: r.year || '',
-        genre: r.media_type === 'movie' ? 'Movie' : 'TV Show',
+        genre: r.media_type === 'tv' ? 'TV Show' : 'Movie',
         rating: r.vote_average ? String(r.vote_average.toFixed(1)) : '0.0',
-        poster: r.poster_path ? `https://image.tmdb.org/t/p/w300${r.poster_path}` : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=300&h=450',
+        poster: r.poster_path
+          ? `https://image.tmdb.org/t/p/w300${r.poster_path}`
+          : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=300&h=450',
         director: '',
         media_type: r.media_type,
       }))
-      
-      if (activeGenre !== 'All') {
-        mapped = mapped.filter(f => f.genre === activeGenre)
-      }
-      if (activeSort === 'Rating (High)') {
-        mapped = [...mapped].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
-      } else if (activeSort === 'Year (Newest)') {
-        mapped = [...mapped].sort((a, b) => parseInt(b.year) - parseInt(a.year))
-      } else if (activeSort === 'Year (Oldest)') {
-        mapped = [...mapped].sort((a, b) => parseInt(a.year) - parseInt(b.year))
-      }
-      setResults(mapped)
+      if (activeGenre !== 'All') mapped = mapped.filter(f => f.genre === activeGenre)
+      if (activeSort === 'Rating (High)') mapped = [...mapped].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
+      else if (activeSort === 'Year (Newest)') mapped = [...mapped].sort((a, b) => parseInt(b.year) - parseInt(a.year))
+      else if (activeSort === 'Year (Oldest)') mapped = [...mapped].sort((a, b) => parseInt(a.year) - parseInt(b.year))
+      return mapped
     }
-  }, [query, apiResults, activeGenre, activeSort])
+
+    // Query typed — show search results
+    const raw = apiResults ?? []
+    let mapped: FilmResult[] = raw.map(r => ({
+      id: String(r.id),
+      title: r.title,
+      year: r.year || '',
+      genre: r.media_type === 'tv' ? 'TV Show' : 'Movie',
+      rating: r.vote_average ? String(r.vote_average.toFixed(1)) : '0.0',
+      poster: r.poster_path
+        ? `https://image.tmdb.org/t/p/w300${r.poster_path}`
+        : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=300&h=450',
+      director: '',
+      media_type: r.media_type,
+    }))
+    if (activeGenre !== 'All') mapped = mapped.filter(f => f.genre === activeGenre)
+    if (activeSort === 'Rating (High)') mapped = [...mapped].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
+    else if (activeSort === 'Year (Newest)') mapped = [...mapped].sort((a, b) => parseInt(b.year) - parseInt(a.year))
+    else if (activeSort === 'Year (Oldest)') mapped = [...mapped].sort((a, b) => parseInt(a.year) - parseInt(b.year))
+    return mapped
+  })()
+
+  const isLoadingResults = query.trim() === '' ? trendingLoading : isSearching
 
   return (
     <div className="bg-background text-on-background min-h-screen flex antialiased">
@@ -326,23 +218,25 @@ export default function SearchPage() {
             </div>
           </div>
 
-          {/* Results Section */}
-          {query.trim() === '' ? (
-            <div className="mb-sm">
-              <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] uppercase mb-md">
-                {isSearching ? 'Searching...' : 'Trending'}
-              </h2>
-            </div>
-          ) : (
-            <div className="mb-sm flex items-center justify-between">
-              <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] uppercase">
-                {isSearching ? 'Searching...' : `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`}
-              </h2>
-            </div>
-          )}
+          {/* Section Label */}
+          <div className="mb-sm flex items-center justify-between">
+            <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] uppercase">
+              {isLoadingResults
+                ? 'Loading...'
+                : query.trim() === ''
+                  ? 'Trending'
+                  : `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`}
+            </h2>
+          </div>
 
-          {/* Results Grid */}
-          {results.length === 0 && !isSearching ? (
+          {/* Loading skeletons */}
+          {isLoadingResults ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="aspect-[2/3] rounded-xl bg-surface-container border border-outline-variant/30 animate-pulse" />
+              ))}
+            </div>
+          ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">movie_filter</span>
               <h3 className="font-heading text-heading text-on-surface mb-xs">No films found</h3>
@@ -357,7 +251,7 @@ export default function SearchPage() {
               </button>
             </div>
           ) : (
-            <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-gutter transition-opacity duration-200 ${isSearching ? 'opacity-50' : 'opacity-100'}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
               {results.map((film) => (
                 <Link
                   key={film.id}

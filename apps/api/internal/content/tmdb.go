@@ -296,4 +296,81 @@ func (c *TMDBClient) Search(ctx context.Context, query string) ([]SearchResult, 
 	}
 
 	return items, nil
+}
+
+func (c *TMDBClient) GetTrending(ctx context.Context) ([]SearchResult, error) {
+	const cacheKey = "tmdb:trending:week"
+
+	// Check Redis cache first
+	cachedData, err := c.redisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var results []SearchResult
+		if err = json.Unmarshal([]byte(cachedData), &results); err == nil {
+			return results, nil
+		}
+	}
+
+	val, err, _ := c.sfGroup.Do(cacheKey, func() (interface{}, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", "https://api.themoviedb.org/3/trending/movie/week", nil)
+		if err != nil {
+			return nil, err
+		}
+		q := req.URL.Query()
+		q.Add("api_key", c.APIKey)
+		req.URL.RawQuery = q.Encode()
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("TMDB trending API error: %s", resp.Status)
+		}
+
+		type tmdbTrendingItem struct {
+			ID          int     `json:"id"`
+			Title       string  `json:"title"`
+			PosterPath  *string `json:"poster_path"`
+			ReleaseDate string  `json:"release_date"`
+			VoteAverage float64 `json:"vote_average"`
+		}
+		type tmdbTrendingResponse struct {
+			Results []tmdbTrendingItem `json:"results"`
+		}
+
+		var trendingData tmdbTrendingResponse
+		if err := json.NewDecoder(resp.Body).Decode(&trendingData); err != nil {
+			return nil, err
+		}
+
+		var items []SearchResult
+		for _, res := range trendingData.Results {
+			year := ""
+			if len(res.ReleaseDate) >= 4 {
+				year = res.ReleaseDate[:4]
+			}
+			items = append(items, SearchResult{
+				ID:          res.ID,
+				MediaType:   "movie",
+				Title:       res.Title,
+				PosterPath:  res.PosterPath,
+				Year:        year,
+				VoteAverage: res.VoteAverage,
+			})
+		}
+
+		// Cache in Redis for 1 hour
+		if data, err := json.Marshal(items); err == nil {
+			c.redisClient.Set(context.Background(), cacheKey, data, time.Hour)
+		}
+
+		return items, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return val.([]SearchResult), nil
 }	

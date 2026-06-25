@@ -18,6 +18,7 @@ func NewHandler(svc IContentService) *Handler {
 func (h *Handler) RegisterRoutes(r fiber.Router) {
 	content := r.Group("/api/v1/content")
 	content.Get("/:type/:tmdbId/streaming", h.GetStreamingAvailability)
+	content.Get("/trending", h.GetTrending)
 	content.Get("/search", h.Search)
 	content.Get("/:type/:tmdbId", h.GetDetails)
 }
@@ -39,6 +40,14 @@ func (h *Handler) GetStreamingAvailability(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(providers[tmdbID])
+}
+
+func (h *Handler) GetTrending(c *fiber.Ctx) error {
+	results, err := h.svc.GetTrending(c.Context())
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to fetch trending content")
+	}
+	return c.Status(fiber.StatusOK).JSON(results)
 }
 
 func (h *Handler) Search(c *fiber.Ctx) error {

@@ -44,7 +44,7 @@ export default async function Page({ params }: PageProps) {
         <div className="text-center max-w-md relative z-10">
           <h1 className="font-display-md text-display-md text-primary mb-sm">User Not Found</h1>
           <p className="font-body-sm text-body-sm text-on-surface-variant mb-lg">
-            We couldn't find a public profile for <span className="font-mono text-primary font-bold">@{username}</span>.
+            We couldn&apos;t find a public profile for <span className="font-mono text-primary font-bold">@{username}</span>.
           </p>
           <Link href="/" className="px-md py-sm bg-primary-container text-background rounded-md text-body-sm font-semibold hover:opacity-90 transition-opacity">
             Return Home
@@ -138,7 +138,7 @@ export default async function Page({ params }: PageProps) {
                 movie
               </span>
               <p className="font-body-sm text-body-sm text-on-surface-variant">
-                @{profile.username} hasn't created any public lists yet.
+                @{profile.username} hasn&apos;t created any public lists yet.
               </p>
             </div>
           )}

@@ -46,8 +46,10 @@ export default function Page() {
 
   // Query Details & Streaming
   const { data: movie, isLoading: movieLoading } = useContentDetails(mediaType, tmdbId)
-  const { data: streamingProviders = [], isLoading: streamingLoading } = useStreamingAvailability(mediaType, tmdbId)
-  const { data: lists = [] } = useUserLists()
+  const { data: rawStreamingProviders, isLoading: streamingLoading } = useStreamingAvailability(mediaType, tmdbId)
+  const streamingProviders = rawStreamingProviders ?? []
+  const { data: rawLists } = useUserLists()
+  const lists = rawLists ?? []
 
   // Scroll listener for TopNavBar elevation
   useEffect(() => {
@@ -168,7 +170,7 @@ export default function Page() {
 
       <main className="min-h-screen relative">
         {/* Hero Section with Background Poster */}
-        <div className="relative w-full h-[614px] md:h-[768px] overflow-hidden">
+        <div className="relative w-full h-[614px] md:h-[768px]">
           {/* Hero Background (Poster) */}
           <div className="absolute inset-0 z-0">
             <div 
@@ -230,7 +232,7 @@ export default function Page() {
 
                   {/* Dropdown List Selector */}
                   {showListSelector && (
-                    <div className="absolute top-[52px] left-0 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl w-64 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-[52px] left-0 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl w-64 p-2 z-[9999] animate-in fade-in slide-in-from-top-2 duration-200">
                       <h4 className="font-mono text-[10px] text-zinc-500 uppercase px-3 py-1 tracking-wider border-b border-zinc-800/50 mb-1">
                         Select a list
                       </h4>

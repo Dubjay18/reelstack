@@ -49,7 +49,8 @@ function FilmItemCardProfile({ item }: { item: ListItem }) {
 }
 
 function ListFilmsRow({ listId, listTitle }: { listId: string; listTitle: string }) {
-  const { data: items = [], isLoading } = useListItems(listId)
+  const { data: rawItems, isLoading } = useListItems(listId)
+  const items = rawItems ?? []
 
   if (isLoading) {
     return (
@@ -100,7 +101,8 @@ export default function ProfilePage() {
   const username = authUser?.username || ''
   
   const { data: profile, isLoading: profileLoading } = usePublicProfile(username)
-  const { data: lists = [], isLoading: listsLoading } = useUserLists()
+  const { data: rawLists, isLoading: listsLoading } = useUserLists()
+  const lists = rawLists ?? []
 
   // Sync profile bio
   useEffect(() => {
@@ -304,7 +306,7 @@ export default function ProfilePage() {
               {lists.length === 0 || totalFilms === 0 ? (
                 <div className="text-center py-12 border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
                   <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">movie</span>
-                  <p className="font-body-sm text-zinc-500">You don't have any films in your lists yet.</p>
+                  <p className="font-body-sm text-zinc-500">You don&apos;t have any films in your lists yet.</p>
                 </div>
               ) : (
                 <div className="space-y-lg">
@@ -326,7 +328,7 @@ export default function ProfilePage() {
               {lists.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
                   <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">playlist_add</span>
-                  <p className="font-body-sm text-zinc-500">You haven't created any lists yet.</p>
+                  <p className="font-body-sm text-zinc-500">You haven&apos;t created any lists yet.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-sm">

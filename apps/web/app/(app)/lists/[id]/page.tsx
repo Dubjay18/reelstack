@@ -139,7 +139,8 @@ export default function Page() {
   
   // Queries
   const { data: list, isLoading: listLoading } = useListDetail(id)
-  const { data: items = [], isLoading: itemsLoading } = useListItems(id)
+  const { data: rawItems, isLoading: itemsLoading } = useListItems(id)
+  const items = rawItems ?? []
 
   const isOwner = user?.id === list?.user_id
 
@@ -181,7 +182,8 @@ export default function Page() {
   }, [searchQuery])
 
   // Fetch search results
-  const { data: searchResults = [] } = useSearchContent(debouncedSearchQuery)
+  const { data: rawSearchResults } = useSearchContent(debouncedSearchQuery)
+  const searchResults = rawSearchResults ?? []
 
   // Toast effect
   useEffect(() => {
