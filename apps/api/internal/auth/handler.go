@@ -148,13 +148,16 @@ func (h *Handler) GoogleRedirect(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate state")
 	}
 
+	// Determine if connection is secure (HTTPS) or running in production behind a reverse proxy.
+	secure := c.Get("X-Forwarded-Proto") == "https" || c.Protocol() == "https" || strings.HasPrefix(h.appURL, "https://")
+
 	c.Cookie(&fiber.Cookie{
 		Name:     stateCookieName,
 		Value:    state,
 		Expires:  time.Now().Add(stateCookieTTL),
 		HTTPOnly: true,
 		SameSite: "Lax",
-		Secure:   false, // set true in prod behind TLS
+		Secure:   secure,
 	})
 
 	// Support custom redirection (e.g. mobile deep linking)
@@ -197,14 +200,23 @@ func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
 	}
 
 	if originalState == "" || cookieState == "" || originalState != cookieState {
+		slog.Error("OAuth state validation failed",
+			"query_state", state,
+			"parsed_original_state", originalState,
+			"cookie_state", cookieState,
+		)
 		return fiber.NewError(fiber.StatusBadRequest, "invalid or missing OAuth state")
 	}
 
-	// Clear the state cookie immediately.
+	// Clear the state cookie immediately, matching the original security options.
+	secure := c.Get("X-Forwarded-Proto") == "https" || c.Protocol() == "https" || strings.HasPrefix(h.appURL, "https://")
 	c.Cookie(&fiber.Cookie{
-		Name:    stateCookieName,
-		Value:   "",
-		Expires: time.Unix(0, 0),
+		Name:     stateCookieName,
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		HTTPOnly: true,
+		SameSite: "Lax",
+		Secure:   secure,
 	})
 
 	code := c.Query("code")
