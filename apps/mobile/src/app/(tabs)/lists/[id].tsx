@@ -10,10 +10,12 @@ import {
   useUpdateList, 
   useDeleteList, 
   useUpdateListItem, 
-  useDeleteListItem 
+  useDeleteListItem,
+  useContentDetails
 } from '@/lib/hooks/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useMovieDetail } from '@/contexts/MovieDetailContext';
 import { PrivacyBadge } from '@/components/ui/PrivacyBadge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PosterCard } from '@/components/ui/PosterCard';
@@ -22,6 +24,55 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
+
+function FilmItemCard({
+  item,
+  cardWidth,
+  onLongPress,
+}: {
+  item: any;
+  cardWidth: number;
+  onLongPress: (content: any) => void;
+}) {
+  const router = useRouter();
+  const { showMovieDetail } = useMovieDetail();
+  const { data: content, isLoading } = useContentDetails(item.media_type, item.tmdb_id);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.cardWrapper, { width: cardWidth }]}>
+        <View style={{ width: cardWidth, height: cardWidth * 1.5, backgroundColor: Colors.surfaceContainerLow, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
+  const filmTitle = (content && 'title' in content) ? content.title : (content as any)?.name || 'Untitled';
+  const posterPath = content?.poster_path || null;
+  const releaseDate = (content && 'release_date' in content) ? content.release_date : (content as any)?.first_air_date;
+  const filmYear = releaseDate ? releaseDate.substring(0, 4) : undefined;
+
+  return (
+    <View style={[styles.cardWrapper, { width: cardWidth }]}>
+      <PosterCard
+        title={filmTitle}
+        posterPath={posterPath}
+        watched={item.watched}
+        onPress={() => showMovieDetail({
+          id: item.tmdb_id,
+          media_type: item.media_type,
+          title: filmTitle,
+          poster_path: posterPath,
+          year: filmYear,
+          vote_average: content?.vote_average,
+        })}
+        onLongPress={() => onLongPress(content)}
+        width={cardWidth}
+      />
+    </View>
+  );
+}
 
 export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -101,9 +152,9 @@ export default function ListDetailScreen() {
     }
   };
 
-  const handleLongPressItem = (item: any) => {
+  const handleLongPressItem = (item: any, content: any) => {
     if (!isOwner) return; // Only owner gets action sheets
-    setSelectedItem(item);
+    setSelectedItem({ ...item, content });
     setShowActionSheet(true);
   };
 
@@ -264,23 +315,14 @@ export default function ListDetailScreen() {
         <View style={styles.gridContainer}>
           {items && items.length > 0 ? (
             <View style={styles.gridContent}>
-              {items.map((item) => {
-                const content = item.content as any;
-                const filmTitle = content?.title || content?.name || 'Untitled';
-                const posterPath = content?.poster_path || null;
-                return (
-                  <View key={item.id} style={[styles.cardWrapper, { width: cardWidth }]}>
-                    <PosterCard
-                      title={filmTitle}
-                      posterPath={posterPath}
-                      watched={item.watched}
-                      onPress={() => router.push(`/(tabs)/search?q=${encodeURIComponent(filmTitle)}`)}
-                      onLongPress={() => handleLongPressItem(item)}
-                      width={cardWidth}
-                    />
-                  </View>
-                );
-              })}
+              {items.map((item) => (
+                <FilmItemCard
+                  key={item.id}
+                  item={item}
+                  cardWidth={cardWidth}
+                  onLongPress={(content) => handleLongPressItem(item, content)}
+                />
+              ))}
             </View>
           ) : (
             <EmptyState

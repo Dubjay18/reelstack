@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { MovieDetailProvider } from '@/contexts/MovieDetailContext';
 import { Colors } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 
@@ -80,8 +81,10 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <AuthProvider>
             <ToastProvider>
-              <StatusBar style="light" />
-              <RootNavigation />
+              <MovieDetailProvider>
+                <StatusBar style="light" />
+                <RootNavigation />
+              </MovieDetailProvider>
             </ToastProvider>
           </AuthProvider>
         </SafeAreaProvider>

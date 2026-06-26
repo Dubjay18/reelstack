@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 // Make sure web browser handles redirects properly in custom sessions
 WebBrowser.maybeCompleteAuthSession();
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl ?? 'http://localhost:8080';
+const API_URL = Constants.expoConfig?.extra?.apiUrl ?? 'https://reelstack-bv9f.onrender.com';
 
 export const GoogleButton: React.FC = () => {
   const [loading, setLoading] = useState(false);

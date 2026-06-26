@@ -6,12 +6,54 @@ import * as Sharing from 'expo-sharing';
 import { Colors, Radius, Typography, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useMovieDetail } from '@/contexts/MovieDetailContext';
 import { useUserLists, usePublicProfile } from '@/lib/hooks/api';
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
+
+function ProfileFilmCard({ item }: { item: any }) {
+  const router = useRouter();
+  const { showMovieDetail } = useMovieDetail();
+  const { useContentDetails } = require('@/lib/hooks/api');
+  const { data: content, isLoading } = useContentDetails(item.media_type, item.tmdb_id);
+
+  if (isLoading) {
+    return (
+      <View style={styles.rowCardWrapper}>
+        <View style={{ width: 85, height: 85 * 1.5, backgroundColor: Colors.surfaceContainerLow, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
+  const filmTitle = content?.title || (content as any)?.name || 'Untitled';
+  const posterPath = content?.poster_path || null;
+  const releaseDate = (content && 'release_date' in content) ? content.release_date : (content as any)?.first_air_date;
+  const filmYear = releaseDate ? releaseDate.substring(0, 4) : undefined;
+
+  return (
+    <View style={styles.rowCardWrapper}>
+      <PosterCard
+        title={filmTitle}
+        posterPath={posterPath}
+        watched={item.watched}
+        onPress={() => showMovieDetail({
+          id: item.tmdb_id,
+          media_type: item.media_type,
+          title: filmTitle,
+          poster_path: posterPath,
+          year: filmYear,
+          vote_average: content?.vote_average,
+        })}
+        width={85}
+      />
+    </View>
+  );
+}
 
 // Horizontal rail of films for a specific list on the profile page
 function ProfileListRow({ listId, listTitle }: { listId: string; listTitle: string }) {
@@ -42,20 +84,9 @@ function ProfileListRow({ listId, listTitle }: { listId: string; listTitle: stri
         </Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowScroll}>
-        {items.map((item: any) => {
-          const filmTitle = item.content?.title || item.content?.name || 'Untitled';
-          return (
-            <View key={item.id} style={styles.rowCardWrapper}>
-              <PosterCard
-                title={filmTitle}
-                posterPath={item.content?.poster_path}
-                watched={item.watched}
-                onPress={() => router.push(`/(tabs)/search?q=${encodeURIComponent(filmTitle)}`)}
-                width={85}
-              />
-            </View>
-          );
-        })}
+        {items.map((item: any) => (
+          <ProfileFilmCard key={item.id} item={item} />
+        ))}
       </ScrollView>
     </View>
   );

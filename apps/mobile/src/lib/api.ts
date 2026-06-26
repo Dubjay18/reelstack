@@ -4,7 +4,7 @@ import { getStoredToken, clearToken } from '@/lib/auth';
 import { router } from 'expo-router';
 
 // Retrieve dynamic API url configured in app.config.js
-const API_URL = Constants.expoConfig?.extra?.apiUrl ?? 'http://localhost:8080';
+const API_URL = Constants.expoConfig?.extra?.apiUrl ?? 'https://reelstack-bv9f.onrender.com';
 
 export class APIError extends Error {
   constructor(public status: number, message: string) {

@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
 import { useTrendingContent, useUserLists } from '@/lib/hooks/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMovieDetail } from '@/contexts/MovieDetailContext';
 import { HorizontalFilmRail } from '@/components/ui/HorizontalFilmRail';
 import { ListCard } from '@/components/ui/ListCard';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
@@ -15,6 +16,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { showMovieDetail } = useMovieDetail();
 
   const { 
     data: trending, 
@@ -88,7 +90,7 @@ export default function HomeScreen() {
         <HorizontalFilmRail
           title="Trending Now"
           data={trending}
-          onItemPress={(item) => router.push(`/(tabs)/search?q=${encodeURIComponent(item.title || item.name)}`)}
+          onItemPress={(item) => showMovieDetail(item)}
         />
       ) : null}
 

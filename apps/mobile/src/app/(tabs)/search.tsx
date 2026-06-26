@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator, Pressable, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { BottomSheet } from '@/components/ui/BottomSheet';
-import { Image } from 'expo-image';
 import { Colors, Radius, Typography, Spacing, Shadow } from '@/constants/theme';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { GenrePills } from '@/components/ui/GenrePills';
 import { PosterGrid } from '@/components/ui/PosterGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useSearchContent, useTrendingContent, useUserLists, useAddListItem } from '@/lib/hooks/api';
-import { useToast } from '@/contexts/ToastContext';
+import { useSearchContent, useTrendingContent } from '@/lib/hooks/api';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useMovieDetail } from '@/contexts/MovieDetailContext';
 
 const GENRES = ['Action', 'Comedy', 'Drama', 'Thriller', 'Sci-Fi', 'Horror', 'Romance', 'Documentary'];
 
@@ -21,13 +19,7 @@ export default function SearchScreen() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   
-  // Modal / Detail state
-  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
-  const [showDetailSheet, setShowDetailSheet] = useState(false);
-  const [showListSelector, setShowListSelector] = useState(false);
-
-  const { showToast } = useToast();
-  const { data: userLists } = useUserLists();
+  const { showMovieDetail } = useMovieDetail();
 
   // Sync route params to search input
   useEffect(() => {
@@ -58,44 +50,22 @@ export default function SearchScreen() {
     const rawData = debouncedQuery.length > 0 ? searchResults : trending;
     if (!rawData) return [];
     
-    // TMDB Search API results can be filtered by genre name if details are mocked or matched
-    // For simplicity, if a genre is selected, we filter by title/year keyword or show all
     if (selectedGenre) {
-      // In actual app, details API is queried. For search screen filtering, we do basic clientside mock match:
-      // We map genre selection to basic media features or just display
       return rawData; // pass through
     }
     return rawData;
   };
 
   const handleCardPress = (item: any) => {
-    setSelectedMedia(item);
-    setShowDetailSheet(true);
-  };
-
-  const handleAddToList = async (listId: string) => {
-    if (!selectedMedia) return;
-    try {
-      // Create mutation dynamically for this list
-      await apiAddListItem(listId, {
-        tmdb_id: selectedMedia.id,
-        media_type: selectedMedia.media_type || 'movie',
-      });
-      showToast(`Added to list!`, 'success');
-      setShowListSelector(false);
-      setShowDetailSheet(false);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to add item', 'error');
-    }
-  };
-
-  // Helper inside search to trigger direct API post (since lists mutations are hook-bound,
-  // we query client queries directly or use custom mutation call)
-  const addListItemMutation = useAddListItem('');
-  const apiAddListItem = async (listId: string, body: any) => {
-    // Custom post call wrapper
-    const { api } = require('@/lib/api');
-    return api.post(`/api/v1/lists/${listId}/items`, body);
+    showMovieDetail({
+      id: item.id,
+      media_type: item.media_type || 'movie',
+      title: item.title,
+      name: item.name,
+      poster_path: item.poster_path,
+      year: item.year,
+      vote_average: item.vote_average,
+    });
   };
 
   const filteredData = getFilteredData();
@@ -150,111 +120,7 @@ export default function SearchScreen() {
         />
       )}
 
-      {/* Movie Details Bottom Sheet */}
-      {selectedMedia && (
-        <BottomSheet
-          isPresented={showDetailSheet}
-          onDismiss={() => {
-            setShowDetailSheet(false);
-            setShowListSelector(false);
-          }}
-        >
-          <View style={styles.detailContainer}>
-            {!showListSelector ? (
-              <ScrollView contentContainerStyle={styles.detailScroll}>
-                <View style={styles.detailHeader}>
-                  <Image
-                    source={{ 
-                      uri: selectedMedia.poster_path 
-                        ? `https://image.tmdb.org/t/p/w300${selectedMedia.poster_path}` 
-                        : 'https://via.placeholder.com/150x225'
-                    }}
-                    style={styles.detailPoster}
-                    contentFit="cover"
-                  />
-                  <View style={styles.detailHeaderText}>
-                    <Text numberOfLines={2} style={[Typography.heading, styles.detailTitle]}>
-                      {selectedMedia.title || selectedMedia.name}
-                    </Text>
-                    <Text style={[Typography.bodySm, styles.detailRelease]}>
-                      Released: {selectedMedia.year || 'N/A'}
-                    </Text>
-                    <View style={styles.ratingRow}>
-                      <MaterialIcons name="star" size={16} color="#f59e0b" />
-                      <Text style={[Typography.bodySm, styles.ratingText]}>
-                        {selectedMedia.vote_average ? selectedMedia.vote_average.toFixed(1) : 'N/A'} / 10
-                      </Text>
-                    </View>
-                    <View style={styles.typeBadge}>
-                      <Text style={[Typography.caption, styles.typeBadgeText]}>
-                        {selectedMedia.media_type === 'tv' ? 'TV SERIES' : 'MOVIE'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
 
-                <View style={styles.actionsRow}>
-                  <Pressable
-                    style={styles.addButton}
-                    onPress={() => setShowListSelector(true)}
-                  >
-                    <MaterialIcons name="playlist-add" size={20} color={Colors.onPrimary} />
-                    <Text style={[Typography.bodySm, styles.addButtonText]}>Add to list...</Text>
-                  </Pressable>
-                </View>
-              </ScrollView>
-            ) : (
-              <View style={styles.listSelectorContainer}>
-                <View style={styles.listSelectorTitleRow}>
-                  <Pressable onPress={() => setShowListSelector(false)}>
-                    <MaterialIcons name="arrow-back" size={24} color={Colors.onSurface} />
-                  </Pressable>
-                  <Text style={[Typography.heading, styles.listSelectorTitle]}>Select List</Text>
-                </View>
-
-                {userLists && userLists.length > 0 ? (
-                  <ScrollView style={styles.listSelectorScroll}>
-                    {userLists.map((list) => (
-                      <Pressable
-                        key={list.id}
-                        style={({ pressed }) => [
-                          styles.listSelectorItem,
-                          pressed && styles.listSelectorItemPressed,
-                        ]}
-                        onPress={() => handleAddToList(list.id)}
-                      >
-                        <MaterialIcons name="folder" size={20} color={Colors.primary} style={styles.folderIcon} />
-                        <View style={styles.listSelectorItemText}>
-                          <Text numberOfLines={1} style={[Typography.bodyLg, styles.listSelectorItemTitle]}>
-                            {list.title}
-                          </Text>
-                          <Text style={[Typography.caption, styles.listSelectorItemCount]}>
-                            {list.item_count} items
-                          </Text>
-                        </View>
-                        <MaterialIcons name="chevron-right" size={20} color={Colors.onSurfaceVariant} />
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                ) : (
-                  <View style={styles.noListsContainer}>
-                    <Text style={[Typography.bodySm, styles.noListsText]}>You don't have any lists yet.</Text>
-                    <Pressable
-                      style={styles.createListButton}
-                      onPress={() => {
-                        setShowDetailSheet(false);
-                        router.push('/(tabs)/lists/new');
-                      }}
-                    >
-                      <Text style={styles.createListButtonText}>Create List</Text>
-                    </Pressable>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        </BottomSheet>
-      )}
     </View>
   );
 }
@@ -296,7 +162,138 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     padding: Spacing.lg,
-    height: 380,
+    height: 580,
+  },
+  detailsLoaderContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 300,
+  },
+  loadingText: {
+    color: Colors.onSurfaceVariant,
+    marginTop: Spacing.sm,
+  },
+  backdropWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: 150,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+  },
+  backdropImage: {
+    width: '100%',
+    height: '100%',
+  },
+  backdropGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
+  },
+  detailHeaderWithBackdrop: {
+    marginTop: -80,
+    zIndex: 10,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+  },
+  genresContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: Spacing.md,
+    gap: 6,
+  },
+  genreBadge: {
+    backgroundColor: 'rgba(79, 219, 200, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(79, 219, 200, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  genreBadgeText: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  streamingContainer: {
+    marginBottom: Spacing.md,
+  },
+  sectionTitle: {
+    color: Colors.onSurfaceVariant,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  streamingScroll: {
+    paddingVertical: 4,
+    gap: 8,
+  },
+  providerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    borderRadius: Radius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  providerName: {
+    color: Colors.onSurface,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  providerType: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: Colors.onSurfaceVariant,
+    fontSize: 8,
+    fontWeight: '700',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+    marginLeft: 6,
+  },
+  noStreamingText: {
+    color: Colors.onSurfaceVariant,
+    opacity: 0.6,
+  },
+  overviewContainer: {
+    marginBottom: Spacing.md,
+  },
+  overviewText: {
+    color: Colors.onSurface,
+    lineHeight: 20,
+    opacity: 0.9,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: 4,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    borderRadius: Radius.md,
+    padding: 10,
+    alignItems: 'center',
+  },
+  statLabel: {
+    color: Colors.onSurfaceVariant,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  statValue: {
+    color: Colors.onSurface,
+    fontSize: 13,
+    fontWeight: '700',
   },
   detailScroll: {
     flexGrow: 1,

@@ -36,7 +36,7 @@ module.exports = {
       reactCompiler: true
     },
     extra: {
-      apiUrl: process.env.API_URL || "http://localhost:8080"
+      apiUrl: process.env.API_URL || "https://reelstack-bv9f.onrender.com"
     }
   }
 };

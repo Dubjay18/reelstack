@@ -50,6 +50,12 @@ export default function TabsLayout() {
             <MaterialIcons name="format-list-bulleted" size={size} color={color} />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('lists', { screen: 'index' });
+          },
+        })}
       />
       <Tabs.Screen
         name="profile"
