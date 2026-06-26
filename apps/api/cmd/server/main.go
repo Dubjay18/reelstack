@@ -38,28 +38,30 @@ func main() {
 	defer database.Close()
 
 	// ── Migrations ──────────────────────────────────────────────────────────
-	if len(os.Args) > 1 && os.Args[1] == "--migrate-only" {
-		slog.Info("Running migrations...")
-		files, err := os.ReadDir("pkg/db/migrations")
-		if err != nil {
-			slog.Error("failed to read migrations dir", "error", err)
-			os.Exit(1)
-		}
-		for _, file := range files {
-			if !file.IsDir() {
-				content, err := os.ReadFile("pkg/db/migrations/" + file.Name())
-				if err != nil {
-					slog.Error("failed to read migration file", "file", file.Name(), "error", err)
-					os.Exit(1)
-				}
-				slog.Info("Executing migration", "file", file.Name())
-				if _, err := database.Exec(string(content)); err != nil {
-					slog.Error("migration failed", "file", file.Name(), "error", err)
-					os.Exit(1)
-				}
+	// Run migrations automatically on startup to ensure the database schema is up-to-date.
+	migrateOnly := len(os.Args) > 1 && os.Args[1] == "--migrate-only"
+	slog.Info("Checking and running database migrations...")
+	files, err := os.ReadDir("pkg/db/migrations")
+	if err != nil {
+		slog.Error("failed to read migrations dir", "error", err)
+		os.Exit(1)
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			content, err := os.ReadFile("pkg/db/migrations/" + file.Name())
+			if err != nil {
+				slog.Error("failed to read migration file", "file", file.Name(), "error", err)
+				os.Exit(1)
+			}
+			slog.Info("Executing migration", "file", file.Name())
+			if _, err := database.Exec(string(content)); err != nil {
+				slog.Error("migration failed", "file", file.Name(), "error", err)
+				os.Exit(1)
 			}
 		}
-		slog.Info("Migrations completed successfully.")
+	}
+	slog.Info("Database migrations completed successfully.")
+	if migrateOnly {
 		os.Exit(0)
 	}
 

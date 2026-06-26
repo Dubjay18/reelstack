@@ -15,6 +15,7 @@ FROM alpine:3.20
 RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/server .
+COPY --from=builder /app/pkg/db/migrations ./pkg/db/migrations
 
 EXPOSE 8080
 CMD ["./server"]
