@@ -1,4 +1,4 @@
-.PHONY: dev dev-api dev-web test-api test-web migrate lint docker-up docker-down
+.PHONY: dev dev-api dev-web dev-mobile dev-android dev-ios test-api test-web migrate lint docker-up docker-down
 
 # ── Local dev ────────────────────────────────────────────────────────────────
 dev: docker-up
@@ -10,6 +10,15 @@ dev-api:
 
 dev-web:
 	@pnpm --filter web dev
+
+dev-mobile:
+	@pnpm --filter mobile start
+
+dev-android:
+	@pnpm --filter mobile android
+
+dev-ios:
+	@pnpm --filter mobile ios
 
 # ── Docker ───────────────────────────────────────────────────────────────────
 docker-up:

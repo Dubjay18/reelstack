@@ -242,3 +242,55 @@ func TestGoogleCallbackBadState(t *testing.T) {
 		t.Fatalf("want 400, got %d", resp.StatusCode)
 	}
 }
+
+func TestGoogleRedirectWithCustomURI(t *testing.T) {
+	var capturedState string
+	svc := &mockAuthService{
+		googleRedirectFn: func(state string) string {
+			capturedState = state
+			return "https://accounts.google.com/o/oauth2/auth?state=" + state
+		},
+	}
+	app := newApp(svc)
+	resp := doRequest(app, http.MethodGet, "/api/v1/auth/google?redirect_uri=reelstack://auth/callback", nil)
+
+	if resp.StatusCode != http.StatusTemporaryRedirect {
+		t.Fatalf("want 307, got %d", resp.StatusCode)
+	}
+
+	// The capturedState must have "___" and base64 encoded custom redirect_uri
+	if !strings.Contains(capturedState, "___") {
+		t.Fatalf("expected state to contain '___', got %s", capturedState)
+	}
+
+	parts := strings.Split(capturedState, "___")
+	if len(parts) != 2 {
+		t.Fatalf("expected 2 parts split by '___', got %d", len(parts))
+	}
+}
+
+func TestGoogleCallbackWithCustomURI(t *testing.T) {
+	const wantToken = "google-jwt-789"
+	svc := &mockAuthService{
+		googleCallbackFn: func(ctx context.Context, code string) (string, error) {
+			return wantToken, nil
+		},
+	}
+	app := newApp(svc)
+
+	stateCookie := &http.Cookie{Name: "oauth_state", Value: "my-state-value"}
+	oAuthState := "my-state-value___cmVlbHN0YWNrOi8vYXV0aC9jYWxsYmFjaw"
+
+	resp := doRequest(app, http.MethodGet,
+		"/api/v1/auth/google/callback?code=authcode&state="+oAuthState,
+		nil, stateCookie)
+
+	if resp.StatusCode != http.StatusTemporaryRedirect {
+		t.Fatalf("want 307 redirect, got %d", resp.StatusCode)
+	}
+	loc := resp.Header.Get("Location")
+	wantLoc := "reelstack://auth/callback?token=" + wantToken
+	if loc != wantLoc {
+		t.Errorf("expected Location %q, got %q", wantLoc, loc)
+	}
+}

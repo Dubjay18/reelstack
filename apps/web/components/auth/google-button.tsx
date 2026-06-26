@@ -1,13 +1,16 @@
 'use client'
 
 // Shared Google OAuth CTA button used on both /login and /register.
-// Redirects the browser to the API's OAuth redirect endpoint.
+// Redirects the browser to the API's OAuth redirect endpoint,
+// passing redirect_uri so the API knows where to send the user back.
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 export function GoogleButton() {
   const handleClick = () => {
-    window.location.href = `${API_URL}/api/v1/auth/google`
+    const redirectUri = `${APP_URL}/auth/callback`
+    window.location.href = `${API_URL}/api/v1/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`
   }
 
   return (

@@ -1,0 +1,497 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Pressable, ActivityIndicator, ScrollView, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import * as Sharing from 'expo-sharing';
+import { Colors, Radius, Typography, Shadow, Spacing } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useUserLists, usePublicProfile } from '@/lib/hooks/api';
+import { ListCard } from '@/components/ui/ListCard';
+import { PosterCard } from '@/components/ui/PosterCard';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { MaterialIcons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
+
+// Horizontal rail of films for a specific list on the profile page
+function ProfileListRow({ listId, listTitle }: { listId: string; listTitle: string }) {
+  const { data: items, isLoading } = require('@/lib/hooks/api').useListItems(listId);
+  const router = useRouter();
+
+  if (isLoading) {
+    return (
+      <View style={styles.rowContainer}>
+        <Text style={[Typography.caption, styles.rowTitle]}>{listTitle.toUpperCase()}</Text>
+        <View style={styles.rowLoader}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      </View>
+    );
+  }
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <View style={styles.rowContainer}>
+      <View style={styles.rowHeader}>
+        <Text numberOfLines={1} style={[Typography.caption, styles.rowTitle]}>
+          {listTitle.toUpperCase()}
+        </Text>
+        <Text style={[Typography.caption, styles.rowCount]}>
+          {items.length} films
+        </Text>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowScroll}>
+        {items.map((item: any) => {
+          const filmTitle = item.content?.title || item.content?.name || 'Untitled';
+          return (
+            <View key={item.id} style={styles.rowCardWrapper}>
+              <PosterCard
+                title={filmTitle}
+                posterPath={item.content?.poster_path}
+                watched={item.watched}
+                onPress={() => router.push(`/(tabs)/search?q=${encodeURIComponent(filmTitle)}`)}
+                width={85}
+              />
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+export default function ProfileScreen() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { showToast } = useToast();
+
+  const [activeTab, setActiveTab] = useState<'films' | 'lists'>('films');
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bioText, setBioText] = useState('');
+
+  const username = user?.username || '';
+  const { data: profile, isLoading: isProfileLoading } = usePublicProfile(username);
+  const { data: lists, isLoading: isListsLoading } = useUserLists();
+
+  useEffect(() => {
+    if (profile?.bio) {
+      setBioText(profile.bio);
+    }
+  }, [profile]);
+
+  const handleShare = async () => {
+    try {
+      const shareSupported = await Sharing.isAvailableAsync();
+      if (shareSupported && username) {
+        // Since we are running locally, we can construct the share message
+        await Sharing.shareAsync(`https://reelstack.app/${username}`, {
+          dialogTitle: `Share @${username}'s Profile`,
+        });
+      } else {
+        showToast('Sharing is not available on this device', 'error');
+      }
+    } catch (err: any) {
+      showToast('Error sharing profile', 'error');
+    }
+  };
+
+  const handleSaveBio = () => {
+    setIsEditingBio(false);
+    showToast('Bio updated! (Simulated)', 'success');
+  };
+
+  if (isProfileLoading || isListsLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  // Calculate stats
+  const totalLists = lists ? lists.length : 0;
+  const totalFilms = lists ? lists.reduce((sum, list) => sum + list.item_count, 0) : 0;
+  const totalWatched = lists ? lists.reduce((sum, list) => sum + list.watched_count, 0) : 0;
+  const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Profile Card Background Gradient Header */}
+        <View style={styles.profileHeader}>
+          {/* Avatar and Badges */}
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{ uri: avatarUrl }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+            <View style={styles.verifiedBadge}>
+              <MaterialIcons name="check" size={12} color={Colors.onSecondary} />
+            </View>
+          </View>
+
+          {/* Username */}
+          <Text style={[Typography.displayMd, styles.username]}>{username}</Text>
+          <Text style={[Typography.mono, styles.handle]}>@{username}</Text>
+
+          {/* Bio text */}
+          {isEditingBio ? (
+            <View style={styles.editBioWrapper}>
+              <TextInput
+                value={bioText}
+                onChangeText={setBioText}
+                maxLength={160}
+                autoFocus
+                multiline
+                style={[Typography.bodySm, styles.editBioInput]}
+                selectionColor={Colors.primary}
+                keyboardAppearance="dark"
+              />
+              <View style={styles.editBioActions}>
+                <Pressable onPress={handleSaveBio} style={styles.saveBioBtn}>
+                  <Text style={styles.saveBioBtnText}>Save</Text>
+                </Pressable>
+                <Pressable onPress={() => setIsEditingBio(false)} style={styles.cancelBioBtn}>
+                  <Text style={styles.cancelBioBtnText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Pressable onPress={() => setIsEditingBio(true)} style={styles.bioPress}>
+              <Text style={[Typography.bodySm, styles.bioText]}>
+                {bioText || <Text style={styles.bioPlaceholder}>Add a bio...</Text>}
+                <MaterialIcons name="edit" size={12} color={Colors.onSurfaceVariant} style={styles.bioEditIcon} />
+              </Text>
+            </Pressable>
+          )}
+
+          {/* Stats count row */}
+          <View style={styles.statsRow}>
+            {[
+              { value: totalLists, label: 'Lists' },
+              { value: totalFilms, label: 'Films' },
+              { value: totalWatched, label: 'Watched' },
+              { value: 0, label: 'Followers' },
+              { value: 0, label: 'Following' },
+            ].map((stat) => (
+              <View key={stat.label} style={styles.statCell}>
+                <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>
+                <Text style={[Typography.caption, styles.statLabel]}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Action Row */}
+          <View style={styles.actionRow}>
+            <Pressable onPress={handleShare} style={styles.shareBtn}>
+              <MaterialIcons name="ios-share" size={16} color={Colors.onSurfaceVariant} style={styles.shareIcon} />
+              <Text style={[Typography.bodySm, styles.shareBtnText]}>Share Profile</Text>
+            </Pressable>
+
+            <Pressable onPress={logout} style={styles.logoutBtn}>
+              <MaterialIcons name="logout" size={16} color={Colors.error} style={styles.shareIcon} />
+              <Text style={[Typography.bodySm, styles.logoutBtnText]}>Sign Out</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Tab switcher */}
+        <View style={styles.tabSwitcher}>
+          <Pressable
+            onPress={() => setActiveTab('films')}
+            style={[styles.tabButton, activeTab === 'films' && styles.tabButtonActive]}
+          >
+            <Text style={[Typography.bodySm, styles.tabText, activeTab === 'films' && styles.tabTextActive]}>
+              Films
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setActiveTab('lists')}
+            style={[styles.tabButton, activeTab === 'lists' && styles.tabButtonActive]}
+          >
+            <Text style={[Typography.bodySm, styles.tabText, activeTab === 'lists' && styles.tabTextActive]}>
+              Lists
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Tab content */}
+        <View style={styles.tabContent}>
+          {activeTab === 'lists' ? (
+            lists && lists.length > 0 ? (
+              <View style={styles.listsContainer}>
+                {lists.map((list) => (
+                  <ListCard
+                    key={list.id}
+                    list={list}
+                    username={username}
+                    onPress={() => router.push(`/(tabs)/lists/${list.id}`)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <EmptyState
+                icon="movie-filter"
+                title="No lists yet"
+                description="Create a list to start tracking films."
+                buttonText="Create list"
+                onButtonPress={() => router.push('/(tabs)/lists/new')}
+              />
+            )
+          ) : (
+            // Films tab: renders list rows
+            lists && lists.length > 0 ? (
+              <View style={styles.filmsContainer}>
+                {lists.map((list) => (
+                  <ProfileListRow
+                    key={list.id}
+                    listId={list.id}
+                    listTitle={list.title}
+                  />
+                ))}
+              </View>
+            ) : (
+              <EmptyState
+                icon="video-library"
+                title="No films logged"
+                description="Films you add to your lists will appear here."
+              />
+            )
+          )}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
+  profileHeader: {
+    paddingTop: 80,
+    paddingBottom: Spacing.md,
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainerLow,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceVariant,
+    paddingHorizontal: Spacing.gutter,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: Spacing.sm,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: 'rgba(79, 219, 200, 0.3)',
+    backgroundColor: Colors.surfaceContainer,
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  username: {
+    color: Colors.onSurface,
+    fontWeight: '700',
+    fontSize: 24,
+    marginBottom: 2,
+  },
+  handle: {
+    color: Colors.primary,
+    fontSize: 13,
+    marginBottom: Spacing.sm,
+  },
+  bioPress: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  bioText: {
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  bioPlaceholder: {
+    fontStyle: 'italic',
+    opacity: 0.5,
+  },
+  bioEditIcon: {
+    marginLeft: 6,
+  },
+  editBioWrapper: {
+    width: '100%',
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  editBioInput: {
+    color: Colors.onSurface,
+    backgroundColor: Colors.surfaceContainer,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: Radius.md,
+    padding: 8,
+    minHeight: 50,
+    textAlign: 'center',
+  },
+  editBioActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  saveBioBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
+    marginRight: 8,
+  },
+  saveBioBtnText: {
+    color: Colors.onPrimary,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  cancelBioBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  cancelBioBtnText: {
+    color: Colors.onSurfaceVariant,
+    fontSize: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginVertical: Spacing.md,
+  },
+  statCell: {
+    alignItems: 'center',
+  },
+  statValue: {
+    color: Colors.onSurface,
+    fontWeight: '700',
+  },
+  statLabel: {
+    color: Colors.onSurfaceVariant,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    marginTop: Spacing.xs,
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    marginRight: 10,
+  },
+  shareIcon: {
+    marginRight: 6,
+  },
+  shareBtnText: {
+    color: Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 180, 171, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+  },
+  logoutBtnText: {
+    color: Colors.error,
+    fontWeight: '600',
+  },
+  tabSwitcher: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceVariant,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabButtonActive: {
+    borderBottomColor: Colors.primary,
+  },
+  tabText: {
+    color: Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: Colors.primary,
+  },
+  tabContent: {
+    paddingTop: Spacing.sm,
+  },
+  listsContainer: {
+    paddingHorizontal: Spacing.gutter,
+  },
+  filmsContainer: {
+    paddingHorizontal: Spacing.gutter,
+  },
+  // Sub-row styles
+  rowContainer: {
+    marginBottom: Spacing.md,
+  },
+  rowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  rowTitle: {
+    color: Colors.onSurfaceVariant,
+    letterSpacing: 1.5,
+    fontWeight: '700',
+  },
+  rowCount: {
+    color: Colors.onSurfaceVariant,
+    opacity: 0.6,
+  },
+  rowScroll: {
+    paddingRight: 100,
+  },
+  rowCardWrapper: {
+    marginRight: 10,
+  },
+  rowLoader: {
+    height: 100,
+    justifyContent: 'center',
+  },
+});

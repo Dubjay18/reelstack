@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -132,6 +133,15 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 
 // GoogleRedirect generates a CSRF state token, stores it in a short-lived
 // cookie, and redirects the browser to Google's consent screen.
+//
+// Optional query parameter:
+//
+//	- redirect_uri: the URL the API should redirect back to after a successful
+//	  Google login. Both web (http://...) and mobile deep-link (reelstack://...)
+//	  schemes are accepted. When provided, it is Base64-encoded and appended to
+//	  the OAuth state string (separated by "___") so it survives the round-trip
+//	  through Google's servers. When omitted, the API falls back to its
+//	  configured APP_URL + "/auth/callback".
 func (h *Handler) GoogleRedirect(c *fiber.Ctx) error {
 	state, err := generateState()
 	if err != nil {
@@ -147,18 +157,46 @@ func (h *Handler) GoogleRedirect(c *fiber.Ctx) error {
 		Secure:   false, // set true in prod behind TLS
 	})
 
-	redirectURL := h.svc.GoogleRedirectURL(state)
+	// Support custom redirection (e.g. mobile deep linking)
+	customRedirect := c.Query("redirect_uri")
+	oAuthState := state
+	if customRedirect != "" {
+		encodedRedirect := base64.RawURLEncoding.EncodeToString([]byte(customRedirect))
+		oAuthState = state + "___" + encodedRedirect
+	}
+
+	redirectURL := h.svc.GoogleRedirectURL(oAuthState)
 	return c.Redirect(redirectURL, fiber.StatusTemporaryRedirect)
 }
 
 
-// GoogleCallback validates the CSRF state, exchanges the code for a profile,
-// upserts the user, and returns a signed JWT.
+// GoogleCallback validates the CSRF state, exchanges the code for a Google
+// profile, upserts the user, issues a signed JWT, and redirects the client.
+//
+// If the incoming state contains a "___"-encoded redirect_uri (injected by
+// GoogleRedirect), the JWT token is appended as a query param to that URI.
+// Otherwise the default APP_URL + "/auth/callback" destination is used.
 func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
 	state := c.Query("state")
 	cookieState := c.Cookies(stateCookieName)
 
-	if state == "" || cookieState == "" || state != cookieState {
+	var originalState string
+	var customRedirectDecoded string
+
+	if strings.Contains(state, "___") {
+		parts := strings.Split(state, "___")
+		originalState = parts[0]
+		if len(parts) > 1 {
+			decodedBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
+			if err == nil {
+				customRedirectDecoded = string(decodedBytes)
+			}
+		}
+	} else {
+		originalState = state
+	}
+
+	if originalState == "" || cookieState == "" || originalState != cookieState {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid or missing OAuth state")
 	}
 
@@ -180,7 +218,16 @@ func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, "Google authentication failed")
 	}
 
-	return c.Redirect(h.appURL+"/auth/callback?token="+token, fiber.StatusTemporaryRedirect)
+	redirectDest := h.appURL + "/auth/callback?token=" + token
+	if customRedirectDecoded != "" {
+		if strings.Contains(customRedirectDecoded, "?") {
+			redirectDest = customRedirectDecoded + "&token=" + token
+		} else {
+			redirectDest = customRedirectDecoded + "?token=" + token
+		}
+	}
+
+	return c.Redirect(redirectDest, fiber.StatusTemporaryRedirect)
 }
 
 
