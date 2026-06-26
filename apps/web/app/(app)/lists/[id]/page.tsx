@@ -42,11 +42,13 @@ function FilmItemCard({
   onToggleWatched,
   onRemove,
   isOwner,
+  isRemoving,
 }: {
   item: ListItem
   onToggleWatched: (itemId: string, watched: boolean) => void
   onRemove: (itemId: string) => void
   isOwner: boolean
+  isRemoving: boolean
 }) {
   const { data: movie, isLoading } = useContentDetails(item.media_type, item.tmdb_id)
 
@@ -84,6 +86,14 @@ function FilmItemCard({
           {title}
         </h3>
       </div>
+
+      {/* Removing Overlay */}
+      {isRemoving && (
+        <div className="absolute inset-0 bg-black/75 z-40 flex flex-col items-center justify-center gap-xs">
+          <span className="material-symbols-outlined text-[24px] text-error animate-spin">progress_activity</span>
+          <span className="text-[10px] text-zinc-400 font-mono">Removing...</span>
+        </div>
+      )}
 
       {/* Hover Overlay */}
       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-sm z-20">
@@ -412,13 +422,22 @@ export default function Page() {
                 />
                 <button 
                   onClick={handleSaveTitle}
-                  className="bg-primary text-background font-body-sm text-body-sm font-semibold px-md py-xs rounded-md hover:bg-primary-fixed transition-colors"
+                  disabled={updateListMutation.isPending}
+                  className="bg-primary text-background font-body-sm text-body-sm font-semibold px-md py-xs rounded-md hover:bg-primary-fixed transition-colors disabled:opacity-50 flex items-center gap-xs"
                 >
-                  Save
+                  {updateListMutation.isPending ? (
+                    <>
+                      <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save'
+                  )}
                 </button>
                 <button 
                   onClick={() => { setTitleInput(listTitle); setIsEditingTitle(false) }}
-                  className="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-sm py-xs rounded-md"
+                  disabled={updateListMutation.isPending}
+                  className="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-sm py-xs rounded-md disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -453,13 +472,22 @@ export default function Page() {
                   <div className="flex gap-sm">
                     <button 
                       onClick={handleSaveDesc}
-                      className="bg-primary text-background font-body-sm text-body-sm font-semibold px-md py-xs rounded-md hover:bg-primary-fixed transition-colors"
+                      disabled={updateListMutation.isPending}
+                      className="bg-primary text-background font-body-sm text-body-sm font-semibold px-md py-xs rounded-md hover:bg-primary-fixed transition-colors disabled:opacity-50 flex items-center gap-xs"
                     >
-                      Save
+                      {updateListMutation.isPending ? (
+                        <>
+                          <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save'
+                      )}
                     </button>
                     <button 
                       onClick={() => { setDescInput(listDescription); setIsEditingDesc(false) }}
-                      className="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-sm py-xs rounded-md"
+                      disabled={updateListMutation.isPending}
+                      className="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-sm py-xs rounded-md disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -597,6 +625,7 @@ export default function Page() {
                   onToggleWatched={(itemId, watched) => toggleWatched(itemId, watched)}
                   onRemove={(itemId) => removeFilm(itemId)}
                   isOwner={isOwner}
+                  isRemoving={deleteListItemMutation.isPending && deleteListItemMutation.variables === item.id}
                 />
               ))}
             </div>
@@ -650,9 +679,17 @@ export default function Page() {
                       </div>
                       <button 
                         onClick={() => handleAddFilm(item.id, item.media_type, item.title)}
-                        className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-background px-sm py-xs rounded-md text-body-sm font-semibold transition-all"
+                        disabled={addListItemMutation.isPending}
+                        className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-background px-sm py-xs rounded-md text-body-sm font-semibold transition-all flex items-center gap-xs disabled:opacity-50"
                       >
-                        Add
+                        {addListItemMutation.isPending && addListItemMutation.variables?.tmdb_id === item.id ? (
+                          <>
+                            <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                            Adding...
+                          </>
+                        ) : (
+                          'Add'
+                        )}
                       </button>
                     </div>
                   ))
@@ -685,9 +722,17 @@ export default function Page() {
                       </div>
                       <button 
                         onClick={() => handleAddFilm(item.id, item.media_type, item.title)}
-                        className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-background px-sm py-xs rounded-md text-body-sm font-semibold transition-all shrink-0"
+                        disabled={addListItemMutation.isPending}
+                        className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-background px-sm py-xs rounded-md text-body-sm font-semibold transition-all shrink-0 flex items-center gap-xs disabled:opacity-50"
                       >
-                        Add
+                        {addListItemMutation.isPending && addListItemMutation.variables?.tmdb_id === item.id ? (
+                          <>
+                            <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                            Adding...
+                          </>
+                        ) : (
+                          'Add'
+                        )}
                       </button>
                     </div>
                   ))

@@ -43,6 +43,7 @@ export default function Page() {
   const [scrolled, setScrolled] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [showListSelector, setShowListSelector] = useState(false)
+  const [addingToListId, setAddingToListId] = useState<string | null>(null)
 
   // Query Details & Streaming
   const { data: movie, isLoading: movieLoading } = useContentDetails(mediaType, tmdbId)
@@ -84,6 +85,7 @@ export default function Page() {
   }
 
   const handleAddToList = (listId: string, listTitle: string) => {
+    setAddingToListId(listId)
     api.post(`/api/v1/lists/${listId}/items`, {
       tmdb_id: tmdbId,
       media_type: mediaType,
@@ -95,6 +97,8 @@ export default function Page() {
       queryClient.invalidateQueries({ queryKey: ['list-items', listId] })
     }).catch((err) => {
       showToast(err.message || 'Failed to add film to list')
+    }).finally(() => {
+      setAddingToListId(null)
     })
   }
 
@@ -217,10 +221,15 @@ export default function Page() {
                 <div className="flex flex-wrap gap-md relative">
                   <button 
                     onClick={() => setShowListSelector(!showListSelector)}
-                    className="px-8 py-3 rounded-xl font-bold bg-primary text-background hover:bg-primary-fixed flex items-center gap-2 transition-all active:scale-[0.98] shadow-lg"
+                    disabled={addingToListId !== null}
+                    className="px-8 py-3 rounded-xl font-bold bg-primary text-background hover:bg-primary-fixed flex items-center gap-2 transition-all active:scale-[0.98] shadow-lg disabled:opacity-85"
                   >
-                    <span className="material-symbols-outlined">add</span>
-                    Save to List
+                    {addingToListId !== null ? (
+                      <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                    ) : (
+                      <span className="material-symbols-outlined">add</span>
+                    )}
+                    {addingToListId !== null ? 'Saving...' : 'Save to List'}
                   </button>
                   <button 
                     onClick={handleShare}
@@ -246,9 +255,13 @@ export default function Page() {
                             <button
                               key={list.id}
                               onClick={() => handleAddToList(list.id, list.title)}
-                              className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-primary rounded-lg text-sm transition-colors truncate"
+                              disabled={addingToListId !== null}
+                              className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-primary rounded-lg text-sm transition-colors truncate flex items-center justify-between disabled:opacity-50 disabled:hover:bg-transparent"
                             >
-                              {list.title}
+                              <span>{list.title}</span>
+                              {addingToListId === list.id && (
+                                <span className="material-symbols-outlined text-[14px] animate-spin text-primary">progress_activity</span>
+                              )}
                             </button>
                           ))}
                         </div>
