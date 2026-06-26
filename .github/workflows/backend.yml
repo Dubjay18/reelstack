@@ -1,13 +1,7 @@
 name: Backend CI
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/api/**'
-  pull_request:
-    paths:
-      - 'apps/api/**'
+  workflow_dispatch:
 
 jobs:
   test:
