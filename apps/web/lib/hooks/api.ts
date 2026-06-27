@@ -87,6 +87,16 @@ export function useUpdateProfile() {
   })
 }
 
+export function useCheckUsernameAvailability(username: string) {
+  return useQuery({
+    queryKey: ['username-availability', username],
+    queryFn: () => api.get<{ available: boolean; error?: string }>(`/api/v1/users/check-username?username=${encodeURIComponent(username)}`),
+    enabled: !!username && username.trim().length >= 3,
+    retry: false,
+    refetchOnWindowFocus: false,
+  })
+}
+
 // 3. Lists Hooks
 export function useUserLists() {
   return useQuery({

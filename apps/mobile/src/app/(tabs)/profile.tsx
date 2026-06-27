@@ -7,7 +7,7 @@ import { Colors, Radius, Typography, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
-import { useUserLists, usePublicProfile, useUpdateProfile } from '@/lib/hooks/api';
+import { useUserLists, usePublicProfile, useUpdateProfile, useCheckUsernameAvailability } from '@/lib/hooks/api';
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -100,6 +100,7 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'films' | 'lists'>('films');
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bioText, setBioText] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
 
   const username = user?.username || '';
   const { data: profile, isLoading: isProfileLoading } = usePublicProfile(username);
@@ -108,6 +109,9 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (profile?.bio) {
       setBioText(profile.bio);
+    }
+    if (profile?.username) {
+      setUsernameInput(profile.username);
     }
   }, [profile]);
 
@@ -129,16 +133,57 @@ export default function ProfileScreen() {
 
   const updateProfileMutation = useUpdateProfile();
 
+  // Debounce username
+  const [debouncedUsername, setDebouncedUsername] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedUsername(usernameInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [usernameInput]);
+
+  const isCheckingUsername = debouncedUsername !== '' && debouncedUsername !== username && debouncedUsername.trim().length >= 3;
+  const { data: availabilityData, isLoading: isAvailabilityLoading } = useCheckUsernameAvailability(
+    isCheckingUsername ? debouncedUsername : ''
+  );
+
+  const isUsernameFormatValid = /^[a-zA-Z0-9_]{3,50}$/.test(usernameInput);
+  const isUsernameChanged = usernameInput !== username;
+
+  const isSaveDisabled = updateProfileMutation.isPending ||
+    (isUsernameChanged && (!isUsernameFormatValid || isAvailabilityLoading || availabilityData?.available === false));
+
+  let statusText = '';
+  let statusColor: string = Colors.onSurfaceVariant;
+  if (isUsernameChanged) {
+    if (!isUsernameFormatValid) {
+      statusText = 'Format: 3-50 characters (letters, numbers, underscores)';
+      statusColor = Colors.error;
+    } else if (isAvailabilityLoading) {
+      statusText = 'Checking availability...';
+      statusColor = Colors.primary;
+    } else if (availabilityData?.available === false) {
+      statusText = 'Username is already taken';
+      statusColor = Colors.error;
+    } else if (availabilityData?.available === true) {
+      statusText = 'Username is available';
+      statusColor = Colors.secondary;
+    }
+  }
+
   const handleSaveBio = () => {
     updateProfileMutation.mutate(
-      { bio: bioText },
+      {
+        bio: bioText,
+        username: usernameInput !== username ? usernameInput : undefined
+      },
       {
         onSuccess: () => {
           setIsEditingBio(false);
-          showToast('Bio updated successfully!', 'success');
+          showToast('Profile updated successfully!', 'success');
         },
         onError: (err: any) => {
-          showToast(err.message || 'Failed to update bio', 'error');
+          showToast(err.message || 'Failed to update profile', 'error');
         },
       }
     );
@@ -180,29 +225,64 @@ export default function ProfileScreen() {
           <Text style={[Typography.mono, styles.handle]}>@{username}</Text>
 
           {/* Bio text */}
+          {/* Bio text / Profile Edit Form */}
           {isEditingBio ? (
-            <View style={styles.editBioWrapper}>
-              <TextInput
-                value={bioText}
-                onChangeText={setBioText}
-                maxLength={160}
-                autoFocus
-                multiline
-                style={[Typography.bodySm, styles.editBioInput]}
-                selectionColor={Colors.primary}
-                keyboardAppearance="dark"
-              />
+            <View style={styles.editProfileForm}>
+              {/* Username field */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>USERNAME</Text>
+                <View style={styles.usernameInputContainer}>
+                  <Text style={styles.atSymbol}>@</Text>
+                  <TextInput
+                    value={usernameInput}
+                    onChangeText={setUsernameInput}
+                    maxLength={50}
+                    style={[Typography.bodySm, styles.usernameTextInput]}
+                    selectionColor={Colors.primary}
+                    keyboardAppearance="dark"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+                {statusText !== '' && (
+                  <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+                )}
+              </View>
+
+              {/* Bio field */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>BIO</Text>
+                <TextInput
+                  value={bioText}
+                  onChangeText={setBioText}
+                  maxLength={160}
+                  multiline
+                  style={[Typography.bodySm, styles.editBioInput, { textAlign: 'left', borderColor: Colors.outlineVariant }]}
+                  selectionColor={Colors.primary}
+                  keyboardAppearance="dark"
+                />
+              </View>
+
               <View style={styles.editBioActions}>
                 <Pressable 
                   onPress={handleSaveBio} 
-                  disabled={updateProfileMutation.isPending} 
-                  style={[styles.saveBioBtn, updateProfileMutation.isPending && { opacity: 0.5 }]}
+                  disabled={isSaveDisabled} 
+                  style={[styles.saveBioBtn, isSaveDisabled && { opacity: 0.5 }]}
                 >
                   <Text style={styles.saveBioBtnText}>
                     {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
                   </Text>
                 </Pressable>
-                <Pressable onPress={() => setIsEditingBio(false)} style={styles.cancelBioBtn}>
+                <Pressable 
+                  onPress={() => {
+                    setIsEditingBio(false);
+                    if (profile) {
+                      setUsernameInput(profile.username);
+                      setBioText(profile.bio || '');
+                    }
+                  }} 
+                  style={styles.cancelBioBtn}
+                >
                   <Text style={styles.cancelBioBtnText}>Cancel</Text>
                 </Pressable>
               </View>
@@ -542,5 +622,47 @@ const styles = StyleSheet.create({
   rowLoader: {
     height: 100,
     justifyContent: 'center',
+  },
+  editProfileForm: {
+    width: '100%',
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  inputGroup: {
+    marginBottom: Spacing.sm,
+    width: '100%',
+  },
+  inputLabel: {
+    color: Colors.onSurfaceVariant,
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  usernameInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    paddingHorizontal: 12,
+  },
+  atSymbol: {
+    color: Colors.onSurfaceVariant,
+    fontSize: 14,
+    marginRight: 2,
+    fontFamily: 'monospace',
+  },
+  usernameTextInput: {
+    color: Colors.onSurface,
+    flex: 1,
+    paddingVertical: 8,
+    fontFamily: 'monospace',
+  },
+  statusText: {
+    fontSize: 10,
+    marginTop: 4,
   },
 });

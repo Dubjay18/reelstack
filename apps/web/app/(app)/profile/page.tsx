@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useUserLists, usePublicProfile, useListItems, useContentDetails, useUpdateProfile } from '@/lib/hooks/api'
+import { useUserLists, usePublicProfile, useListItems, useContentDetails, useUpdateProfile, useCheckUsernameAvailability } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import type { ListItem } from '@/types'
 
@@ -89,20 +89,65 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'films' | 'lists'>('films')
   const [isEditingBio, setIsEditingBio] = useState(false)
   const [bioText, setBioText] = useState('')
+  const [usernameInput, setUsernameInput] = useState('')
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const updateProfileMutation = useUpdateProfile()
 
+  // Debounce username
+  const [debouncedUsername, setDebouncedUsername] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedUsername(usernameInput)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [usernameInput])
+
+  const username = authUser?.username || ''
+
+  const isCheckingUsername = debouncedUsername !== '' && debouncedUsername !== username && debouncedUsername.trim().length >= 3
+  const { data: availabilityData, isLoading: isAvailabilityLoading } = useCheckUsernameAvailability(
+    isCheckingUsername ? debouncedUsername : ''
+  )
+
+  const isUsernameFormatValid = /^[a-zA-Z0-9_]{3,50}$/.test(usernameInput)
+  const isUsernameChanged = usernameInput !== username
+  const isUsernameAvailable = !isUsernameChanged || (isUsernameFormatValid && availabilityData?.available === true)
+
+  const isSaveDisabled = updateProfileMutation.isPending ||
+    (isUsernameChanged && (!isUsernameFormatValid || isAvailabilityLoading || availabilityData?.available === false))
+
+  let statusText = ''
+  let statusColor = 'text-zinc-500 font-mono text-[10px] mt-1'
+  if (isUsernameChanged) {
+    if (!isUsernameFormatValid) {
+      statusText = 'Invalid format (3-50 chars, alphanumeric & underscores only)'
+      statusColor = 'text-error font-mono text-[10px] mt-1'
+    } else if (isAvailabilityLoading) {
+      statusText = 'Checking availability...'
+      statusColor = 'text-primary font-mono text-[10px] mt-1 animate-pulse'
+    } else if (availabilityData?.available === false) {
+      statusText = 'Username is already taken'
+      statusColor = 'text-error font-mono text-[10px] mt-1'
+    } else if (availabilityData?.available === true) {
+      statusText = 'Username is available'
+      statusColor = 'text-secondary font-mono text-[10px] mt-1'
+    }
+  }
+
   const handleSaveBio = () => {
     updateProfileMutation.mutate(
-      { bio: bioText },
+      {
+        bio: bioText,
+        username: usernameInput !== username ? usernameInput : undefined
+      },
       {
         onSuccess: () => {
           setIsEditingBio(false)
-          showToast('Bio updated successfully!')
+          showToast('Profile updated successfully!')
         },
         onError: (err: any) => {
-          showToast(err.message || 'Failed to update bio')
+          showToast(err.message || 'Failed to update profile')
         },
       }
     )
@@ -115,16 +160,17 @@ export default function ProfilePage() {
     }
   }, [authUser, authLoading, router])
 
-  const username = authUser?.username || ''
-  
   const { data: profile, isLoading: profileLoading } = usePublicProfile(username)
   const { data: rawLists, isLoading: listsLoading } = useUserLists()
   const lists = rawLists ?? []
 
-  // Sync profile bio
+  // Sync profile bio and username
   useEffect(() => {
     if (profile?.bio) {
       setBioText(profile.bio)
+    }
+    if (profile?.username) {
+      setUsernameInput(profile.username)
     }
   }, [profile])
 
@@ -220,27 +266,53 @@ export default function ProfilePage() {
                 <h1 className="font-display-md text-display-md text-on-surface capitalize">{username}</h1>
                 <p className="font-mono text-mono text-primary mb-xs">@{username}</p>
                 
-                {/* Bio */}
+                {/* Bio / Profile Edit Form */}
                 {isEditingBio ? (
-                  <div className="flex flex-col gap-xs mt-xs">
-                    <textarea
-                      value={bioText}
-                      onChange={(e) => setBioText(e.target.value)}
-                      rows={2}
-                      maxLength={160}
-                      autoFocus
-                      className="bg-surface-container border border-primary rounded-lg p-xs font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary resize-none w-full"
-                    />
+                  <div className="flex flex-col gap-md mt-sm bg-surface-container/30 border border-outline-variant/30 rounded-xl p-md w-full max-w-md">
+                    <div className="flex flex-col gap-xs">
+                      <label className="font-caption text-caption text-on-surface-variant uppercase tracking-wider text-[10px]">Username</label>
+                      <div className="flex items-center bg-surface-container border border-outline-variant focus-within:border-primary rounded-lg px-sm">
+                        <span className="text-on-surface-variant font-mono text-[14px]">@</span>
+                        <input
+                          type="text"
+                          value={usernameInput}
+                          onChange={(e) => setUsernameInput(e.target.value)}
+                          maxLength={50}
+                          className="bg-transparent border-0 font-mono text-mono text-on-surface focus:outline-none w-full py-xs px-xs"
+                        />
+                      </div>
+                      {statusText !== '' && (
+                        <p className={statusColor}>{statusText}</p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-xs">
+                      <label className="font-caption text-caption text-on-surface-variant uppercase tracking-wider text-[10px]">Bio</label>
+                      <textarea
+                        value={bioText}
+                        onChange={(e) => setBioText(e.target.value)}
+                        rows={2}
+                        maxLength={160}
+                        className="bg-surface-container border border-outline-variant focus:border-primary rounded-lg p-xs font-body-sm text-body-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary resize-none w-full"
+                      />
+                    </div>
+
                     <div className="flex gap-xs">
                       <button
                         onClick={handleSaveBio}
-                        disabled={updateProfileMutation.isPending}
+                        disabled={isSaveDisabled}
                         className="bg-primary text-on-primary px-sm py-1 rounded text-body-sm font-semibold hover:bg-primary-fixed transition-colors text-xs disabled:opacity-50"
                       >
                         {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
                       </button>
                       <button
-                        onClick={() => setIsEditingBio(false)}
+                        onClick={() => {
+                          setIsEditingBio(false)
+                          if (profile) {
+                            setUsernameInput(profile.username)
+                            setBioText(profile.bio || '')
+                          }
+                        }}
                         className="text-on-surface-variant px-sm py-1 rounded text-body-sm hover:text-on-surface transition-colors text-xs"
                       >
                         Cancel

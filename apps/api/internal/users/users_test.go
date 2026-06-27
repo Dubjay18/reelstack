@@ -335,4 +335,50 @@ func TestUpdateProfile_Integration(t *testing.T) {
 	if resp4.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected status 400 for bad username format, got %d", resp4.StatusCode)
 	}
+
+	// Test 5: Check Username Availability - Taken
+	req5 := httptest.NewRequest("GET", "/api/v1/users/check-username?username=profileb", nil)
+	resp5, _ := app.Test(req5)
+	if resp5.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp5.StatusCode)
+	}
+	var res5 struct {
+		Available bool `json:"available"`
+	}
+	_ = json.NewDecoder(resp5.Body).Decode(&res5)
+	if res5.Available {
+		t.Error("expected 'profileb' username to be unavailable")
+	}
+
+	// Test 6: Check Username Availability - Available
+	req6 := httptest.NewRequest("GET", "/api/v1/users/check-username?username=profile_new_available", nil)
+	resp6, _ := app.Test(req6)
+	if resp6.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp6.StatusCode)
+	}
+	var res6 struct {
+		Available bool `json:"available"`
+	}
+	_ = json.NewDecoder(resp6.Body).Decode(&res6)
+	if !res6.Available {
+		t.Error("expected 'profile_new_available' username to be available")
+	}
+
+	// Test 7: Check Username Availability - Invalid Format
+	req7 := httptest.NewRequest("GET", "/api/v1/users/check-username?username=ab", nil)
+	resp7, _ := app.Test(req7)
+	if resp7.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200 for validation check, got %d", resp7.StatusCode)
+	}
+	var res7 struct {
+		Available bool   `json:"available"`
+		Error     string `json:"error"`
+	}
+	_ = json.NewDecoder(resp7.Body).Decode(&res7)
+	if res7.Available {
+		t.Error("expected invalid username format to be unavailable")
+	}
+	if res7.Error == "" {
+		t.Error("expected error message for invalid format")
+	}
 }

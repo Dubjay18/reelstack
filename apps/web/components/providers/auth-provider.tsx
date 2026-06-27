@@ -1,7 +1,7 @@
 // TASK-042 — Auth context + useAuth() hook
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getCurrentUser, clearToken, storeToken } from '@/lib/auth'
 import type { User } from '@/types'
 
@@ -14,7 +14,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: any }) {
   const [user, setUser] = useState<Pick<User, 'id' | 'username'> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 

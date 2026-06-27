@@ -13,6 +13,7 @@ func NewHandler(svc IUserService) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r fiber.Router, authMiddleware fiber.Handler) {
+	r.Get("/api/v1/users/check-username", h.CheckUsernameAvailability)
 	r.Get("/api/v1/users/:identifier", h.GetPublicProfile)
 	r.Put("/api/v1/users/profile", authMiddleware, h.UpdateProfile)
 }
@@ -84,5 +85,34 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 		"success": true,
 		"user":    updatedUser,
 		"token":   token,
+	})
+}
+
+func (h *Handler) CheckUsernameAvailability(c *fiber.Ctx) error {
+	username := c.Query("username")
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "username query parameter is required",
+		})
+	}
+
+	if !usernameRegex.MatchString(username) {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"available": false,
+			"error":     "invalid username format",
+		})
+	}
+
+	available, err := h.svc.CheckUsernameAvailability(c.UserContext(), username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   "failed to check username availability",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"available": available,
 	})
 }

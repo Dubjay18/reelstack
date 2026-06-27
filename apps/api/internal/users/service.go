@@ -28,6 +28,7 @@ type UpdateProfileInput struct {
 type IUserService interface {
 	GetPublicProfile(ctx context.Context, identifier string) (*PublicProfile, error)
 	UpdateProfile(ctx context.Context, userID string, input UpdateProfileInput) (*User, string, error)
+	CheckUsernameAvailability(ctx context.Context, username string) (bool, error)
 }
 
 type UserService struct {
@@ -182,4 +183,12 @@ func (s *UserService) generateToken(userID, username string) (string, error) {
 		"exp":      time.Now().Add(time.Hour * 72).Unix(),
 	})
 	return tk.SignedString([]byte(s.jwtSecret))
+}
+
+func (s *UserService) CheckUsernameAvailability(ctx context.Context, username string) (bool, error) {
+	existing, err := s.repo.GetUserByUsername(username)
+	if err != nil {
+		return false, err
+	}
+	return existing == nil, nil
 }
