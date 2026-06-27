@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
 	"github.com/Dubjay18/reelstack/api/internal/auth"
 	"github.com/Dubjay18/reelstack/api/internal/content"
 	"github.com/Dubjay18/reelstack/api/internal/embed"
+	"github.com/Dubjay18/reelstack/api/internal/follows"
 	"github.com/Dubjay18/reelstack/api/internal/lists"
+	"github.com/Dubjay18/reelstack/api/internal/notifications"
 	"github.com/Dubjay18/reelstack/api/internal/users"
 	"github.com/Dubjay18/reelstack/api/pkg/cache"
 	"github.com/Dubjay18/reelstack/api/pkg/config"
@@ -118,12 +121,24 @@ func main() {
 	usersHandler := users.NewHandler(usersSvc)
 	usersHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
+	// ── Wire: notifications ─────────────────────────────────────────────────
+	notificationsRepo := notifications.NewNotificationRepository(database)
+	notificationsSvc := notifications.NewNotificationService(notificationsRepo)
+	notificationsHandler := notifications.NewHandler(notificationsSvc)
+	notificationsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
+	// ── Wire: follows ───────────────────────────────────────────────────────
+	followsRepo := follows.NewFollowRepository(database)
+	followsSvc := follows.NewFollowService(followsRepo, notificationsSvc)
+	followsHandler := follows.NewHandler(followsSvc)
+	followsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
 	// ── Wire: embed ─────────────────────────────────────────────────────────
 	embedHandler := embed.NewHandler(userRepo, listsRepo)
 	embedHandler.RegisterRoutes(app)
 
 	// ── Wire: lists ──────────────────────────────────────────────────────────
-	listsSvc := lists.NewListService(listsRepo)
+	listsSvc := lists.NewListService(listsRepo, &followerFetcherAdapter{followsSvc: followsSvc}, notificationsSvc)
 	listsHandler := lists.NewHandler(listsSvc)
 	listsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
@@ -157,4 +172,20 @@ func errorHandler(c *fiber.Ctx, err error) error {
 		"error":   err.Error(),
 		"success": false,
 	})
+}
+
+type followerFetcherAdapter struct {
+	followsSvc follows.IFollowService
+}
+
+func (a *followerFetcherAdapter) GetFollowerIDs(ctx context.Context, userID string) ([]string, error) {
+	followers, err := a.followsSvc.GetFollowers(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, len(followers))
+	for i, f := range followers {
+		ids[i] = f.ID.String()
+	}
+	return ids, nil
 }

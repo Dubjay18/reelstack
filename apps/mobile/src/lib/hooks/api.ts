@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import type { User, List, ListItem, SearchResult, StreamingProvider, Movie, TVShow } from '@/types';
+import type { User, List, ListItem, SearchResult, StreamingProvider, Movie, TVShow, Notification } from '@/types';
 
 // Auth Input Types
 export interface LoginCredentials {
@@ -58,6 +58,8 @@ export function usePublicProfile(username: string) {
       bio: string | null;
       public_links: List[];
       item_count: number;
+      followers_count: number;
+      following_count: number;
     }>(`/api/v1/users/${username}`),
     enabled: !!username,
   });
@@ -237,5 +239,66 @@ export function useContentDetails(mediaType: string, tmdbId: number) {
     queryKey: ['content-details', mediaType, tmdbId],
     queryFn: () => api.get<Movie | TVShow>(`/api/v1/content/${mediaType}/${tmdbId}`),
     enabled: !!mediaType && !!tmdbId,
+  });
+}
+
+// 6. Follow Hooks
+export function useFollowUser(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<{ success: boolean }>(`/api/v1/users/${userId}/follow`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['follow-status', userId] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useUnfollowUser(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete<{ success: boolean }>(`/api/v1/users/${userId}/follow`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['follow-status', userId] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useFollowStatus(userId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['follow-status', userId],
+    queryFn: () => api.get<{ is_following: boolean }>(`/api/v1/users/${userId}/follow-status`),
+    enabled: !!userId && enabled,
+  });
+}
+
+// 7. Notification Hooks
+export function useNotifications(enabled = true) {
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => api.get<Notification[]>('/api/v1/notifications'),
+    refetchInterval: 30000, // Poll every 30s
+    enabled,
+  });
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (notifId: string) => api.put<{ success: boolean }>(`/api/v1/notifications/${notifId}/read`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.put<{ success: boolean }>('/api/v1/notifications/read-all'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 }

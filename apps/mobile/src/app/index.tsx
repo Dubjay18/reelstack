@@ -68,6 +68,10 @@ export default function LandingScreen() {
     transform: [{ translateY: float3.value }, { rotate: '-2deg' }],
   }));
 
+  if (user) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>

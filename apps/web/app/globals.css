@@ -1,6 +1,5 @@
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,600,400&f[]=jet-brains-mono@400&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,600,500,400&f[]=jet-brains-mono@700,500,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,12 +11,24 @@
     --foreground: 250 250 250;  /* zinc-50  */
   }
 
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   * {
     border-color: theme('colors.zinc.800');
   }
 
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+  }
+
   ::selection {
-    background: rgba(20, 184, 166, 0.3);
+    background: rgba(16, 185, 129, 0.2); /* Emerald 500 selection */
+    color: #34d399; /* Emerald 400 selection text */
   }
 
   ::-webkit-scrollbar {
@@ -28,8 +39,12 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: theme('colors.zinc.700');
+    background: theme('colors.zinc.800');
     border-radius: 99px;
+    border: 1px solid theme('colors.zinc.900');
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.zinc.700');
   }
 }
 
@@ -37,14 +52,33 @@
   .poster-aspect {
     aspect-ratio: 2 / 3;
   }
+  
   .fade-right {
     mask-image: linear-gradient(to right, black 80%, transparent 100%);
   }
+
+  /* Liquid Glass Panel with inner border refraction and soft drop shadow */
   .glass-panel {
-    background: rgba(32, 31, 34, 0.7);
+    background: rgba(9, 9, 11, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.5),
+      0 20px 40px -15px rgba(0, 0, 0, 0.7);
+  }
+
+  .glass-card {
+    background: rgba(20, 20, 23, 0.5);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 8px 32px -8px rgba(0, 0, 0, 0.5);
   }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -52,4 +86,23 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Text Mask Reveal animation */
+  .text-mask-reveal {
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    mask-size: 100% 200%;
+    mask-position: 0 0;
+    transition: mask-position 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .text-mask-reveal:hover {
+    mask-position: 0 -100%;
+  }
+
+  /* Shimmer animation keyframe */
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
+

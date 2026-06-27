@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, RefreshControl, Pressable } from 'r
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
-import { useTrendingContent, useUserLists } from '@/lib/hooks/api';
+import { useTrendingContent, useUserLists, useNotifications } from '@/lib/hooks/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
 import { HorizontalFilmRail } from '@/components/ui/HorizontalFilmRail';
@@ -30,6 +30,9 @@ export default function HomeScreen() {
     isRefetching: isListsRefetching,
     refetch: refetchLists 
   } = useUserLists();
+
+  const { data: notifications } = useNotifications(!!user);
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
   const isRefreshing = isTrendingRefetching || isListsRefetching;
 
@@ -59,12 +62,25 @@ export default function HomeScreen() {
           <Text style={[Typography.caption, styles.welcome]}>Welcome back,</Text>
           <Text style={[Typography.displayMd, styles.username]}>@{user?.username || 'user'}</Text>
         </View>
-        <Pressable 
-          onPress={() => router.push('/(tabs)/profile')} 
-          style={styles.avatarButton}
-        >
-          <MaterialIcons name="account-circle" size={32} color={Colors.primary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable 
+            onPress={() => router.push('/notifications')} 
+            style={styles.bellButton}
+          >
+            <MaterialIcons name="notifications" size={26} color={Colors.onSurfaceVariant} />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
+              </View>
+            )}
+          </Pressable>
+          <Pressable 
+            onPress={() => router.push('/(tabs)/profile')} 
+            style={styles.avatarButton}
+          >
+            <MaterialIcons name="account-circle" size={32} color={Colors.primary} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Search trigger box */}
@@ -161,8 +177,34 @@ const styles = StyleSheet.create({
     fontFamily: 'HankenGrotesk_700Bold',
     fontSize: 26,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bellButton: {
+    padding: 6,
+    marginRight: 8,
+    position: 'relative',
+  },
   avatarButton: {
     padding: 4,
+  },
+  badge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: Colors.primary,
+    borderRadius: 7,
+    height: 14,
+    minWidth: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  badgeText: {
+    color: Colors.background,
+    fontSize: 8,
+    fontWeight: '800',
   },
   searchShell: {
     flexDirection: 'row',

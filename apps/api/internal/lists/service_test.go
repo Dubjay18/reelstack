@@ -44,7 +44,7 @@ func TestListService_AccessControl(t *testing.T) {
 	}
 
 	repo := NewListRepository(database)
-	svc := NewListService(repo)
+	svc := NewListService(repo, nil, nil)
 	ctx := context.Background()
 
 	// 1. Create a public list for User A

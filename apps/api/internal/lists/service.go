@@ -36,6 +36,14 @@ func GenerateSlug(title string) string {
 	return result
 }
 
+type IFollowerFetcher interface {
+	GetFollowerIDs(ctx context.Context, userID string) ([]string, error)
+}
+
+type INotificationSender interface {
+	CreateNotification(ctx context.Context, userID, actorID, notifType string, entityID *string) error
+}
+
 type IListService interface {
 	// List operations
 	CreateList(ctx context.Context, list *List) error
@@ -52,11 +60,17 @@ type IListService interface {
 }
 
 type ListService struct {
-	repo IListRepository
+	repo            IListRepository
+	followerFetcher IFollowerFetcher
+	notifSender     INotificationSender
 }
 
-func NewListService(repo IListRepository) *ListService {
-	return &ListService{repo: repo}
+func NewListService(repo IListRepository, followerFetcher IFollowerFetcher, notifSender INotificationSender) *ListService {
+	return &ListService{
+		repo:            repo,
+		followerFetcher: followerFetcher,
+		notifSender:     notifSender,
+	}
 }
 
 func (s *ListService) CreateList(ctx context.Context, list *List) error {
@@ -64,7 +78,22 @@ func (s *ListService) CreateList(ctx context.Context, list *List) error {
 		list.ID = uuid.NewString()
 	}
 	list.Slug = GenerateSlug(list.Title)
-	return s.repo.CreateList(ctx, list)
+	err := s.repo.CreateList(ctx, list)
+	if err != nil {
+		return err
+	}
+
+	// Notify followers if list is public
+	if list.IsPublic && s.followerFetcher != nil && s.notifSender != nil {
+		followerIDs, err := s.followerFetcher.GetFollowerIDs(ctx, list.UserID)
+		if err == nil {
+			for _, followerID := range followerIDs {
+				_ = s.notifSender.CreateNotification(ctx, followerID, list.UserID, "list_created", &list.ID)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *ListService) GetListsByUserID(ctx context.Context, userID string) ([]*List, error) {

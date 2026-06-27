@@ -24,12 +24,14 @@ type User struct {
 
 
 type PublicProfile struct {
-	ID        uuid.UUID `json:"id"`
-	Username  string    `json:"username"`
-	AvatarURL *string   `json:"avatar_url,omitempty"`
-	Bio       *string   `json:"bio,omitempty"`
-	PublicLinks []*lists.List `json:"public_links,omitempty"`
-	ItemCount   int       `json:"item_count,omitempty"`
+	ID             uuid.UUID `json:"id"`
+	Username       string    `json:"username"`
+	AvatarURL      *string   `json:"avatar_url,omitempty"`
+	Bio            *string   `json:"bio,omitempty"`
+	PublicLinks    []*lists.List `json:"public_links,omitempty"`
+	ItemCount      int       `json:"item_count,omitempty"`
+	FollowersCount int       `json:"followers_count"`
+	FollowingCount int       `json:"following_count"`
 }
 
 func (u *User) ToPublicProfile() PublicProfile {

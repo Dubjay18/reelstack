@@ -43,6 +43,10 @@ func (m *mockUserRepo) GetUserByGoogleID(googleID string) (*users.User, error) {
 	return m.getByGoogleIDFn(googleID)
 }
 func (m *mockUserRepo) UpsertGoogleUser(u *users.User) error { return m.upsertGoogleFn(u) }
+func (m *mockUserRepo) UpdateUser(u *users.User) error { return nil }
+func (m *mockUserRepo) GetFollowCounts(userID string) (followers int, following int, err error) {
+	return 0, 0, nil
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

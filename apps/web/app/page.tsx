@@ -1,143 +1,128 @@
+"use client"
+
 import Link from 'next/link'
-import Image from 'next/image'
+import { motion } from 'framer-motion'
+import { FloatingNav, Magnetic } from '@/components/ui/floating-nav'
+import { HeroGallery } from '@/components/ui/hero-gallery'
+import { BentoShowcase } from '@/components/ui/bento-showcase'
+import * as Icons from '@phosphor-icons/react'
+
+const ArrowRight = Icons.ArrowRight as any
+const Compass = Icons.Compass as any
+const FilmStrip = Icons.FilmStrip as any
 
 export default function LandingPage() {
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col font-sans selection:bg-primary/30 selection:text-primary">
-      {/* Main Asymmetric Layout */}
-      <main className="flex-grow flex flex-col lg:flex-row relative z-10 overflow-hidden">
-        {/* Ambient Glow behind collage */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+    <div className="bg-[#09090b] text-zinc-100 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300 relative overflow-x-hidden">
+      {/* Floating Header */}
+      <FloatingNav />
+
+      {/* Hero Section */}
+      <main className="flex-grow flex flex-col relative z-10">
         
-        {/* Left Column: Copy & Actions */}
-        <section className="flex-1 flex flex-col justify-center px-lg py-xl lg:pl-[10%] lg:pr-xl z-20">
-          <div className="max-w-xl">
-            <h1 className="font-display-xl-mobile text-display-xl-mobile lg:font-display-xl lg:text-display-xl text-on-background mb-lg">
-              The watchlist that <span className="text-primary">speaks for you.</span>
+        {/* Asymmetric Hero: Content and Assets */}
+        <section className="w-full max-w-7xl mx-auto px-6 md:px-8 min-h-[100dvh] flex flex-col lg:flex-row items-center justify-between pt-28 lg:pt-0 gap-12 lg:gap-8">
+          
+          {/* Left Column: Typographic Lockup & Action CTAs */}
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: "spring", stiffness: 80, damping: 15, delay: 0.2 }}
+            className="flex-1 flex flex-col justify-center text-left max-w-2xl lg:pr-8"
+          >
+            {/* Visual indicator tag */}
+            <div className="inline-flex items-center gap-1.5 self-start mb-6 bg-zinc-900 border border-zinc-800 rounded-full px-3 py-1 text-xs text-zinc-400">
+              <FilmStrip className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Version 2.0 live</span>
+            </div>
+
+            <h1 className="font-sans font-extrabold text-4xl sm:text-5xl md:text-7xl tracking-tighter leading-[0.95] text-zinc-50 mb-6">
+              The watchlist <br />
+              that <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 font-black">speaks for you.</span>
             </h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant mb-xl max-w-md">
+
+            <p className="font-sans text-base sm:text-lg text-zinc-400 leading-relaxed max-w-[55ch] mb-8">
               Reelstack turns what you watch into a public taste profile. Curate collections, discover critically acclaimed cinema, and construct your digital film gallery.
             </p>
-            <div className="flex flex-col sm:flex-row gap-md items-start sm:items-center">
-              <Link 
-                href="/register" 
-                className="bg-primary text-on-primary px-lg py-sm rounded-md font-heading text-heading transition-all duration-200 hover:bg-primary-fixed hover:shadow-[0_0_15px_rgba(79,219,200,0.3)] w-full sm:w-auto text-center"
-              >
-                Get started free
-              </Link>
+
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+              <Magnetic>
+                <Link 
+                  href="/register" 
+                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold px-8 py-3 rounded-full text-base shadow-[0_4px_25px_-4px_rgba(16,185,129,0.5)] transition-all duration-300 active:scale-[0.97]"
+                >
+                  <span>Get started free</span>
+                  <ArrowRight weight="bold" className="w-4 h-4" />
+                </Link>
+              </Magnetic>
+
               <Link 
                 href="/search" 
-                className="bg-transparent border border-outline-variant text-on-background px-lg py-sm rounded-md font-heading text-heading transition-all duration-200 hover:border-primary/50 hover:text-primary hover:bg-primary/5 w-full sm:w-auto text-center"
+                className="inline-flex items-center justify-center gap-2 bg-transparent border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900/50 px-8 py-3 rounded-full text-base transition-all duration-300 active:scale-[0.97]"
               >
-                Browse a sample
+                <Compass className="w-5 h-5 opacity-75" />
+                <span>Browse sample</span>
               </Link>
             </div>
-          </div>
+
+            {/* Micro details */}
+            <div className="mt-12 flex gap-8 border-t border-zinc-900 pt-6">
+              <div>
+                <span className="block font-mono text-xs text-zinc-600">FILM BASE</span>
+                <span className="font-sans font-bold text-zinc-300 text-sm">48.2k titles</span>
+              </div>
+              <div className="w-px bg-zinc-900" />
+              <div>
+                <span className="block font-mono text-xs text-zinc-600">CURATORS</span>
+                <span className="font-sans font-bold text-zinc-300 text-sm">12.5k active</span>
+              </div>
+              <div className="w-px bg-zinc-900" />
+              <div>
+                <span className="block font-mono text-xs text-zinc-600">INTEGRATION</span>
+                <span className="font-sans font-bold text-emerald-400/90 text-sm">100% manual feed</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right Column: Parallax float visual gallery */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 80, damping: 15, delay: 0.3 }}
+            className="flex-1 w-full relative min-h-[480px] lg:min-h-screen z-10"
+          >
+            <HeroGallery />
+          </motion.div>
+
         </section>
 
-        {/* Right Column: Visual Collage */}
-        <section className="flex-1 relative min-h-[500px] lg:min-h-screen flex items-center justify-center p-lg lg:p-0 z-10 overflow-hidden [perspective:1000px]">
-          <div className="relative w-full h-full max-w-[600px] max-h-[800px] min-h-[500px]">
-            
-            {/* Background Poster (Blurred/Faded) */}
-            <div className="absolute top-[10%] right-[10%] w-40 md:w-56 poster-aspect rounded-xl overflow-hidden border border-surface-container opacity-40 blur-[2px] transform rotate-6 z-0">
-              <Image
-                src="/scifi_monolith.png"
-                alt="A vintage 1970s science fiction film poster aesthetic. Grainy texture, deep void blacks, and a single piercing beam of harsh white light hitting a brutalist monolithic structure."
-                fill
-                sizes="(max-width: 768px) 160px, 224px"
-                className="object-cover object-center"
-                priority
-              />
-            </div>
+        {/* Separator Line */}
+        <div className="w-full max-w-7xl mx-auto px-6 md:px-8">
+          <div className="w-full h-px bg-zinc-900" />
+        </div>
 
-            {/* Mid-ground Poster Left */}
-            <div className="absolute top-[25%] left-[5%] md:left-[15%] w-48 md:w-64 poster-aspect rounded-xl overflow-hidden border border-outline-variant shadow-[0_20px_40px_rgba(0,0,0,0.8)] transform -rotate-3 transition-transform duration-500 hover:rotate-0 hover:z-30 z-10">
-              <Image
-                src="/thriller_poster.png"
-                alt="Cinematic still of a tense psychological thriller."
-                fill
-                sizes="(max-width: 768px) 192px, 256px"
-                className="object-cover object-center"
-                priority
-              />
-              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-              <div className="absolute bottom-md left-md right-md">
-                <span className="font-body-sm text-body-sm text-on-background line-clamp-2 leading-tight">Nocturnal Animals</span>
-              </div>
-            </div>
-
-            {/* Foreground Poster Right */}
-            <div className="absolute bottom-[20%] right-[5%] md:right-[20%] w-52 md:w-72 poster-aspect rounded-xl overflow-hidden border border-outline-variant shadow-[0_30px_50px_rgba(0,0,0,0.9)] transform rotate-2 transition-transform duration-500 hover:-rotate-1 hover:z-30 z-20">
-              <Image
-                src="/desert_dusk.png"
-                alt="A sweeping, epic wide shot of a desert landscape at dusk."
-                fill
-                sizes="(max-width: 768px) 208px, 288px"
-                className="object-cover object-center"
-                priority
-              />
-              <div className="absolute top-sm right-sm flex gap-xs">
-                {/* Watched Indicator */}
-                <div className="w-2 h-2 rounded-full bg-secondary shadow-[0_0_5px_rgba(74,225,118,0.5)]"></div>
-              </div>
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col justify-end p-md">
-                <span className="font-body-sm text-body-sm text-on-background line-clamp-2 leading-tight mb-xs">Dune: Part Two</span>
-                <div className="flex gap-sm">
-                  <span className="inline-flex items-center justify-center font-mono text-[10px] uppercase text-surface px-2 py-0.5 rounded-full bg-primary font-bold">MUBI</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Floating Sample List Card Overlay */}
-            <div className="absolute bottom-[10%] left-[10%] md:left-[5%] glass-panel border border-outline-variant rounded-xl p-md shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] z-40 flex items-center gap-md w-[280px] sm:w-[320px] transform hover:-translate-y-1 transition-transform duration-300">
-              {/* Poster Strip Left */}
-              <div className="flex -space-x-4 relative shrink-0">
-                <div className="w-10 h-16 poster-aspect rounded-sm overflow-hidden border border-surface-container relative z-10 shadow-md">
-                  <Image
-                    src="/bokeh_neon.png"
-                    alt="Late Night Arthouse poster 1"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="w-10 h-16 poster-aspect rounded-sm overflow-hidden border border-surface-container relative z-20 shadow-md">
-                  <Image
-                    src="/film_grain.png"
-                    alt="Late Night Arthouse poster 2"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="w-10 h-16 poster-aspect rounded-sm overflow-hidden border border-surface-container relative z-30 shadow-md">
-                  <Image
-                    src="/minimal_white.png"
-                    alt="Late Night Arthouse poster 3"
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              {/* Metadata Right */}
-              <div className="flex flex-col min-w-0">
-                <h3 className="font-heading text-heading text-on-background leading-tight truncate">Late Night Arthouse</h3>
-                <p className="font-mono text-mono text-on-surface-variant mt-1 opacity-80 truncate">12 films • @director</p>
-              </div>
-              <span className="material-symbols-outlined text-on-surface-variant ml-auto text-[18px] opacity-50 shrink-0">arrow_forward</span>
-            </div>
-
-          </div>
+        {/* Feature Bento Grid Section */}
+        <section className="w-full py-20 bg-gradient-to-b from-[#09090b] to-[#0c0c0e]">
+          <BentoShowcase />
         </section>
+
       </main>
 
       {/* Footer Strip */}
-      <footer className="w-full py-md px-lg lg:px-[10%] flex justify-between items-center border-t border-outline-variant/30 z-20 bg-background/90 backdrop-blur-md shrink-0">
-        <div className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</div>
-        <div className="font-mono text-mono text-on-surface-variant tracking-wide uppercase text-[11px] opacity-70">
-          No ads. No algorithms.
+      <footer className="w-full py-8 px-6 md:px-8 border-t border-zinc-900 z-20 bg-[#0c0c0e]/95 backdrop-blur-md shrink-0">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-sans font-extrabold text-lg tracking-tighter text-emerald-400">Reelstack</span>
+            <span className="text-[10px] font-mono text-zinc-600 mt-0.5">© 2026</span>
+          </div>
+          <div className="font-mono text-zinc-500 tracking-wider uppercase text-[10px] opacity-70">
+            No ads. No algorithms. Pure curation.
+          </div>
+          <div className="flex gap-6 text-xs text-zinc-500 font-sans">
+            <Link href="/privacy" className="hover:text-zinc-300 transition-colors duration-200">Privacy</Link>
+            <Link href="/terms" className="hover:text-zinc-300 transition-colors duration-200">Terms</Link>
+            <Link href="https://github.com" className="hover:text-zinc-300 transition-colors duration-200">Open source</Link>
+          </div>
         </div>
       </footer>
     </div>

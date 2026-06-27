@@ -1,5 +1,6 @@
 import { ListCard } from '../../components/list-card'
 import { ShareButton } from '../../components/share-button'
+import { FollowButton } from '../../components/follow-button'
 import Link from 'next/link'
 
 interface PageProps {
@@ -15,6 +16,8 @@ interface PublicProfile {
   bio?: string | null
   public_links?: any[]
   item_count?: number
+  followers_count?: number
+  following_count?: number
 }
 
 async function getProfile(username: string): Promise<PublicProfile | null> {
@@ -109,13 +112,13 @@ export default async function Page({ params }: PageProps) {
               <span className="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
               <span>{totalWatched} {totalWatched === 1 ? 'film watched' : 'films watched'}</span>
               <span className="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
-              <span>0 followers</span>
+              <span>{profile.followers_count ?? 0} followers</span>
+              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+              <span>{profile.following_count ?? 0} following</span>
             </div>
           </div>
           <div className="flex items-center gap-md mt-md md:mt-0">
-            <button className="px-md py-xs bg-transparent text-primary-container font-body-sm text-body-sm hover:underline transition-all active:scale-95 duration-150">
-              Follow
-            </button>
+            <FollowButton targetUserId={profile.id} targetUsername={profile.username} />
             <ShareButton />
           </div>
         </div>

@@ -15,6 +15,7 @@ type IUserRepository interface {
 	GetUserByGoogleID(googleID string) (*User, error)
 	UpsertGoogleUser(user *User) error
 	UpdateUser(user *User) error
+	GetFollowCounts(userID string) (followers int, following int, err error)
 }
 
 // UserRepository is the sqlx-backed implementation.
@@ -139,4 +140,21 @@ func (r *UserRepository) UpdateUser(user *User) error {
 		user,
 	)
 	return err
+}
+
+// GetFollowCounts returns the followers and following count for a user.
+func (r *UserRepository) GetFollowCounts(userID string) (followers int, following int, err error) {
+	queryFollowers := `SELECT COUNT(*) FROM follows WHERE following_id = $1`
+	err = r.db.Get(&followers, queryFollowers, userID)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	queryFollowing := `SELECT COUNT(*) FROM follows WHERE follower_id = $1`
+	err = r.db.Get(&following, queryFollowing, userID)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return followers, following, nil
 }

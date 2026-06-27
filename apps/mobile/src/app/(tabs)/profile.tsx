@@ -302,8 +302,8 @@ export default function ProfileScreen() {
               { value: totalLists, label: 'Lists' },
               { value: totalFilms, label: 'Films' },
               { value: totalWatched, label: 'Watched' },
-              { value: 0, label: 'Followers' },
-              { value: 0, label: 'Following' },
+              { value: profile?.followers_count || 0, label: 'Followers' },
+              { value: profile?.following_count || 0, label: 'Following' },
             ].map((stat) => (
               <View key={stat.label} style={styles.statCell}>
                 <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>

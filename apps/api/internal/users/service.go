@@ -80,13 +80,22 @@ func (s *UserService) GetPublicProfile(ctx context.Context, identifier string) (
 		return nil, err
 	}
 
+	// Fetch follow counts
+	followersCount, followingCount, err := s.repo.GetFollowCounts(user.ID.String())
+	if err != nil {
+		followersCount = 0
+		followingCount = 0
+	}
+
 	// Map and construct public profile (exclude email)
 	profile := &PublicProfile{
-		ID:          user.ID,
-		Username:    user.Username,
-		AvatarURL:   user.AvatarURL,
-		Bio:         user.Bio,
-		PublicLinks: publicLists,
+		ID:             user.ID,
+		Username:       user.Username,
+		AvatarURL:      user.AvatarURL,
+		Bio:            user.Bio,
+		PublicLinks:    publicLists,
+		FollowersCount: followersCount,
+		FollowingCount: followingCount,
 	}
 
 	// Sum item count across all public lists

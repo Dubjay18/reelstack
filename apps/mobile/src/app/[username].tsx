@@ -6,7 +6,8 @@ import * as Sharing from 'expo-sharing';
 import { Colors, Radius, Typography, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
-import { usePublicProfile } from '@/lib/hooks/api';
+import { usePublicProfile, useFollowUser, useUnfollowUser, useFollowStatus } from '@/lib/hooks/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -97,6 +98,36 @@ export default function PublicProfileScreen() {
   const [activeTab, setActiveTab] = useState<'films' | 'lists'>('films');
 
   const { data: profile, isLoading, isError } = usePublicProfile(username || '');
+  const { user } = useAuth();
+
+  const isSelf = user?.username === username;
+  const targetUserId = profile?.id || '';
+
+  const { data: followStatus, isLoading: isFollowStatusLoading } = useFollowStatus(
+    targetUserId,
+    !!user && !isSelf && !!targetUserId
+  );
+
+  const followMutation = useFollowUser(targetUserId);
+  const unfollowMutation = useUnfollowUser(targetUserId);
+
+  const isFollowing = followStatus?.is_following ?? false;
+  const isPending = followMutation.isPending || unfollowMutation.isPending;
+
+  const handleFollowToggle = () => {
+    if (isPending) return;
+    if (isFollowing) {
+      unfollowMutation.mutate(undefined, {
+        onSuccess: () => showToast(`Unfollowed @${username}`, 'success'),
+        onError: () => showToast('Failed to unfollow', 'error'),
+      });
+    } else {
+      followMutation.mutate(undefined, {
+        onSuccess: () => showToast(`Following @${username}`, 'success'),
+        onError: () => showToast('Failed to follow', 'error'),
+      });
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -181,8 +212,8 @@ export default function PublicProfileScreen() {
               { value: totalLists, label: 'Lists' },
               { value: totalFilms, label: 'Films' },
               { value: totalWatched, label: 'Watched' },
-              { value: 0, label: 'Followers' },
-              { value: 0, label: 'Following' },
+              { value: profile.followers_count || 0, label: 'Followers' },
+              { value: profile.following_count || 0, label: 'Following' },
             ].map((stat) => (
               <View key={stat.label} style={styles.statCell}>
                 <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>
@@ -190,6 +221,36 @@ export default function PublicProfileScreen() {
               </View>
             ))}
           </View>
+
+          {/* Action Row */}
+          {!isSelf && user && (
+            <View style={styles.actionRow}>
+              <Pressable
+                onPress={handleFollowToggle}
+                disabled={isFollowStatusLoading || isPending}
+                style={[
+                  styles.followBtn,
+                  isFollowing ? styles.followingBtnActive : styles.followBtnActive,
+                  isPending && { opacity: 0.7 }
+                ]}
+              >
+                <MaterialIcons 
+                  name={isFollowing ? "person-remove" : "person-add"} 
+                  size={16} 
+                  color={isFollowing ? Colors.onSurfaceVariant : Colors.onPrimary} 
+                  style={styles.shareIcon} 
+                />
+                <Text 
+                  style={[
+                    Typography.bodySm, 
+                    isFollowing ? styles.followingBtnText : styles.followBtnText
+                  ]}
+                >
+                  {isPending ? 'Saving...' : isFollowing ? 'Unfollow' : 'Follow'}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         {/* Tab switcher */}
@@ -268,6 +329,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.background,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    marginTop: Spacing.sm,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  followBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    justifyContent: 'center',
+    width: '60%',
+  },
+  followBtnActive: {
+    backgroundColor: Colors.primary,
+  },
+  followBtnText: {
+    color: Colors.onPrimary,
+    fontWeight: '700',
+  },
+  followingBtnActive: {
+    backgroundColor: Colors.surfaceContainer,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+  },
+  followingBtnText: {
+    color: Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  shareIcon: {
+    marginRight: 6,
   },
   errorText: {
     color: Colors.error,

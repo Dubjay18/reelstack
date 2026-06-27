@@ -37,8 +37,18 @@ const queryClient = new QueryClient({
   },
 });
 
-function RootNavigation() {
+function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; fontError: any }) {
   const { isLoading } = useAuth();
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && !isLoading) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError, isLoading]);
+
+  if (isLoading || (!fontsLoaded && !fontError)) {
+    return null;
+  }
 
   return (
     <Stack
@@ -51,6 +61,7 @@ function RootNavigation() {
       <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="[username]" />
+      <Stack.Screen name="notifications" />
     </Stack>
   );
 }
@@ -65,16 +76,6 @@ export default function RootLayout() {
     JetBrainsMono_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
@@ -83,7 +84,7 @@ export default function RootLayout() {
             <ToastProvider>
               <MovieDetailProvider>
                 <StatusBar style="light" />
-                <RootNavigation />
+                <RootNavigation fontsLoaded={fontsLoaded} fontError={fontError} />
               </MovieDetailProvider>
             </ToastProvider>
           </AuthProvider>

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useUserLists, useTrendingContent } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
+import { NotificationBell } from '@/components/notification-bell'
 
 export default function Page() {
   const { user, logout } = useAuth()
@@ -49,6 +50,13 @@ export default function Page() {
             <span className="material-symbols-outlined">person</span>
             Profile
           </Link>
+          <div className="flex items-center justify-between px-md py-2 hover:bg-surface-container transition-colors rounded-r-lg text-on-surface-variant hover:text-on-surface border-l-[3px] border-transparent font-heading text-heading">
+            <span className="flex items-center gap-sm">
+              <span className="material-symbols-outlined">notifications</span>
+              Alerts
+            </span>
+            <NotificationBell />
+          </div>
         </div>
 
         <div className="mt-auto px-sm flex flex-col gap-sm">
@@ -82,9 +90,15 @@ export default function Page() {
       {/* TopAppBar (Mobile) */}
       <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
         <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
-        <div className="flex gap-sm">
-          <Link href="/login" className="text-on-surface-variant font-body-sm text-body-sm flex items-center">Log in</Link>
-          <Link href="/register" className="text-primary font-body-sm text-body-sm font-semibold flex items-center">Sign up</Link>
+        <div className="flex items-center gap-sm">
+          {user ? (
+            <NotificationBell />
+          ) : (
+            <>
+              <Link href="/login" className="text-on-surface-variant font-body-sm text-body-sm flex items-center">Log in</Link>
+              <Link href="/register" className="text-primary font-body-sm text-body-sm font-semibold flex items-center">Sign up</Link>
+            </>
+          )}
         </div>
       </header>
 
