@@ -114,9 +114,9 @@ func main() {
 
 	// ── Wire: users ─────────────────────────────────────────────────────────
 	listsRepo := lists.NewListRepository(database)
-	usersSvc := users.NewUserService(userRepo, listsRepo, redisClient)
+	usersSvc := users.NewUserService(userRepo, listsRepo, redisClient, cfg.JWTSecret)
 	usersHandler := users.NewHandler(usersSvc)
-	usersHandler.RegisterRoutes(app)
+	usersHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
 	// ── Wire: embed ─────────────────────────────────────────────────────────
 	embedHandler := embed.NewHandler(userRepo, listsRepo)

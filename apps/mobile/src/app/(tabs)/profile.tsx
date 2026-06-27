@@ -7,7 +7,7 @@ import { Colors, Radius, Typography, Shadow, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
-import { useUserLists, usePublicProfile } from '@/lib/hooks/api';
+import { useUserLists, usePublicProfile, useUpdateProfile } from '@/lib/hooks/api';
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -127,9 +127,21 @@ export default function ProfileScreen() {
     }
   };
 
+  const updateProfileMutation = useUpdateProfile();
+
   const handleSaveBio = () => {
-    setIsEditingBio(false);
-    showToast('Bio updated! (Simulated)', 'success');
+    updateProfileMutation.mutate(
+      { bio: bioText },
+      {
+        onSuccess: () => {
+          setIsEditingBio(false);
+          showToast('Bio updated successfully!', 'success');
+        },
+        onError: (err: any) => {
+          showToast(err.message || 'Failed to update bio', 'error');
+        },
+      }
+    );
   };
 
   if (isProfileLoading || isListsLoading) {
@@ -181,8 +193,14 @@ export default function ProfileScreen() {
                 keyboardAppearance="dark"
               />
               <View style={styles.editBioActions}>
-                <Pressable onPress={handleSaveBio} style={styles.saveBioBtn}>
-                  <Text style={styles.saveBioBtnText}>Save</Text>
+                <Pressable 
+                  onPress={handleSaveBio} 
+                  disabled={updateProfileMutation.isPending} 
+                  style={[styles.saveBioBtn, updateProfileMutation.isPending && { opacity: 0.5 }]}
+                >
+                  <Text style={styles.saveBioBtnText}>
+                    {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
+                  </Text>
                 </Pressable>
                 <Pressable onPress={() => setIsEditingBio(false)} style={styles.cancelBioBtn}>
                   <Text style={styles.cancelBioBtnText}>Cancel</Text>

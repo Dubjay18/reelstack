@@ -14,6 +14,7 @@ type IUserRepository interface {
 	GetUserByUsername(username string) (*User, error)
 	GetUserByGoogleID(googleID string) (*User, error)
 	UpsertGoogleUser(user *User) error
+	UpdateUser(user *User) error
 }
 
 // UserRepository is the sqlx-backed implementation.
@@ -121,6 +122,20 @@ func (r *UserRepository) UpsertGoogleUser(user *User) error {
 			email      = EXCLUDED.email,
 			avatar_url = EXCLUDED.avatar_url,
 			updated_at = NOW()`,
+		user,
+	)
+	return err
+}
+
+// UpdateUser updates username, avatar_url, bio, and updated_at for an existing user record.
+func (r *UserRepository) UpdateUser(user *User) error {
+	_, err := r.db.NamedExec(`
+		UPDATE users
+		SET username = :username,
+		    avatar_url = :avatar_url,
+		    bio = :bio,
+		    updated_at = NOW()
+		WHERE id = :id`,
 		user,
 	)
 	return err

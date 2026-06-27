@@ -2,12 +2,13 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { getCurrentUser, clearToken } from '@/lib/auth'
+import { getCurrentUser, clearToken, storeToken } from '@/lib/auth'
 import type { User } from '@/types'
 
 interface AuthContextValue {
   user: Pick<User, 'id' | 'username'> | null
   isLoading: boolean
+  login: (token: string) => void
   logout: () => void
 }
 
@@ -22,6 +23,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
+  const login = (newToken: string) => {
+    storeToken(newToken)
+    setUser(getCurrentUser())
+  }
+
   const logout = () => {
     clearToken()
     setUser(null)
@@ -29,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useUserLists, usePublicProfile, useListItems, useContentDetails } from '@/lib/hooks/api'
+import { useUserLists, usePublicProfile, useListItems, useContentDetails, useUpdateProfile } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import type { ListItem } from '@/types'
 
@@ -90,6 +90,23 @@ export default function ProfilePage() {
   const [isEditingBio, setIsEditingBio] = useState(false)
   const [bioText, setBioText] = useState('')
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const updateProfileMutation = useUpdateProfile()
+
+  const handleSaveBio = () => {
+    updateProfileMutation.mutate(
+      { bio: bioText },
+      {
+        onSuccess: () => {
+          setIsEditingBio(false)
+          showToast('Bio updated successfully!')
+        },
+        onError: (err: any) => {
+          showToast(err.message || 'Failed to update bio')
+        },
+      }
+    )
+  }
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -216,10 +233,11 @@ export default function ProfilePage() {
                     />
                     <div className="flex gap-xs">
                       <button
-                        onClick={() => { setIsEditingBio(false); showToast('Bio updated! (Simulated)') }}
-                        className="bg-primary text-on-primary px-sm py-1 rounded text-body-sm font-semibold hover:bg-primary-fixed transition-colors text-xs"
+                        onClick={handleSaveBio}
+                        disabled={updateProfileMutation.isPending}
+                        className="bg-primary text-on-primary px-sm py-1 rounded text-body-sm font-semibold hover:bg-primary-fixed transition-colors text-xs disabled:opacity-50"
                       >
-                        Save
+                        {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
                       </button>
                       <button
                         onClick={() => setIsEditingBio(false)}

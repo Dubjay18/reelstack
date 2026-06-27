@@ -63,6 +63,29 @@ export function usePublicProfile(username: string) {
   });
 }
 
+export interface UpdateProfileInput {
+  username?: string;
+  bio?: string;
+  avatar_url?: string;
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  const { login } = useAuth();
+  return useMutation({
+    mutationFn: async (body: UpdateProfileInput) => {
+      const data = await api.put<{ success: boolean; user: User; token: string }>('/api/v1/users/profile', body);
+      if (data.token) {
+        await login(data.token);
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
 // 3. Lists Hooks
 export function useUserLists() {
   return useQuery({

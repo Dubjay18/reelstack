@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
+import { useAuth } from '@/components/providers/auth-provider'
 import type { User, List, ListItem, SearchResult, StreamingProvider, Movie, TVShow } from '@/types'
 
 // Auth Input Types
@@ -60,6 +61,29 @@ export function usePublicProfile(username: string) {
       item_count: number
     }>(`/api/v1/users/${username}`),
     enabled: !!username,
+  })
+}
+
+export interface UpdateProfileInput {
+  username?: string
+  bio?: string
+  avatar_url?: string
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient()
+  const { login } = useAuth()
+  return useMutation({
+    mutationFn: async (body: UpdateProfileInput) => {
+      const data = await api.put<{ success: boolean; user: User; token: string }>('/api/v1/users/profile', body)
+      if (data.token) {
+        login(data.token)
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+    },
   })
 }
 
