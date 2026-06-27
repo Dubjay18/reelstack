@@ -43,10 +43,13 @@ axiosInstance.interceptors.response.use(
       const message = error.response.data?.error ?? error.message;
 
       if (status === 401) {
-        await clearToken();
-        // Redirect to auth stack root
-        router.replace('/(auth)/login');
-        return Promise.reject(new APIError(401, 'Session expired'));
+        const isAuthRoute = error.config?.url?.includes('/api/v1/auth/');
+        if (!isAuthRoute) {
+          await clearToken();
+          // Redirect to auth stack root
+          router.replace('/(auth)/login');
+          return Promise.reject(new APIError(401, 'Session expired'));
+        }
       }
 
       return Promise.reject(new APIError(status, message));

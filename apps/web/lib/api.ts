@@ -40,11 +40,14 @@ axiosInstance.interceptors.response.use(
       const message = error.response.data?.error ?? error.message
 
       if (status === 401) {
-        if (typeof window !== 'undefined') {
-          clearToken()
-          window.location.href = '/login'
+        const isAuthRoute = error.config?.url?.includes('/api/v1/auth/')
+        if (!isAuthRoute) {
+          if (typeof window !== 'undefined') {
+            clearToken()
+            window.location.href = '/login'
+          }
+          return Promise.reject(new APIError(401, 'Session expired'))
         }
-        return Promise.reject(new APIError(401, 'Session expired'))
       }
 
       return Promise.reject(new APIError(status, message))
