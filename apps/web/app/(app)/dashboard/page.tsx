@@ -14,78 +14,6 @@ export default function Page() {
   const trendingMovies = rawTrendingMovies ?? []
   return (
     <div className="bg-background text-on-background flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
-      {/* SideNavBar (Desktop) */}
-      <nav className="hidden md:flex flex-col bg-surface-dim border-r border-outline-variant w-[240px] h-full fixed left-0 top-0 py-lg z-50">
-        <div className="px-md mb-xl">
-          <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
-          <p className="font-caption text-caption text-on-surface-variant mt-1">Cinephile Gallery</p>
-        </div>
-        
-        <div className="flex-1 flex flex-col gap-xs px-sm">
-          <Link 
-            className="flex items-center gap-sm bg-surface-container-high text-primary border-l-[3px] border-primary px-md py-sm rounded-r-lg opacity-80 font-heading text-heading" 
-            href="/dashboard"
-          >
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>
-            Home
-          </Link>
-          <Link 
-            className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading" 
-            href="/search"
-          >
-            <span className="material-symbols-outlined">search</span>
-            Search
-          </Link>
-          <Link 
-            className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading" 
-            href="/lists"
-          >
-            <span className="material-symbols-outlined">format_list_bulleted</span>
-            My Lists
-          </Link>
-          <Link 
-            className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading" 
-            href="/profile"
-          >
-            <span className="material-symbols-outlined">person</span>
-            Profile
-          </Link>
-          <div className="flex items-center justify-between px-md py-2 hover:bg-surface-container transition-colors rounded-r-lg text-on-surface-variant hover:text-on-surface border-l-[3px] border-transparent font-heading text-heading">
-            <span className="flex items-center gap-sm">
-              <span className="material-symbols-outlined">notifications</span>
-              Alerts
-            </span>
-            <NotificationBell />
-          </div>
-        </div>
-
-        <div className="mt-auto px-sm flex flex-col gap-sm">
-          <button className="w-full text-left flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-lg font-heading text-heading">
-            <span className="material-symbols-outlined">settings</span>
-            Settings
-          </button>
-          <button 
-            onClick={logout}
-            className="w-full text-left flex items-center gap-sm text-on-surface-variant hover:text-error-container hover:bg-error-container/10 px-md py-sm transition-colors rounded-lg font-heading text-heading"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            Log out
-          </button>
-          <div className="px-md pt-sm border-t border-outline-variant">
-            <button 
-              onClick={() => {
-                if (user) {
-                  navigator.clipboard.writeText(`${window.location.origin}/${user.username}`)
-                  alert('Profile link copied to clipboard!')
-                }
-              }}
-              className="w-full py-2 px-4 bg-primary text-background font-body-sm text-body-sm font-semibold rounded-md shadow-[0_0_15px_rgba(79,219,200,0.15)] hover:bg-primary-fixed transition-colors"
-            >
-              Share my profile
-            </button>
-          </div>
-        </div>
-      </nav>
 
       {/* TopAppBar (Mobile) */}
       <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
@@ -234,26 +162,7 @@ export default function Page() {
 
         </div>
       </main>
-
-      {/* BottomNavBar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 w-full h-16 z-50 bg-surface-container-low/95 backdrop-blur-lg flex justify-around items-center px-sm pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.4)]">
-        <Link className="flex flex-col items-center justify-center text-primary transition-all duration-200 ease-in-out active:scale-95 w-16 h-full" href="/dashboard">
-          <span className="material-symbols-outlined mb-1" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>
-          <span className="font-caption text-[10px] font-semibold">Home</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all duration-200 ease-in-out active:scale-95 w-16 h-full" href="/search">
-          <span className="material-symbols-outlined mb-1">search</span>
-          <span className="font-caption text-[10px]">Search</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all duration-200 ease-in-out active:scale-95 w-16 h-full" href="/lists">
-          <span className="material-symbols-outlined mb-1">list</span>
-          <span className="font-caption text-[10px]">Lists</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all duration-200 ease-in-out active:scale-95 w-16 h-full" href="/profile">
-          <span className="material-symbols-outlined mb-1">person</span>
-          <span className="font-caption text-[10px]">Profile</span>
-        </Link>
-      </nav>
+  
     </div>
   )
 }

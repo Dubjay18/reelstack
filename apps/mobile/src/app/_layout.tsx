@@ -61,6 +61,7 @@ function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; font
       <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="[username]" />
+      <Stack.Screen name="auth/callback" options={{ gestureEnabled: false }} />
       <Stack.Screen name="notifications" />
     </Stack>
   );

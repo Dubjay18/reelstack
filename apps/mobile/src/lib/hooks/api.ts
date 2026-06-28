@@ -246,7 +246,7 @@ export function useContentDetails(mediaType: string, tmdbId: number) {
 export function useFollowUser(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => api.post<{ success: boolean }>(`/api/v1/users/${userId}/follow`),
+    mutationFn: () => api.post<{ success: boolean }>(`/api/v1/users/${userId}/follow`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['follow-status', userId] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -286,7 +286,7 @@ export function useNotifications(enabled = true) {
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (notifId: string) => api.put<{ success: boolean }>(`/api/v1/notifications/${notifId}/read`),
+    mutationFn: (notifId: string) => api.put<{ success: boolean }>(`/api/v1/notifications/${notifId}/read`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -296,7 +296,7 @@ export function useMarkNotificationRead() {
 export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => api.put<{ success: boolean }>('/api/v1/notifications/read-all'),
+    mutationFn: () => api.put<{ success: boolean }>('/api/v1/notifications/read-all', {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },

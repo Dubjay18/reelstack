@@ -2,6 +2,8 @@ import { ListCard } from '../../components/list-card'
 import { ShareButton } from '../../components/share-button'
 import { FollowButton } from '../../components/follow-button'
 import Link from 'next/link'
+import { NotificationBell } from '@/components/notification-bell'
+import { useAuth } from '@/components/providers/auth-provider'
 
 interface PageProps {
   params: {
@@ -71,18 +73,15 @@ export default async function Page({ params }: PageProps) {
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col font-sans selection:bg-primary/30 selection:text-primary pt-16">
       {/* TopAppBar */}
-      <header className="bg-background/80 backdrop-blur-md text-primary font-heading text-heading fixed top-0 left-0 w-full z-40 border-b border-outline-variant/30 flex justify-between items-center px-lg h-16">
-        <Link href="/" className="font-display-md text-display-md font-bold text-primary hover:opacity-90 transition-opacity">
-          Reelstack
-        </Link>
-        <div className="flex items-center gap-md">
-          <Link href="/register" className="px-md py-sm bg-primary-container text-background rounded-md text-body-sm font-semibold hover:opacity-90 transition-opacity">
-            Sign up
-          </Link>
-          <Link href="/login" className="px-md py-sm border border-outline-variant rounded-md text-body-sm font-semibold text-on-surface hover:bg-surface-container transition-colors">
-            Log in
-          </Link>
-        </div>
+    <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
+        <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
+        {/* <div className="flex items-center gap-sm">
+   
+   
+              <Link href="/login" className="text-on-surface-variant font-body-sm text-body-sm flex items-center">Log in</Link>
+              <Link href="/register" className="text-primary font-body-sm text-body-sm font-semibold flex items-center">Sign up</Link>
+       
+        </div> */}
       </header>
 
       {/* Main Content */}

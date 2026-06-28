@@ -19,7 +19,7 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length
+  const unreadCount = notifications?.filter((n) => !n.is_read).length
 
   // Close dropdown on click outside
   useEffect(() => {

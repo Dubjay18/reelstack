@@ -21,11 +21,12 @@ interface RegisterCredentials {
 // 1. Auth Hooks
 export function useLogin() {
   const queryClient = useQueryClient()
+  const { login } = useAuth()
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
       const data = await api.post<{ success: boolean; token: string }>('/api/v1/auth/login', credentials)
       if (data.token) {
-        storeToken(data.token)
+        login(data.token)
         // Reset query caches
         queryClient.clear()
       }
@@ -36,11 +37,12 @@ export function useLogin() {
 
 export function useRegister() {
   const queryClient = useQueryClient()
+  const { login } = useAuth()
   return useMutation({
     mutationFn: async (credentials: RegisterCredentials) => {
       const data = await api.post<{ success: boolean; token: string; user: User }>('/api/v1/auth/register', credentials)
       if (data.token) {
-        storeToken(data.token)
+        login(data.token)
         queryClient.clear()
       }
       return data

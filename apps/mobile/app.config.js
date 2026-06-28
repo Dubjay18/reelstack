@@ -16,7 +16,19 @@ module.exports = {
       adaptiveIcon: {
         backgroundColor: "#131315",
         foregroundImage: "./assets/images/android-icon-foreground.png"
-      }
+      },
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "reelstack"
+            }
+          ],
+          category: ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     plugins: [
       "expo-router",
@@ -36,7 +48,10 @@ module.exports = {
       reactCompiler: true
     },
     extra: {
-      apiUrl: process.env.API_URL || "https://reelstack-bv9f.onrender.com"
+      apiUrl: process.env.API_URL || "https://reelstack-bv9f.onrender.com",
+      eas: {
+        projectId: process.env.EAS_PROJECT_ID || "0cc8e82a-96df-48a0-9ee4-e3df1532c776"
+      }
     }
   }
 };
