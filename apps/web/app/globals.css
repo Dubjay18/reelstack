@@ -98,6 +98,20 @@
     mask-position: 0 -100%;
   }
 
+  /* Sidebar width CSS variable */
+  :root {
+    --sidebar-width: 240px;
+  }
+
+  /* Safe area padding for mobile bottom bars */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
   /* Shimmer animation keyframe */
   @keyframes shimmer {
     100% {

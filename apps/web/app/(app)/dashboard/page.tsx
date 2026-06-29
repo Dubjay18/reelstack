@@ -31,7 +31,7 @@ export default function Page() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full md:ml-[240px] pt-16 md:pt-0 pb-16 md:pb-0 h-screen overflow-y-auto">
+      <main className="flex-1 w-full md:ml-[--sidebar-width] pt-16 md:pt-0 pb-16 md:pb-0 h-screen overflow-y-auto">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl space-y-xl md:space-y-[48px]">
           
           {/* TRENDING Section */}

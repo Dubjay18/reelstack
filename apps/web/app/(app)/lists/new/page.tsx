@@ -127,38 +127,8 @@ export default function NewListPage() {
   }
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex antialiased">
-      {/* SideNavBar (Desktop) */}
-      <nav className="hidden md:flex flex-col bg-surface-dim border-r border-outline-variant w-[240px] h-full fixed left-0 top-0 py-lg z-50">
-        <div className="px-md mb-xl">
-          <Link href="/dashboard">
-            <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
-            <p className="font-caption text-caption text-on-surface-variant mt-1">Cinephile Gallery</p>
-          </Link>
-        </div>
-        <div className="flex-1 flex flex-col gap-xs px-sm">
-          <Link className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading" href="/dashboard">
-            <span className="material-symbols-outlined">home</span>Home
-          </Link>
-          <Link className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading" href="/search">
-            <span className="material-symbols-outlined">search</span>Search
-          </Link>
-          <Link className="flex items-center gap-sm bg-surface-container-high text-primary border-l-[3px] border-primary px-md py-sm rounded-r-lg opacity-80 font-heading text-heading" href="/lists">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>format_list_bulleted</span>My Lists
-          </Link>
-          <Link className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading" href="/profile">
-            <span className="material-symbols-outlined">person</span>Profile
-          </Link>
-        </div>
-        <div className="mt-auto px-sm">
-          <Link href="/settings" className="w-full text-left flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-lg font-heading text-heading">
-            <span className="material-symbols-outlined">settings</span>Settings
-          </Link>
-        </div>
-      </nav>
-
-      {/* Main */}
-      <main className="flex-1 w-full md:ml-[240px] pb-20 md:pb-0">
+    <div className="bg-background text-on-background min-h-screen overflow-x-hidden">
+      <main className="flex-1 w-full md:ml-[--sidebar-width]">
         <div className="max-w-2xl mx-auto px-lg md:px-xl py-lg md:py-xl">
           
           {/* Breadcrumb */}
@@ -360,25 +330,6 @@ export default function NewListPage() {
         </div>
       </main>
 
-      {/* BottomNavBar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 w-full h-16 z-50 bg-surface-container-low/95 backdrop-blur-lg flex justify-around items-center px-sm pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.4)]">
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 w-16 h-full" href="/dashboard">
-          <span className="material-symbols-outlined mb-1">home</span>
-          <span className="font-caption text-[10px]">Home</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 w-16 h-full" href="/search">
-          <span className="material-symbols-outlined mb-1">search</span>
-          <span className="font-caption text-[10px]">Search</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-primary active:scale-95 w-16 h-full" href="/lists">
-          <span className="material-symbols-outlined mb-1" style={{ fontVariationSettings: "'FILL' 1" }}>list</span>
-          <span className="font-caption text-[10px] font-semibold">Lists</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 w-16 h-full" href="/profile">
-          <span className="material-symbols-outlined mb-1">person</span>
-          <span className="font-caption text-[10px]">Profile</span>
-        </Link>
-      </nav>
     </div>
   )
 }

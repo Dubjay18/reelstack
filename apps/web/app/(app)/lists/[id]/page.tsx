@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import {
   useListDetail,
   useListItems,
@@ -141,11 +141,10 @@ function FilmItemCard({
 }
 
 export default function Page() {
-  const router = useRouter()
   const params = useParams()
   const id = params.id as string
 
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   
   // Queries
   const { data: list, isLoading: listLoading } = useListDetail(id)
@@ -341,71 +340,8 @@ export default function Page() {
   const watchedCount = items?.filter(f => f.watched).length ?? 0
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex antialiased">
-      {/* SideNavBar Component */}
-      <nav className="bg-surface-dim w-[240px] h-full fixed left-0 top-0 border-r border-outline-variant z-40 hidden md:flex flex-col py-lg justify-between">
-        <div className="px-md mb-lg">
-          <div className="flex items-center gap-sm mb-xl">
-            <h1 className="font-display-md text-[1.25rem] font-bold text-primary tracking-tight">Reelstack</h1>
-            <p className="font-caption text-caption text-on-surface-variant">Cinephile Gallery</p>
-          </div>
-          <ul className="flex flex-col space-y-1">
-            <li>
-              <Link href="/dashboard" className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors px-md py-sm rounded-md font-heading text-[0.875rem] font-medium">
-                <span className="material-symbols-outlined">home</span>
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/search" className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors px-md py-sm rounded-md font-heading text-[0.875rem] font-medium">
-                <span className="material-symbols-outlined">search</span>
-                Search
-              </Link>
-            </li>
-            <li>
-              <Link href="/lists" className="flex items-center gap-sm bg-surface-container-high text-primary border-l-2 border-primary px-md py-sm rounded-r-md font-heading text-[0.875rem] font-medium opacity-80">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>format_list_bulleted</span>
-                My Lists
-              </Link>
-            </li>
-            <li>
-              <Link href="/profile" className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors px-md py-sm rounded-md font-heading text-[0.875rem] font-medium">
-                <span className="material-symbols-outlined">person</span>
-                Profile
-              </Link>
-            </li>
-          </ul>
-        </div>
-        <div className="px-md mt-auto">
-          <button 
-            onClick={handleShare}
-            className="w-full flex items-center justify-center gap-xs border border-outline-variant text-on-background hover:bg-surface-container transition-colors py-sm rounded-md font-body-sm text-body-sm mb-md"
-          >
-            <span className="material-symbols-outlined text-[16px]">ios_share</span>
-            Share my profile
-          </button>
-          <ul>
-            <li>
-              <Link href="/settings" className="flex items-center gap-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors px-md py-sm rounded-md font-heading text-[0.875rem] font-medium">
-                <span className="material-symbols-outlined">settings</span>
-                Settings
-              </Link>
-            </li>
-            <li>
-              <button 
-                onClick={logout}
-                className="w-full text-left flex items-center gap-sm text-on-surface-variant hover:text-error-container hover:bg-error-container/10 px-md py-sm transition-colors rounded-md font-heading text-[0.875rem] font-medium"
-              >
-                <span className="material-symbols-outlined">logout</span>
-                Log out
-              </button>
-            </li>
-          </ul>
-        </div>
-      </nav>
-
-      {/* Main Content Area */}
-      <main className="flex-1 w-full md:ml-[240px] pb-24 md:pb-8">
+    <div className="bg-background text-on-background min-h-screen overflow-x-hidden">
+      <main className="flex-1 w-full md:ml-[--sidebar-width] pb-24 md:pb-8">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl space-y-xl">
           {/* List Header */}
           <header className="space-y-md border-b border-outline-variant/30 pb-lg">
@@ -751,25 +687,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* BottomNavBar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 w-full h-16 z-50 bg-surface-container-low/95 backdrop-blur-lg flex justify-around items-center px-sm pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.4)]">
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 w-16 h-full" href="/dashboard">
-          <span className="material-symbols-outlined mb-1">home</span>
-          <span className="font-caption text-[10px]">Home</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 w-16 h-full" href="/search">
-          <span className="material-symbols-outlined mb-1">search</span>
-          <span className="font-caption text-[10px]">Search</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-primary active:scale-95 w-16 h-full" href="/lists">
-          <span className="material-symbols-outlined mb-1" style={{ fontVariationSettings: "'FILL' 1" }}>list</span>
-          <span className="font-caption text-[10px] font-semibold">Lists</span>
-        </Link>
-        <Link className="flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 w-16 h-full" href="/profile">
-          <span className="material-symbols-outlined mb-1">person</span>
-          <span className="font-caption text-[10px]">Profile</span>
-        </Link>
-      </nav>
     </div>
   )
 }

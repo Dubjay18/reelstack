@@ -174,7 +174,7 @@ export default function Page() {
 
       <main className="min-h-screen relative">
         {/* Hero Section with Background Poster */}
-        <div className="relative w-full h-[614px] md:h-[768px]">
+        <div className="relative w-full min-h-[50dvh] lg:min-h-[80dvh]">
           {/* Hero Background (Poster) */}
           <div className="absolute inset-0 z-0">
             <div 

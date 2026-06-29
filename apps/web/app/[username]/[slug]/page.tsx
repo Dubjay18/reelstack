@@ -108,7 +108,7 @@ export default function PublicListPage() {
   return (
     <div className="bg-[#131315] text-zinc-100 min-h-screen flex flex-col font-sans selection:bg-primary/30 selection:text-primary pt-16">
       {/* TopAppBar */}
-      <header className="bg-[#131315]/85 backdrop-blur-md fixed top-0 left-0 w-full z-45 border-b border-zinc-800/80 flex justify-between items-center px-6 h-16 max-w-[1120px] mx-auto left-1/2 -translate-x-1/2">
+      <header className="bg-[#131315]/85 backdrop-blur-md fixed top-0 left-0 w-full z-45 border-b border-zinc-800/80 flex justify-between items-center px-6 h-16">
         <Link href="/" className="font-display-lg text-[22px] tracking-tighter text-primary font-extrabold hover:opacity-90 transition-opacity">
           Reelstack
         </Link>

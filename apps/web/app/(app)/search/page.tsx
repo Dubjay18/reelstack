@@ -102,11 +102,11 @@ export default function SearchPage() {
   const isLoadingResults = query.trim() === '' ? trendingLoading : isSearching
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex antialiased">
+    <div className="bg-background text-on-background min-h-screen">
 
 
       {/* Main */}
-      <main className="flex-1 w-full md:ml-[240px] pb-16 md:pb-0">
+      <main className="flex-1 w-full md:ml-[--sidebar-width] pb-16 md:pb-0">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl">
           
           {/* Page Header */}

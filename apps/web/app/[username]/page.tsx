@@ -74,14 +74,12 @@ export default async function Page({ params }: PageProps) {
     <div className="bg-background text-on-background min-h-screen flex flex-col font-sans selection:bg-primary/30 selection:text-primary pt-16">
       {/* TopAppBar */}
     <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
-        <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
-        {/* <div className="flex items-center gap-sm">
-   
-   
-              <Link href="/login" className="text-on-surface-variant font-body-sm text-body-sm flex items-center">Log in</Link>
-              <Link href="/register" className="text-primary font-body-sm text-body-sm font-semibold flex items-center">Sign up</Link>
-       
-        </div> */}
+        <Link href="/dashboard" className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</Link>
+        <div className="flex items-center gap-sm">
+          <Link href="/search" className="text-on-surface-variant hover:text-on-surface transition-colors">
+            <span className="material-symbols-outlined">search</span>
+          </Link>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -106,13 +104,13 @@ export default async function Page({ params }: PageProps) {
                 No bio provided.
               </p>
             )}
-            <div className="font-mono text-mono text-on-surface-variant/80 flex items-center justify-center md:justify-start gap-sm mt-xs">
+            <div className="font-mono text-mono text-on-surface-variant/80 flex flex-wrap items-center justify-center md:justify-start gap-x-sm gap-y-1 mt-xs">
               <span>{listCount} {listCount === 1 ? 'list' : 'lists'}</span>
-              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant shrink-0"></span>
               <span>{totalWatched} {totalWatched === 1 ? 'film watched' : 'films watched'}</span>
-              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant shrink-0"></span>
               <span>{profile.followers_count ?? 0} followers</span>
-              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+              <span className="w-[3px] h-[3px] rounded-full bg-outline-variant shrink-0"></span>
               <span>{profile.following_count ?? 0} following</span>
             </div>
           </div>

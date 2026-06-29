@@ -91,7 +91,7 @@ export default function EmbedPage() {
   const watchedCount = items.filter((f) => f.watched).length
 
   return (
-    <div className="bg-[#131315] text-zinc-100 min-h-screen p-4 flex flex-col font-sans selection:bg-primary/30 selection:text-primary">
+    <div className="bg-[#131315] text-zinc-100 min-h-screen p-4 flex flex-col font-sans selection:bg-primary/30 selection:text-primary overflow-x-hidden max-w-full">
       {/* Widget Header */}
       <header className="flex items-center justify-between gap-4 border-b border-zinc-800 pb-3 mb-4">
         <div className="min-w-0">

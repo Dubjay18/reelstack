@@ -94,7 +94,7 @@ export default function ListsPage() {
   const totalWatched = lists?.reduce((a, b) => a + b.watched_count, 0) ?? 0
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex antialiased">
+    <div className="bg-background text-on-background min-h-screen">
 
   <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
         <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
@@ -110,7 +110,7 @@ export default function ListsPage() {
         </div>
       </header>
       {/* Main */}
-      <main className="flex-1 w-full md:ml-[240px] pb-20 md:pb-0">
+      <main className="flex-1 w-full md:ml-[--sidebar-width] pt-16 md:pt-0 pb-20 md:pb-0">
         <div className="max-w-3xl mx-auto px-lg md:px-xl py-lg md:py-xl">
 
           {/* Page Header */}

@@ -204,11 +204,11 @@ export default function ProfilePage() {
   const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex antialiased">
+    <div className="bg-background text-on-background min-h-screen">
 
 
       {/* Main */}
-      <main className="flex-1 w-full md:ml-[240px] pb-20 md:pb-0">
+      <main className="flex-1 w-full md:ml-[--sidebar-width] pb-20 md:pb-0">
         {/* Profile Header */}
         <div className="relative overflow-hidden">
           {/* Ambient background */}
