@@ -62,17 +62,17 @@ export const api = {
     return res.data
   },
 
-  post: async <T>(path: string, body: unknown, _auth = false): Promise<T> => {
+  post: async <T>(path: string, body?: unknown, _auth = false): Promise<T> => {
     const res = await axiosInstance.post<T>(path, body)
     return res.data
   },
 
-  patch: async <T>(path: string, body: unknown, _auth = true): Promise<T> => {
+  patch: async <T>(path: string, body?: unknown, _auth = true): Promise<T> => {
     const res = await axiosInstance.patch<T>(path, body)
     return res.data
   },
 
-  put: async <T>(path: string, body: unknown, _auth = true): Promise<T> => {
+  put: async <T>(path: string, body?: unknown, _auth = true): Promise<T> => {
     const res = await axiosInstance.put<T>(path, body)
     return res.data
   },

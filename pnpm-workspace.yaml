@@ -2,3 +2,8 @@ packages:
   - 'apps/*'
 allowBuilds:
   unrs-resolver: false
+
+overrides:
+  "web>@types/react": "18.3.31"
+  "web>@types/react-dom": "18.3.7"
+

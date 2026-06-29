@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  web>@types/react: 18.3.31
+  web>@types/react-dom: 18.3.7
+
 importers:
 
   .: {}
@@ -175,10 +179,10 @@ importers:
         specifier: ^5.3.14
         version: 5.5.2
       '@types/react':
-        specifier: ^18
+        specifier: 18.3.31
         version: 18.3.31
       '@types/react-dom':
-        specifier: ^18
+        specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       autoprefixer:
         specifier: ^10
@@ -6142,7 +6146,7 @@ snapshots:
 
   '@types/react-test-renderer@19.1.0':
     dependencies:
-      '@types/react': 18.3.31
+      '@types/react': 19.2.17
 
   '@types/react@18.3.31':
     dependencies:
