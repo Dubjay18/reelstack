@@ -1,9 +1,21 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function TabsLayout() {
+  const { isAuthorized } = useAuthGuard();
+
+  if (!isAuthorized) {
+    return (
+      <View style={{ flex: 1, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{

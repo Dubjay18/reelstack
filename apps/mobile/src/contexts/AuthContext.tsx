@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser, storeToken, clearToken, getStoredToken } from '@/lib/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCurrentUser, storeToken, clearToken, getStoredToken, isTokenExpired } from '@/lib/auth';
 import type { User } from '@/types';
 import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AuthContextType {
   user: Pick<User, 'id' | 'username'> | null;
@@ -17,6 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Pick<User, 'id' | 'username'> | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     async function loadStoredAuth() {
@@ -41,6 +43,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStoredAuth();
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+    const interval = setInterval(async () => {
+      if (isTokenExpired(token)) {
+        await clearToken();
+        setUser(null);
+        setToken(null);
+        queryClient.clear();
+        router.replace('/(auth)/login');
+      }
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [token]);
+
   const login = async (newToken: string) => {
     await storeToken(newToken);
     const currentUser = await getCurrentUser();
@@ -48,12 +64,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(newToken);
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await clearToken();
     setUser(null);
     setToken(null);
+    queryClient.clear();
     router.replace('/');
-  };
+  }, [queryClient]);
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>

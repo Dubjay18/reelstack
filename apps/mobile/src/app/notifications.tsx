@@ -4,12 +4,22 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Colors, Radius, Typography, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '@/lib/hooks/api';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function NotificationsScreen() {
+  const { isAuthorized } = useAuthGuard();
   const router = useRouter();
   const { showToast } = useToast();
+
+  if (!isAuthorized) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
   const { data: notifications, isLoading, refetch } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
