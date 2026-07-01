@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,6 +12,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+)
+
+var (
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
 // IAuthService is the contract consumed by the HTTP handler.
@@ -59,11 +65,6 @@ func hashPassword(password string) (string, error) {
 
 // RegisterUser creates a new password-based user and returns a JWT.
 func (s *AuthService) RegisterUser(email, password, username string) (*users.User, error) {
-	existing, _ := s.userRepo.GetUserByEmail(email)
-	if existing != nil {
-		return nil, fmt.Errorf("user with email %s already exists", email)
-	}
-
 	hash, err := hashPassword(password)
 	if err != nil {
 		return nil, fmt.Errorf("hash password: %w", err)
@@ -76,6 +77,9 @@ func (s *AuthService) RegisterUser(email, password, username string) (*users.Use
 		PasswordHash: &hash,
 	}
 	if err := s.userRepo.CreateUser(newUser); err != nil {
+		if errors.Is(err, users.ErrDuplicateEmail) {
+			return nil, ErrUserAlreadyExists
+		}
 		return nil, err
 	}
 	return newUser, nil
@@ -85,14 +89,14 @@ func (s *AuthService) RegisterUser(email, password, username string) (*users.Use
 func (s *AuthService) LoginUser(email, password string) (string, error) {
 	user, err := s.userRepo.GetUserByEmail(email)
 	if err != nil || user == nil {
-		return "", fmt.Errorf("invalid email or password")
+		return "", ErrInvalidCredentials
 	}
 	if user.PasswordHash == nil {
 		return "", fmt.Errorf("this account uses Google sign-in; no password set")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(password)); err != nil {
-		return "", fmt.Errorf("invalid email or password")
+		return "", ErrInvalidCredentials
 	}
 
 	return GenerateToken(user.ID.String(), user.Username, s.secret)

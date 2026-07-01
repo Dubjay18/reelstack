@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("not found")
-	ErrForbidden = errors.New("forbidden")
+	ErrNotFound      = errors.New("not found")
+	ErrForbidden     = errors.New("forbidden")
+	ErrDuplicateItem = errors.New("item already exists in this list")
+	ErrDuplicateSlug = errors.New("a list with this title already exists")
 )
 
 func GenerateSlug(title string) string {

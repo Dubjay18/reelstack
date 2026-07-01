@@ -32,6 +32,9 @@ func (h *Handler) MarkAsRead(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	id := c.Params("id")
 	if err := h.svc.MarkAsRead(c.UserContext(), id, userID); err != nil {
+		if err == ErrNotFound {
+			return fiber.NewError(fiber.StatusNotFound, "notification not found")
+		}
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to mark notification as read")
 	}
 	return c.JSON(fiber.Map{"success": true})

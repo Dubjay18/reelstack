@@ -19,6 +19,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/pkg/cache"
 	"github.com/Dubjay18/reelstack/api/pkg/config"
 	"github.com/Dubjay18/reelstack/api/pkg/db"
+	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -196,11 +197,26 @@ func main() {
 
 func errorHandler(c *fiber.Ctx, err error) error {
 	code := fiber.StatusInternalServerError
-	if e, ok := err.(*fiber.Error); ok {
+	message := "internal server error"
+
+	// Check for our custom AppError first
+	if appErr, ok := apperrors.IsAppError(err); ok {
+		code = appErr.Code
+		message = appErr.Message
+		if appErr.Err != nil {
+			slog.Error("request failed", "error", appErr.Err, "path", c.Path(), "method", c.Method())
+		}
+	} else if e, ok := err.(*fiber.Error); ok {
 		code = e.Code
+		message = e.Message
 	}
+
+	if code >= 500 {
+		slog.Error("request failed", "error", err, "path", c.Path(), "method", c.Method())
+	}
+
 	return c.Status(code).JSON(fiber.Map{
-		"error":   err.Error(),
+		"error":   message,
 		"success": false,
 	})
 }

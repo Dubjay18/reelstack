@@ -51,8 +51,18 @@ func (r *NotificationRepository) GetNotifications(ctx context.Context, userID st
 
 func (r *NotificationRepository) MarkAsRead(ctx context.Context, notificationID, userID string) error {
 	query := `UPDATE notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2`
-	_, err := r.db.ExecContext(ctx, query, notificationID, userID)
-	return err
+	result, err := r.db.ExecContext(ctx, query, notificationID, userID)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (r *NotificationRepository) MarkAllAsRead(ctx context.Context, userID string) error {

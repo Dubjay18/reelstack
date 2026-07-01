@@ -2,9 +2,12 @@ package notifications
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 )
+
+var ErrNotFound = errors.New("notification not found")
 
 type INotificationService interface {
 	CreateNotification(ctx context.Context, userID, actorID, notifType string, entityID *string) error

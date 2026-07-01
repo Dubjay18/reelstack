@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"log/slog"
 	"strings"
 	"time"
@@ -65,7 +66,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 
 	user, err := h.svc.RegisterUser(req.Email, req.Password, req.Username)
 	if err != nil {
-		if err.Error() == "user already exists" {
+		if errors.Is(err, ErrUserAlreadyExists) {
 			return fiber.NewError(fiber.StatusConflict, err.Error())
 		}
 		slog.Error("failed to register user", "error", err)
@@ -117,7 +118,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 
 	token, err := h.svc.LoginUser(req.Email, req.Password)
 	if err != nil {
-		if err.Error() == "invalid email or password" {
+		if errors.Is(err, ErrInvalidCredentials) {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}
 		slog.Error("failed to login user", "error", err)

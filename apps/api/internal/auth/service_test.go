@@ -6,7 +6,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/Dubjay18/reelstack/api/internal/auth"
@@ -95,17 +94,17 @@ func TestRegisterUser_OK(t *testing.T) {
 }
 
 func TestRegisterUser_Duplicate(t *testing.T) {
-	existing := &users.User{ID: uuid.New(), Email: "dup@example.com", Username: "dup"}
 	repo := &mockUserRepo{
-		getByEmailFn: func(email string) (*users.User, error) { return existing, nil },
+		getByEmailFn: func(email string) (*users.User, error) { return nil, sql.ErrNoRows },
+		createFn:     func(u *users.User) error { return users.ErrDuplicateEmail },
 	}
 	svc := newService(repo)
 	_, err := svc.RegisterUser("dup@example.com", "password", "dup")
 	if err == nil {
 		t.Fatal("expected error for duplicate registration, got nil")
 	}
-	if !strings.Contains(err.Error(), "already exists") {
-		t.Errorf("unexpected error message: %v", err)
+	if !errors.Is(err, auth.ErrUserAlreadyExists) {
+		t.Errorf("expected ErrUserAlreadyExists, got %v", err)
 	}
 }
 

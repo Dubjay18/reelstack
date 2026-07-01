@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -64,7 +65,13 @@ func (r *ListRepository) CreateList(ctx context.Context, list *List) error {
 		INSERT INTO lists (id, user_id, title, description, is_public, slug, created_at, updated_at)
 		VALUES (:id, :user_id, :title, :description, :is_public, :slug, NOW(), NOW())`
 	_, err := r.db.NamedExecContext(ctx, query, list)
-	return err
+	if err != nil {
+		if apperrors.IsUniqueViolation(err) {
+			return ErrDuplicateSlug
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *ListRepository) GetListByID(ctx context.Context, id string) (*List, error) {
@@ -163,7 +170,13 @@ func (r *ListRepository) AddItemToList(ctx context.Context, listID string, item 
 		INSERT INTO list_items (id, list_id, tmdb_id, media_type, watched, watched_at, notes, position, added_at)
 		VALUES (:id, :list_id, :tmdb_id, :media_type, :watched, :watched_at, :notes, :position, NOW())`
 	_, err := r.db.NamedExecContext(ctx, query, item)
-	return err
+	if err != nil {
+		if apperrors.IsUniqueViolation(err) {
+			return ErrDuplicateItem
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *ListRepository) GetItemsByListID(ctx context.Context, listID string) ([]*ListItem, error) {

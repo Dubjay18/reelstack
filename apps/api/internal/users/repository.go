@@ -3,7 +3,13 @@ package users
 import (
 	"database/sql"
 
+	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
 	"github.com/jmoiron/sqlx"
+)
+
+var (
+	ErrDuplicateEmail    = apperrors.ErrConflict // returned when email already exists
+	ErrDuplicateUsername = apperrors.ErrConflict // returned when username already exists
 )
 
 // IUserRepository is the persistence contract for user data.
@@ -35,7 +41,13 @@ func (r *UserRepository) CreateUser(user *User) error {
 		VALUES (:id, :email, :password_hash, :username)`,
 		user,
 	)
-	return err
+	if err != nil {
+		if apperrors.IsUniqueViolation(err) {
+			return ErrDuplicateEmail
+		}
+		return err
+	}
+	return nil
 }
 
 // GetUserByEmail returns the user matching the given email, or an error.
@@ -139,7 +151,13 @@ func (r *UserRepository) UpdateUser(user *User) error {
 		WHERE id = :id`,
 		user,
 	)
-	return err
+	if err != nil {
+		if apperrors.IsUniqueViolation(err) {
+			return ErrDuplicateUsername
+		}
+		return err
+	}
+	return nil
 }
 
 // GetFollowCounts returns the followers and following count for a user.

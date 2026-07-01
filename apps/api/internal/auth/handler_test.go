@@ -104,7 +104,7 @@ func TestRegisterOK(t *testing.T) {
 func TestRegisterDuplicate(t *testing.T) {
 	svc := &mockAuthService{
 		registerFn: func(email, password, username string) (*users.User, error) {
-			return nil, fiber.NewError(fiber.StatusConflict, "user already exists")
+			return nil, auth.ErrUserAlreadyExists
 		},
 	}
 	app := newApp(svc)
@@ -163,7 +163,7 @@ func TestLoginOK(t *testing.T) {
 func TestLoginWrongPassword(t *testing.T) {
 	svc := &mockAuthService{
 		loginFn: func(email, password string) (string, error) {
-			return "", fiber.NewError(fiber.StatusUnauthorized, "invalid email or password")
+			return "", auth.ErrInvalidCredentials
 		},
 	}
 	app := newApp(svc)

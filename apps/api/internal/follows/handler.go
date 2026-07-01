@@ -14,12 +14,10 @@ func NewHandler(svc IFollowService) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r fiber.Router, authMiddleware fiber.Handler) {
-	// Actions requiring authentication
 	r.Post("/api/v1/users/:id/follow", authMiddleware, h.Follow)
 	r.Delete("/api/v1/users/:id/follow", authMiddleware, h.Unfollow)
 	r.Get("/api/v1/users/:id/follow-status", authMiddleware, h.GetFollowStatus)
 
-	// Open listings
 	r.Get("/api/v1/users/:id/followers", h.GetFollowers)
 	r.Get("/api/v1/users/:id/following", h.GetFollowing)
 }
@@ -30,15 +28,9 @@ func (h *Handler) Follow(c *fiber.Ctx) error {
 
 	if err := h.svc.Follow(c.UserContext(), followerID, followingID); err != nil {
 		if err == ErrCannotFollowSelf {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"error":   err.Error(),
-			})
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to follow user",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to follow user")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
@@ -49,10 +41,7 @@ func (h *Handler) Unfollow(c *fiber.Ctx) error {
 	followingID := c.Params("id")
 
 	if err := h.svc.Unfollow(c.UserContext(), followerID, followingID); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to unfollow user",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to unfollow user")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
@@ -64,10 +53,7 @@ func (h *Handler) GetFollowStatus(c *fiber.Ctx) error {
 
 	isFollowing, err := h.svc.IsFollowing(c.UserContext(), followerID, followingID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to check follow status",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to check follow status")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -79,10 +65,7 @@ func (h *Handler) GetFollowers(c *fiber.Ctx) error {
 	userID := c.Params("id")
 	followersList, err := h.svc.GetFollowers(c.UserContext(), userID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to get followers",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to get followers")
 	}
 
 	publicFollowers := make([]users.PublicProfile, len(followersList))
@@ -97,10 +80,7 @@ func (h *Handler) GetFollowing(c *fiber.Ctx) error {
 	userID := c.Params("id")
 	followingList, err := h.svc.GetFollowing(c.UserContext(), userID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to get following",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to get following")
 	}
 
 	publicFollowing := make([]users.PublicProfile, len(followingList))

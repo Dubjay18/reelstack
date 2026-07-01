@@ -23,15 +23,9 @@ func (h *Handler) GetPublicProfile(c *fiber.Ctx) error {
 	profile, err := h.svc.GetPublicProfile(c.UserContext(), identifier)
 	if err != nil {
 		if err == ErrNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"error":   "user not found",
-			})
+			return fiber.NewError(fiber.StatusNotFound, "user not found")
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to retrieve public profile",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to retrieve public profile")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(profile)
@@ -41,43 +35,25 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	userIDVal := c.Locals("userID")
 	userID, ok := userIDVal.(string)
 	if !ok || userID == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"error":   "unauthorized",
-		})
+		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
 	}
 
 	var input UpdateProfileInput
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"error":   "invalid request body",
-		})
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 
 	updatedUser, token, err := h.svc.UpdateProfile(c.UserContext(), userID, input)
 	if err != nil {
 		switch err {
 		case ErrNotFound:
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"error":   "user not found",
-			})
+			return fiber.NewError(fiber.StatusNotFound, "user not found")
 		case ErrUsernameTaken:
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"success": false,
-				"error":   "username already taken",
-			})
+			return fiber.NewError(fiber.StatusConflict, "username already taken")
 		case ErrInvalidInput:
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"error":   "invalid username or bio format",
-			})
+			return fiber.NewError(fiber.StatusBadRequest, "invalid username or bio format")
 		default:
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"success": false,
-				"error":   "failed to update profile",
-			})
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to update profile")
 		}
 	}
 
@@ -91,10 +67,7 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 func (h *Handler) CheckUsernameAvailability(c *fiber.Ctx) error {
 	username := c.Query("username")
 	if username == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"error":   "username query parameter is required",
-		})
+		return fiber.NewError(fiber.StatusBadRequest, "username query parameter is required")
 	}
 
 	if !usernameRegex.MatchString(username) {
@@ -106,10 +79,7 @@ func (h *Handler) CheckUsernameAvailability(c *fiber.Ctx) error {
 
 	available, err := h.svc.CheckUsernameAvailability(c.UserContext(), username)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "failed to check username availability",
-		})
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to check username availability")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

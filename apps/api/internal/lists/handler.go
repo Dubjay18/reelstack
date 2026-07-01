@@ -36,6 +36,9 @@ func (h *Handler) CreateList(c *fiber.Ctx) error {
 	list.UserID = userID
 
 	if err := h.svc.CreateList(c.Context(), &list); err != nil {
+		if err == ErrDuplicateSlug {
+			return fiber.NewError(fiber.StatusConflict, err.Error())
+		}
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to create list")
 	}
 
@@ -113,6 +116,9 @@ func (h *Handler) AddItemToList(c *fiber.Ctx) error {
 		}
 		if err == ErrForbidden {
 			return fiber.NewError(fiber.StatusForbidden, "access denied to add item to this list")
+		}
+		if err == ErrDuplicateItem {
+			return fiber.NewError(fiber.StatusConflict, err.Error())
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to add item to list")
 	}
