@@ -263,7 +263,7 @@ export const MovieDetailProvider: React.FC<{ children: React.ReactNode }> = ({ c
                   </ScrollView>
                 ) : (
                   <View style={styles.noListsContainer}>
-                    <Text style={[Typography.bodySm, styles.noListsText]}>You don't have any lists yet.</Text>
+                    <Text style={[Typography.bodySm, styles.noListsText]}>You don&apos;t have any lists yet.</Text>
                     <Pressable
                       style={styles.createListButton}
                       onPress={() => {

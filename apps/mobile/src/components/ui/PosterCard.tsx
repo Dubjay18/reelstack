@@ -1,8 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Colors, Radius, Typography, Shadow } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 
@@ -25,7 +24,7 @@ export const PosterCard: React.FC<PosterCardProps> = ({
   onLongPress,
   width = 120,
 }) => {
-  const scale = useSharedValue(1);
+  const [scaleAnim] = useState(() => new Animated.Value(1));
 
   const imageUrl = posterPath
     ? posterPath.startsWith('http')
@@ -33,16 +32,22 @@ export const PosterCard: React.FC<PosterCardProps> = ({
       : `https://image.tmdb.org/t/p/w500${posterPath}`
     : null;
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 200 });
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      damping: 15,
+      stiffness: 200,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 200 });
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      damping: 15,
+      stiffness: 200,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePress = () => {
@@ -69,7 +74,7 @@ export const PosterCard: React.FC<PosterCardProps> = ({
       onLongPress={onLongPress ? handleLongPress : undefined}
       style={{ width }}
     >
-      <Animated.View style={[styles.card, animatedStyle, { height, borderRadius: Radius.md }]}>
+      <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }, { height, borderRadius: Radius.md }]}>
         {imageUrl ? (
           <Image
             source={{ uri: imageUrl }}

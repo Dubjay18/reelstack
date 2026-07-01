@@ -105,15 +105,19 @@ export default function ProfileScreen() {
   const username = user?.username || '';
   const { data: profile, isLoading: isProfileLoading } = usePublicProfile(username);
   const { data: lists, isLoading: isListsLoading } = useUserLists();
+  const displayBio = profile?.bio || '';
 
-  useEffect(() => {
-    if (profile?.bio) {
-      setBioText(profile.bio);
-    }
-    if (profile?.username) {
-      setUsernameInput(profile.username);
-    }
-  }, [profile]);
+  const startEditing = () => {
+    setBioText(profile?.bio || '');
+    setUsernameInput(profile?.username || username);
+    setIsEditingBio(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditingBio(false);
+    setUsernameInput(profile?.username || username);
+    setBioText(profile?.bio || '');
+  };
 
   const handleShare = async () => {
     try {
@@ -274,13 +278,7 @@ export default function ProfileScreen() {
                   </Text>
                 </Pressable>
                 <Pressable 
-                  onPress={() => {
-                    setIsEditingBio(false);
-                    if (profile) {
-                      setUsernameInput(profile.username);
-                      setBioText(profile.bio || '');
-                    }
-                  }} 
+                  onPress={cancelEditing}
                   style={styles.cancelBioBtn}
                 >
                   <Text style={styles.cancelBioBtnText}>Cancel</Text>
@@ -288,9 +286,9 @@ export default function ProfileScreen() {
               </View>
             </View>
           ) : (
-            <Pressable onPress={() => setIsEditingBio(true)} style={styles.bioPress}>
+            <Pressable onPress={startEditing} style={styles.bioPress}>
               <Text style={[Typography.bodySm, styles.bioText]}>
-                {bioText || <Text style={styles.bioPlaceholder}>Add a bio...</Text>}
+                {displayBio || <Text style={styles.bioPlaceholder}>Add a bio...</Text>}
                 <MaterialIcons name="edit" size={12} color={Colors.onSurfaceVariant} style={styles.bioEditIcon} />
               </Text>
             </Pressable>

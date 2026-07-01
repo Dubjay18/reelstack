@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/google/uuid"
 )
 
@@ -40,10 +41,6 @@ type IFollowerFetcher interface {
 	GetFollowerIDs(ctx context.Context, userID string) ([]string, error)
 }
 
-type INotificationSender interface {
-	CreateNotification(ctx context.Context, userID, actorID, notifType string, entityID *string) error
-}
-
 type IListService interface {
 	// List operations
 	CreateList(ctx context.Context, list *List) error
@@ -62,14 +59,14 @@ type IListService interface {
 type ListService struct {
 	repo            IListRepository
 	followerFetcher IFollowerFetcher
-	notifSender     INotificationSender
+	enqueuer        queue.Enqueuer
 }
 
-func NewListService(repo IListRepository, followerFetcher IFollowerFetcher, notifSender INotificationSender) *ListService {
+func NewListService(repo IListRepository, followerFetcher IFollowerFetcher, enqueuer queue.Enqueuer) *ListService {
 	return &ListService{
 		repo:            repo,
 		followerFetcher: followerFetcher,
-		notifSender:     notifSender,
+		enqueuer:        enqueuer,
 	}
 }
 
@@ -83,12 +80,16 @@ func (s *ListService) CreateList(ctx context.Context, list *List) error {
 		return err
 	}
 
-	// Notify followers if list is public
-	if list.IsPublic && s.followerFetcher != nil && s.notifSender != nil {
+	if list.IsPublic && s.followerFetcher != nil && s.enqueuer != nil {
 		followerIDs, err := s.followerFetcher.GetFollowerIDs(ctx, list.UserID)
 		if err == nil {
 			for _, followerID := range followerIDs {
-				_ = s.notifSender.CreateNotification(ctx, followerID, list.UserID, "list_created", &list.ID)
+				_ = s.enqueuer.Enqueue(ctx, queue.JobTypeSendNotification, queue.SendNotificationPayload{
+					UserID:   followerID,
+					ActorID:  list.UserID,
+					Type:     "list_created",
+					EntityID: &list.ID,
+				})
 			}
 		}
 	}

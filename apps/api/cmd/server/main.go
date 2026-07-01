@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Dubjay18/reelstack/api/internal/auth"
 	"github.com/Dubjay18/reelstack/api/internal/content"
@@ -11,6 +13,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/follows"
 	"github.com/Dubjay18/reelstack/api/internal/lists"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
+	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/Dubjay18/reelstack/api/internal/users"
 	"github.com/Dubjay18/reelstack/api/pkg/cache"
 	"github.com/Dubjay18/reelstack/api/pkg/config"
@@ -127,9 +130,14 @@ func main() {
 	notificationsHandler := notifications.NewHandler(notificationsSvc)
 	notificationsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
+	// ── Queue ───────────────────────────────────────────────────────────────
+	queueRepo := queue.NewRepository(database)
+	queueSvc := queue.NewService(queueRepo, queue.DefaultConfig())
+	queueSvc.RegisterHandler(queue.JobTypeSendNotification, queue.NewSendNotificationHandler(notificationsSvc))
+
 	// ── Wire: follows ───────────────────────────────────────────────────────
 	followsRepo := follows.NewFollowRepository(database)
-	followsSvc := follows.NewFollowService(followsRepo, notificationsSvc)
+	followsSvc := follows.NewFollowService(followsRepo, notificationsSvc, queueSvc)
 	followsHandler := follows.NewHandler(followsSvc)
 	followsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
@@ -138,7 +146,7 @@ func main() {
 	embedHandler.RegisterRoutes(app)
 
 	// ── Wire: lists ──────────────────────────────────────────────────────────
-	listsSvc := lists.NewListService(listsRepo, &followerFetcherAdapter{followsSvc: followsSvc}, notificationsSvc)
+	listsSvc := lists.NewListService(listsRepo, &followerFetcherAdapter{followsSvc: followsSvc}, queueSvc)
 	listsHandler := lists.NewHandler(listsSvc)
 	listsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
@@ -154,6 +162,22 @@ func main() {
 	for _, route := range app.GetRoutes(true) {
 		slog.Info("Route", "method", route.Method, "path", route.Path)
 	}
+
+	// ── Start Worker ────────────────────────────────────────────────────────
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	queueSvc.Start(ctx)
+	defer queueSvc.Shutdown()
+
+	// ── Graceful Shutdown ───────────────────────────────────────────────────
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+		<-sig
+		slog.Info("shutting down...")
+		cancel()
+		_ = app.Shutdown()
+	}()
 
 	// ── Start ───────────────────────────────────────────────────────────────
 	slog.Info("Reelstack API starting...", "port", cfg.Port)

@@ -15,19 +15,11 @@ const GENRES = ['Action', 'Comedy', 'Drama', 'Thriller', 'Sci-Fi', 'Horror', 'Ro
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
   const router = useRouter();
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [query, setQuery] = useState(params.q || '');
+  const [debouncedQuery, setDebouncedQuery] = useState(params.q || '');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   
   const { showMovieDetail } = useMovieDetail();
-
-  // Sync route params to search input
-  useEffect(() => {
-    if (params.q) {
-      setQuery(params.q);
-      setDebouncedQuery(params.q);
-    }
-  }, [params.q]);
 
   // Debounce search query
   useEffect(() => {

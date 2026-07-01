@@ -2,15 +2,36 @@ package follows_test
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
 	"github.com/Dubjay18/reelstack/api/internal/follows"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
+	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/Dubjay18/reelstack/api/pkg/db"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
+
+type syncEnqueuer struct {
+	notifSvc *notifications.NotificationService
+}
+
+func (e *syncEnqueuer) Enqueue(ctx context.Context, jobType string, payload any) error {
+	if jobType != queue.JobTypeSendNotification {
+		return nil
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	var p queue.SendNotificationPayload
+	if err := json.Unmarshal(raw, &p); err != nil {
+		return err
+	}
+	return e.notifSvc.CreateNotification(ctx, p.UserID, p.ActorID, p.Type, p.EntityID)
+}
 
 func TestFollowSystem_Integration(t *testing.T) {
 	_ = godotenv.Load("../../.env")
@@ -47,7 +68,7 @@ func TestFollowSystem_Integration(t *testing.T) {
 	notifSvc := notifications.NewNotificationService(notifRepo)
 
 	followRepo := follows.NewFollowRepository(database)
-	followSvc := follows.NewFollowService(followRepo, notifSvc)
+	followSvc := follows.NewFollowService(followRepo, notifSvc, &syncEnqueuer{notifSvc: notifSvc})
 
 	ctx := context.Background()
 

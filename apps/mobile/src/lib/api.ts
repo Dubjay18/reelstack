@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { getStoredToken, clearToken } from '@/lib/auth';
 import { router } from 'expo-router';
+import { wakeGate } from '@/lib/wake-state';
 
 // Retrieve dynamic API url configured in app.config.js
 const API_URL = Constants.expoConfig?.extra?.apiUrl ?? 'https://reelstack-bv9f.onrender.com';
@@ -54,6 +55,10 @@ axiosInstance.interceptors.response.use(
 
       return Promise.reject(new APIError(status, message));
     }
+
+    // Network error — server may be sleeping on Render free tier
+    wakeGate.trigger();
+
     return Promise.reject(new APIError(500, error.message || 'Network error'));
   }
 );

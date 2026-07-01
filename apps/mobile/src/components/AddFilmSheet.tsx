@@ -34,13 +34,11 @@ export const AddFilmSheet: React.FC<AddFilmSheetProps> = ({
   const { data: results, isLoading, isError } = useSearchContent(debouncedQuery);
   const addListItemMutation = useAddListItem(listId);
 
-  // Clear query on close
-  useEffect(() => {
-    if (!isVisible) {
-      setQuery('');
-      setDebouncedQuery('');
-    }
-  }, [isVisible]);
+  const handleDismiss = () => {
+    setQuery('');
+    setDebouncedQuery('');
+    onClose();
+  };
 
   const handleAdd = async (item: any) => {
     Keyboard.dismiss();
@@ -59,7 +57,7 @@ export const AddFilmSheet: React.FC<AddFilmSheetProps> = ({
   const AnyFlashList = FlashList as any;
 
   return (
-    <BottomSheet isPresented={isVisible} onDismiss={onClose}>
+    <BottomSheet isPresented={isVisible} onDismiss={handleDismiss}>
       <View style={styles.container}>
         <Text style={[Typography.heading, styles.sheetTitle]}>Add Film or TV Show</Text>
         
@@ -133,7 +131,7 @@ export const AddFilmSheet: React.FC<AddFilmSheetProps> = ({
           </View>
         ) : debouncedQuery.length > 0 ? (
           <View style={styles.centerContainer}>
-            <Text style={[Typography.bodySm, styles.infoText]}>No results found for "{debouncedQuery}"</Text>
+            <Text style={[Typography.bodySm, styles.infoText]}>No results found for &ldquo;{debouncedQuery}&rdquo;</Text>
           </View>
         ) : (
           <View style={styles.centerContainer}>

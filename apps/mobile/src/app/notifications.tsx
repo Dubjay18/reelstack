@@ -12,6 +12,9 @@ export default function NotificationsScreen() {
   const { isAuthorized } = useAuthGuard();
   const router = useRouter();
   const { showToast } = useToast();
+  const { data: notifications, isLoading, refetch } = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
 
   if (!isAuthorized) {
     return (
@@ -20,9 +23,6 @@ export default function NotificationsScreen() {
       </View>
     );
   }
-  const { data: notifications, isLoading, refetch } = useNotifications();
-  const markRead = useMarkNotificationRead();
-  const markAllRead = useMarkAllNotificationsRead();
 
   const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
@@ -137,7 +137,7 @@ export default function NotificationsScreen() {
             <MaterialIcons name="notifications-none" size={48} color={Colors.onSurfaceVariant} style={{ opacity: 0.3, marginBottom: Spacing.sm }} />
             <Text style={[Typography.bodyLg, styles.emptyTitle]}>All caught up!</Text>
             <Text style={[Typography.bodySm, styles.emptyText]}>
-              No new alerts right now. When followers follow you or creators post public lists, they'll show up here.
+              No new alerts right now. When followers follow you or creators post public lists, they&apos;ll show up here.
             </Text>
           </View>
         }

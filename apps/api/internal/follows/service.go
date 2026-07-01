@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
+	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/Dubjay18/reelstack/api/internal/users"
 )
 
@@ -22,14 +23,16 @@ type IFollowService interface {
 }
 
 type FollowService struct {
-	repo     IFollowRepository
-	notifSvc notifications.INotificationService
+	repo      IFollowRepository
+	notifSvc  notifications.INotificationService
+	enqueuer  queue.Enqueuer
 }
 
-func NewFollowService(repo IFollowRepository, notifSvc notifications.INotificationService) *FollowService {
+func NewFollowService(repo IFollowRepository, notifSvc notifications.INotificationService, enqueuer queue.Enqueuer) *FollowService {
 	return &FollowService{
 		repo:     repo,
 		notifSvc: notifSvc,
+		enqueuer: enqueuer,
 	}
 }
 
@@ -43,8 +46,12 @@ func (s *FollowService) Follow(ctx context.Context, followerID, followingID stri
 		return err
 	}
 
-	// Trigger follow notification (recipient is followingID, actor is followerID)
-	_ = s.notifSvc.CreateNotification(ctx, followingID, followerID, "new_follower", nil)
+	_ = s.enqueuer.Enqueue(ctx, queue.JobTypeSendNotification, queue.SendNotificationPayload{
+		UserID:   followingID,
+		ActorID:  followerID,
+		Type:     "new_follower",
+		EntityID: nil,
+	})
 
 	return nil
 }
@@ -55,7 +62,6 @@ func (s *FollowService) Unfollow(ctx context.Context, followerID, followingID st
 		return err
 	}
 
-	// Remove follow notification
 	_ = s.notifSvc.DeleteFollowNotification(ctx, followingID, followerID)
 
 	return nil

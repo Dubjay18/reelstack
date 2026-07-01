@@ -109,3 +109,10 @@ export interface Notification {
   actor_avatar_url?: string
   entity_title?: string
 }
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+declare global {
+  interface Window {
+    __wakeGate?: () => void
+  }
+}

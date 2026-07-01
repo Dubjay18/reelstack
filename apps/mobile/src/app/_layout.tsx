@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { MovieDetailProvider } from '@/contexts/MovieDetailContext';
+import { ServerWakeGate } from '@/components/ServerWakeGate';
 import { Colors } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 
@@ -51,19 +52,21 @@ function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; font
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: Colors.background },
-      }}
-    >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="[username]" />
-      <Stack.Screen name="auth/callback" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="notifications" />
-    </Stack>
+    <ServerWakeGate>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: Colors.background },
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="[username]" />
+        <Stack.Screen name="auth/callback" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="notifications" />
+      </Stack>
+    </ServerWakeGate>
   );
 }
 
