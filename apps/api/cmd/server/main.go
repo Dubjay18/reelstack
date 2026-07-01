@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/Dubjay18/reelstack/api/internal/auth"
+	"github.com/Dubjay18/reelstack/api/internal/comments"
 	"github.com/Dubjay18/reelstack/api/internal/content"
 	"github.com/Dubjay18/reelstack/api/internal/embed"
 	"github.com/Dubjay18/reelstack/api/internal/follows"
@@ -156,6 +157,12 @@ func main() {
 	contentSvc := content.NewService(tmdbClient, wmClient)
 	contentHandler := content.NewHandler(contentSvc)
 	contentHandler.RegisterRoutes(app)
+
+	// ── Wire: comments ────────────────────────────────────────────────────────
+	commentsRepo := comments.NewCommentRepository(database)
+	commentsSvc := comments.NewCommentService(commentsRepo, queueSvc)
+	commentsHandler := comments.NewHandler(commentsSvc)
+	commentsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
 	// ── Log Routes ──────────────────────────────────────────────────────────
 	slog.Info("Registered routes:")

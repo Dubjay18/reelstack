@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, StreamingProvider, Movie, TVShow, Notification } from '@/types'
+import type { User, List, ListItem, SearchResult, StreamingProvider, Movie, TVShow, Notification, Comment } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -254,7 +254,38 @@ export function useContentDetails(mediaType: string, tmdbId: number) {
   })
 }
 
-// 7. Follow Hooks
+// 7. Comment Hooks
+export function useComments(tmdbId: number, mediaType: string) {
+  return useQuery({
+    queryKey: ['comments', tmdbId, mediaType],
+    queryFn: () => api.get<Comment[]>(`/api/v1/content/${mediaType}/${tmdbId}/comments`),
+    enabled: !!tmdbId && !!mediaType,
+  })
+}
+
+export function useCreateComment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tmdbId, mediaType, body, parentId }: { tmdbId: number; mediaType: string; body: string; parentId?: string }) =>
+      api.post<Comment>(`/api/v1/content/${mediaType}/${tmdbId}/comments`, { body, parent_id: parentId }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['comments', data.tmdb_id, data.media_type] })
+    },
+  })
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ commentId, tmdbId, mediaType }: { commentId: string; tmdbId: number; mediaType: string }) =>
+      api.delete<void>(`/api/v1/content/${mediaType}/${tmdbId}/comments/${commentId}`),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['comments', variables.tmdbId, variables.mediaType] })
+    },
+  })
+}
+
+// 8. Follow Hooks
 export function useFollowUser(userId: string) {
   const queryClient = useQueryClient()
   return useMutation({

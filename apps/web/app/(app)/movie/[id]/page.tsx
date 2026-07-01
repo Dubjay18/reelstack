@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { useContentDetails, useStreamingAvailability, useUserLists } from '@/lib/hooks/api'
 import { api } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
+import { CommentSection } from '@/components/comments'
 
 const SIMILAR_FILMS_FALLBACK = [
   {
@@ -328,6 +329,9 @@ export default function Page() {
                   )}
                 </div>
               </section>
+
+              {/* Comments */}
+              <CommentSection tmdbId={tmdbId} mediaType={mediaType} />
             </div>
 
             {/* Sidebar Metadata */}

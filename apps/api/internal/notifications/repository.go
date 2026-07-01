@@ -35,10 +35,11 @@ func (r *NotificationRepository) GetNotifications(ctx context.Context, userID st
 	query := `
 		SELECT n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
 		       u.username AS actor_username, u.avatar_url AS actor_avatar_url,
-		       l.title AS entity_title
+		       COALESCE(l.title, c.body) AS entity_title
 		FROM notifications n
 		JOIN users u ON n.actor_id = u.id
 		LEFT JOIN lists l ON n.entity_id = l.id AND n.type = 'list_created'
+		LEFT JOIN comments c ON n.entity_id = c.id AND n.type = 'comment_reply'
 		WHERE n.user_id = $1
 		ORDER BY n.created_at DESC`
 	err := r.db.SelectContext(ctx, &notifs, query, userID)
