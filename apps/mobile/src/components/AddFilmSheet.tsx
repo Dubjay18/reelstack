@@ -31,7 +31,7 @@ export const AddFilmSheet: React.FC<AddFilmSheetProps> = ({
     return () => clearTimeout(timer);
   }, [query]);
 
-  const { data: results, isLoading, isError } = useSearchContent(debouncedQuery);
+  const { data: results, isLoading, isError, error } = useSearchContent(debouncedQuery);
   const addListItemMutation = useAddListItem(listId);
 
   const handleDismiss = () => {
@@ -75,7 +75,7 @@ export const AddFilmSheet: React.FC<AddFilmSheetProps> = ({
           </View>
         ) : isError ? (
           <View style={styles.centerContainer}>
-            <Text style={[Typography.bodySm, styles.errorText]}>Error fetching search results</Text>
+            <Text style={[Typography.bodySm, styles.errorText]}>{error?.message || 'Error fetching search results'}</Text>
           </View>
         ) : results && results.length > 0 ? (
           <View style={styles.listWrapper}>

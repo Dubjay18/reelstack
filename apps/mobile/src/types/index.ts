@@ -14,6 +14,7 @@ export interface List {
   title: string
   description: string | null
   is_public: boolean
+  is_watchlist: boolean
   slug: string
   item_count: number
   watched_count: number
@@ -69,6 +70,30 @@ export interface SearchResult {
   year: string
   vote_average: number
   streaming?: StreamingProvider[]
+}
+
+export interface PersonKnownFor {
+  id: number
+  title: string
+  media_type: 'movie' | 'tv'
+  poster_path: string | null
+  year: string
+}
+
+export interface PersonSearchResult {
+  id: number
+  name: string
+  profile_path: string | null
+  known_for_department: string
+  known_for: PersonKnownFor[]
+}
+
+export interface UserSearchResult {
+  id: string
+  username: string
+  avatar_url: string | null
+  bio: string | null
+  followers_count: number
 }
 
 export interface StreamingProvider {

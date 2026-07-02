@@ -131,7 +131,7 @@ export default function ProfileScreen() {
         showToast('Sharing is not available on this device', 'error');
       }
     } catch (err: any) {
-      showToast('Error sharing profile', 'error');
+      showToast(err?.message || 'Error sharing profile', 'error');
     }
   };
 

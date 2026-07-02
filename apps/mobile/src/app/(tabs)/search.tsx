@@ -6,11 +6,12 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { GenrePills } from '@/components/ui/GenrePills';
 import { PosterGrid } from '@/components/ui/PosterGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useSearchContent, useTrendingContent } from '@/lib/hooks/api';
+import { useSearchContent, useSearchPeople, useSearchCurators, useTrendingContent } from '@/lib/hooks/api';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
 
 const GENRES = ['Action', 'Comedy', 'Drama', 'Thriller', 'Sci-Fi', 'Horror', 'Romance', 'Documentary'];
+const SEARCH_TABS = ['Films', 'People', 'Curators'];
 
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
@@ -18,6 +19,7 @@ export default function SearchScreen() {
   const [query, setQuery] = useState(params.q || '');
   const [debouncedQuery, setDebouncedQuery] = useState(params.q || '');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [searchTab, setSearchTab] = useState<'films' | 'people' | 'curators'>('films');
   
   const { showMovieDetail } = useMovieDetail();
 
@@ -31,11 +33,16 @@ export default function SearchScreen() {
   }, [query]);
 
   // Fetch queries
-  const { data: searchResults, isLoading: isSearchLoading, isError: isSearchError } = useSearchContent(debouncedQuery);
-  const { data: trending, isLoading: isTrendingLoading, isError: isTrendingError } = useTrendingContent();
+  const isPeopleTab = searchTab === 'people';
+  const isCuratorsTab = searchTab === 'curators';
+  const { data: searchResults, isLoading: isSearchLoading, isError: isSearchError, error: searchError } = useSearchContent(isPeopleTab || isCuratorsTab ? '' : debouncedQuery);
+  const { data: peopleResults, isLoading: peopleLoading, isError: peopleError, error: peopleErrorMessage } = useSearchPeople(isPeopleTab ? debouncedQuery : '');
+  const { data: curatorResults, isLoading: curatorLoading, isError: curatorError, error: curatorErrorMessage } = useSearchCurators(isCuratorsTab ? debouncedQuery : '');
+  const { data: trending, isLoading: isTrendingLoading, isError: isTrendingError, error: trendingError } = useTrendingContent();
 
-  const isLoading = isSearchLoading || (debouncedQuery.length === 0 && isTrendingLoading);
-  const isError = isSearchError || (debouncedQuery.length === 0 && isTrendingError);
+  const isLoading = isCuratorsTab ? curatorLoading : isPeopleTab ? peopleLoading : (isSearchLoading || (debouncedQuery.length === 0 && isTrendingLoading));
+  const isError = isCuratorsTab ? curatorError : isPeopleTab ? peopleError : (isSearchError || (debouncedQuery.length === 0 && isTrendingError));
+  const errorMessage = isCuratorsTab ? curatorErrorMessage?.message : isPeopleTab ? peopleErrorMessage?.message : (isSearchError ? searchError?.message : trendingError?.message);
 
   // Filter logic
   const getFilteredData = () => {
@@ -69,28 +76,138 @@ export default function SearchScreen() {
         <SearchInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search movies, TV shows..."
+          placeholder={isCuratorsTab ? "Search curators by username..." : isPeopleTab ? "Search actors, directors..." : "Search movies, TV shows..."}
         />
       </View>
 
-      {/* Genre Pills */}
-      <View style={styles.pillsContainer}>
-        <GenrePills
-          genres={GENRES}
-          selectedGenre={selectedGenre}
-          onSelectGenre={setSelectedGenre}
-        />
+      {/* Search Tab Toggle */}
+      <View style={styles.tabRow}>
+        {SEARCH_TABS.map(tab => (
+          <Pressable
+            key={tab}
+            onPress={() => setSearchTab(tab.toLowerCase() as 'films' | 'people' | 'curators')}
+            style={[
+              styles.tabButton,
+              searchTab === tab.toLowerCase() && styles.tabButtonActive,
+            ]}
+          >
+            <Text style={[
+              Typography.caption,
+              styles.tabButtonText,
+              searchTab === tab.toLowerCase() && styles.tabButtonTextActive,
+            ]}>
+              {tab}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
-      {/* Grid Results */}
+      {/* Genre Pills — only show for films tab */}
+      {!isPeopleTab && !isCuratorsTab && (
+        <View style={styles.pillsContainer}>
+          <GenrePills
+            genres={GENRES}
+            selectedGenre={selectedGenre}
+            onSelectGenre={setSelectedGenre}
+          />
+        </View>
+      )}
+
+      {/* Results */}
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : isError ? (
         <View style={styles.centerContainer}>
-          <Text style={[Typography.bodySm, styles.errorText]}>Failed to load content</Text>
+          <Text style={[Typography.bodySm, styles.errorText]}>{errorMessage || 'Failed to load content'}</Text>
         </View>
+      ) : isCuratorsTab && curatorResults && curatorResults.length > 0 ? (
+        <View style={styles.gridWrapper}>
+          <ScrollView contentContainerStyle={styles.peopleList}>
+            <Text style={[Typography.caption, styles.gridTitle]}>
+              {curatorResults.length} curator{curatorResults.length !== 1 ? 's' : ''} found
+            </Text>
+            {curatorResults.map(curator => (
+              <Pressable
+                key={curator.id}
+                style={styles.personCard}
+                onPress={() => router.push(`/${curator.username}` as any)}
+              >
+                <View style={styles.personAvatar}>
+                  {curator.avatar_url ? (
+                    <Text style={styles.personAvatarPlaceholder}>U</Text>
+                  ) : (
+                    <MaterialIcons name="person" size={28} color={Colors.onSurfaceVariant} />
+                  )}
+                </View>
+                <View style={styles.personInfo}>
+                  <Text style={[Typography.bodyLg, { color: Colors.onSurface, fontWeight: '600' }]}>
+                    {curator.username}
+                  </Text>
+                  {curator.bio && (
+                    <Text style={[Typography.bodySm, { color: Colors.onSurfaceVariant, opacity: 0.7 }]} numberOfLines={2}>
+                      {curator.bio}
+                    </Text>
+                  )}
+                  <Text style={[Typography.bodySm, { color: Colors.onSurfaceVariant, opacity: 0.5 }]}>
+                    {curator.followers_count} follower{curator.followers_count !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={18} color={Colors.onSurfaceVariant} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : isCuratorsTab && debouncedQuery.length > 0 ? (
+        <EmptyState
+          icon="group"
+          title="No curators found"
+          description="We couldn't find any curator matching your request. Try a different username."
+        />
+      ) : isPeopleTab && peopleResults && peopleResults.length > 0 ? (
+        <View style={styles.gridWrapper}>
+          <ScrollView contentContainerStyle={styles.peopleList}>
+            <Text style={[Typography.caption, styles.gridTitle]}>
+              {peopleResults.length} person{peopleResults.length !== 1 ? 's' : ''} found
+            </Text>
+            {peopleResults.map(person => (
+              <Pressable
+                key={person.id}
+                style={styles.personCard}
+                onPress={() => {}}
+              >
+                <View style={styles.personAvatar}>
+                  {person.profile_path ? (
+                    <Text style={styles.personAvatarPlaceholder}>P</Text>
+                  ) : (
+                    <MaterialIcons name="person" size={28} color={Colors.onSurfaceVariant} />
+                  )}
+                </View>
+                <View style={styles.personInfo}>
+                  <Text style={[Typography.bodyLg, { color: Colors.onSurface, fontWeight: '600' }]}>
+                    {person.name}
+                  </Text>
+                  <Text style={[Typography.bodySm, { color: Colors.onSurfaceVariant }]}>
+                    {person.known_for_department}
+                  </Text>
+                  {person.known_for.length > 0 && (
+                    <Text style={[Typography.bodySm, { color: Colors.onSurfaceVariant, opacity: 0.7 }]} numberOfLines={1}>
+                      Known for: {person.known_for.map(kf => kf.title).join(', ')}
+                    </Text>
+                  )}
+                </View>
+                <MaterialIcons name="open-in-new" size={18} color={Colors.onSurfaceVariant} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : isPeopleTab && debouncedQuery.length > 0 ? (
+        <EmptyState
+          icon="person-search"
+          title="No people found"
+          description="We couldn't find any person matching your request. Try another name."
+        />
       ) : filteredData && filteredData.length > 0 ? (
         <View style={styles.gridWrapper}>
           <PosterGrid
@@ -286,6 +403,64 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
     fontSize: 13,
     fontWeight: '700',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.gutter,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    gap: Spacing.sm,
+    backgroundColor: Colors.background,
+  },
+  tabButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+  },
+  tabButtonActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  tabButtonText: {
+    color: Colors.onSurfaceVariant,
+  },
+  tabButtonTextActive: {
+    color: Colors.onPrimary,
+    fontWeight: '600',
+  },
+  peopleList: {
+    padding: Spacing.gutter,
+    gap: Spacing.sm,
+  },
+  personCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  personAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.surfaceVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  personAvatarPlaceholder: {
+    color: Colors.onSurfaceVariant,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  personInfo: {
+    flex: 1,
+    gap: 2,
   },
   detailScroll: {
     flexGrow: 1,

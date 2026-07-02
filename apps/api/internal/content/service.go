@@ -11,9 +11,26 @@ import (
 type IContentService interface {
 	GetListAvailability(ctx context.Context, items []ContentItem, countryCode string) (map[int][]StreamingProvider, error)
 	Search(ctx context.Context, query string) ([]SearchResult, error)
+	SearchPeople(ctx context.Context, query string) ([]PersonSearchResult, error)
 	GetTrending(ctx context.Context) ([]SearchResult, error)
 	GetDetails(ctx context.Context, mediaType string, tmdbID int) (interface{}, error)
 }
+type PersonKnownFor struct {
+	ID         int     `json:"id"`
+	Title      string  `json:"title"`
+	MediaType  string  `json:"media_type"`
+	PosterPath *string `json:"poster_path"`
+	Year       string  `json:"year"`
+}
+
+type PersonSearchResult struct {
+	ID                int              `json:"id"`
+	Name              string           `json:"name"`
+	ProfilePath       *string          `json:"profile_path"`
+	KnownForDepartment string           `json:"known_for_department"`
+	KnownFor          []PersonKnownFor `json:"known_for"`
+}
+
 type ContentItem struct {
 	TMDBID    int    `json:"tmdb_id"`
 	MediaType string `json:"media_type"`
@@ -86,6 +103,10 @@ func (s *ContentService) GetListAvailability(ctx context.Context, items []Conten
 
 func (s *ContentService) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	return s.tmdbClient.Search(ctx, query)
+}
+
+func (s *ContentService) SearchPeople(ctx context.Context, query string) ([]PersonSearchResult, error) {
+	return s.tmdbClient.SearchPeople(ctx, query)
 }
 
 func (s *ContentService) GetTrending(ctx context.Context) ([]SearchResult, error) {

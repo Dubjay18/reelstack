@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrForbidden     = errors.New("forbidden")
-	ErrDuplicateItem = errors.New("item already exists in this list")
-	ErrDuplicateSlug = errors.New("a list with this title already exists")
+	ErrNotFound        = errors.New("not found")
+	ErrForbidden       = errors.New("forbidden")
+	ErrDuplicateItem   = errors.New("item already exists in this list")
+	ErrDuplicateSlug   = errors.New("a list with this title already exists")
+	ErrWatchlistDelete = errors.New("cannot delete the watchlist")
 )
 
 func GenerateSlug(title string) string {
@@ -56,6 +57,12 @@ type IListService interface {
 	GetItemsByListID(ctx context.Context, listID string, requesterUserID string) ([]*ListItem, error)
 	UpdateListItem(ctx context.Context, item *ListItem, requesterUserID string) error
 	DeleteListItem(ctx context.Context, id string, requesterUserID string) error
+
+	// Watchlist operations
+	CreateWatchlist(ctx context.Context, userID string) (*List, error)
+	GetWatchlist(ctx context.Context, userID string) (*List, error)
+	EnsureWatchlistExists(ctx context.Context, userID string) (*List, error)
+	AddItemToWatchlist(ctx context.Context, userID string, item *ListItem) error
 }
 
 type ListService struct {
@@ -168,8 +175,56 @@ func (s *ListService) DeleteList(ctx context.Context, id string, requesterUserID
 	if existing.UserID != requesterUserID {
 		return ErrForbidden
 	}
+
+	// Prevent deletion of the watchlist
+	if existing.IsWatchlist {
+		return ErrWatchlistDelete
+	}
 	
 	return s.repo.DeleteList(ctx, id)
+}
+
+func (s *ListService) CreateWatchlist(ctx context.Context, userID string) (*List, error) {
+	list := &List{
+		ID:          uuid.NewString(),
+		UserID:      userID,
+		Title:       "Watchlist",
+		IsPublic:    false,
+		Slug:        "watchlist",
+		IsWatchlist: true,
+	}
+	err := s.repo.CreateList(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+func (s *ListService) GetWatchlist(ctx context.Context, userID string) (*List, error) {
+	return s.repo.GetWatchlistByUserID(ctx, userID)
+}
+
+func (s *ListService) EnsureWatchlistExists(ctx context.Context, userID string) (*List, error) {
+	list, err := s.repo.GetWatchlistByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if list != nil {
+		return list, nil
+	}
+	return s.CreateWatchlist(ctx, userID)
+}
+
+func (s *ListService) AddItemToWatchlist(ctx context.Context, userID string, item *ListItem) error {
+	list, err := s.EnsureWatchlistExists(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if item.ID == "" {
+		item.ID = uuid.NewString()
+	}
+	item.ListID = list.ID
+	return s.repo.AddItemToList(ctx, list.ID, item)
 }
 
 func (s *ListService) AddItemToList(ctx context.Context, listID string, item *ListItem, requesterUserID string) error {

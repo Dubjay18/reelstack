@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"database/sql"
 
 	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
@@ -22,6 +23,7 @@ type IUserRepository interface {
 	UpsertGoogleUser(user *User) error
 	UpdateUser(user *User) error
 	GetFollowCounts(userID string) (followers int, following int, err error)
+	SearchUsers(ctx context.Context, query string, limit int) ([]UserSearchResult, error)
 }
 
 // UserRepository is the sqlx-backed implementation.
@@ -158,6 +160,29 @@ func (r *UserRepository) UpdateUser(user *User) error {
 		return err
 	}
 	return nil
+}
+
+// SearchUsers returns users whose username ILIKE matches the query, ordered by follower count.
+func (r *UserRepository) SearchUsers(ctx context.Context, query string, limit int) ([]UserSearchResult, error) {
+	var results []UserSearchResult
+	err := r.db.SelectContext(ctx, &results, `
+		SELECT
+			id,
+			username,
+			avatar_url,
+			bio,
+			(SELECT COUNT(*) FROM follows WHERE following_id = users.id) AS followers_count
+		FROM users
+		WHERE username ILIKE '%' || $1 || '%'
+		ORDER BY followers_count DESC
+		LIMIT $2`, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	if results == nil {
+		return []UserSearchResult{}, nil
+	}
+	return results, nil
 }
 
 // GetFollowCounts returns the followers and following count for a user.

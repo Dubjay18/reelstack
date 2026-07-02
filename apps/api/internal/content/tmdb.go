@@ -227,6 +227,87 @@ type tmdbTVShowDetails struct {
 	VoteAverage     float64     `json:"vote_average"`
 }
 
+func (c *TMDBClient) SearchPeople(ctx context.Context, query string) ([]PersonSearchResult, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.themoviedb.org/3/search/person", nil)
+	if err != nil {
+		return nil, err
+	}
+	q := req.URL.Query()
+	q.Add("api_key", c.APIKey)
+	q.Add("query", query)
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("TMDB person search API error: %s", resp.Status)
+	}
+
+	type tmdbKnownFor struct {
+		ID           int     `json:"id"`
+		Title        string  `json:"title"`
+		Name         string  `json:"name"`
+		MediaType    string  `json:"media_type"`
+		PosterPath   *string `json:"poster_path"`
+		ReleaseDate  string  `json:"release_date"`
+		FirstAirDate string  `json:"first_air_date"`
+	}
+	type tmdbPersonResult struct {
+		ID                 int            `json:"id"`
+		Name               string         `json:"name"`
+		ProfilePath        *string        `json:"profile_path"`
+		KnownForDepartment string         `json:"known_for_department"`
+		KnownFor           []tmdbKnownFor `json:"known_for"`
+	}
+	type tmdbPersonSearchResponse struct {
+		Results []tmdbPersonResult `json:"results"`
+	}
+
+	var searchData tmdbPersonSearchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&searchData); err != nil {
+		return nil, err
+	}
+
+	var items []PersonSearchResult
+	for _, res := range searchData.Results {
+		knownFor := make([]PersonKnownFor, len(res.KnownFor))
+		for i, kf := range res.KnownFor {
+			title := kf.Title
+			if kf.MediaType == "tv" {
+				title = kf.Name
+			}
+			date := kf.ReleaseDate
+			if kf.MediaType == "tv" {
+				date = kf.FirstAirDate
+			}
+			year := ""
+			if len(date) >= 4 {
+				year = date[:4]
+			}
+			knownFor[i] = PersonKnownFor{
+				ID:         kf.ID,
+				Title:      title,
+				MediaType:  kf.MediaType,
+				PosterPath: kf.PosterPath,
+				Year:       year,
+			}
+		}
+		items = append(items, PersonSearchResult{
+			ID:                 res.ID,
+			Name:               res.Name,
+			ProfilePath:        res.ProfilePath,
+			KnownForDepartment: res.KnownForDepartment,
+			KnownFor:           knownFor,
+		})
+	}
+
+	return items, nil
+}
+
 func (c *TMDBClient) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.themoviedb.org/3/search/multi", nil)
 	if err != nil {

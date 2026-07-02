@@ -11,6 +11,8 @@ import { MovieDetailProvider } from '@/contexts/MovieDetailContext';
 import { ServerWakeGate } from '@/components/ServerWakeGate';
 import { Colors } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
+import { AppErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
+import { getToastErrorHandler } from '@/lib/toast-bridge';
 
 
 
@@ -35,6 +37,12 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 30,  // 30 min
       retry: 1,
     },
+    mutations: {
+      onError: (error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Something went wrong';
+        getToastErrorHandler()?.(message);
+      },
+    },
   },
 });
 
@@ -53,19 +61,21 @@ function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; font
 
   return (
     <ServerWakeGate>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="[username]" />
-        <Stack.Screen name="auth/callback" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="notifications" />
-      </Stack>
+      <AppErrorBoundary>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: Colors.background },
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="[username]" />
+          <Stack.Screen name="auth/callback" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="notifications" />
+        </Stack>
+      </AppErrorBoundary>
     </ServerWakeGate>
   );
 }

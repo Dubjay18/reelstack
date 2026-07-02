@@ -29,7 +29,7 @@ export default function NotificationsScreen() {
   const handleMarkAllRead = () => {
     markAllRead.mutate(undefined, {
       onSuccess: () => showToast('All notifications marked as read', 'success'),
-      onError: () => showToast('Failed to mark notifications read', 'error')
+      onError: (err: any) => showToast(err?.message || 'Failed to mark notifications read', 'error')
     });
   };
 

@@ -13,9 +13,24 @@ func NewHandler(svc IUserService) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(r fiber.Router, authMiddleware fiber.Handler) {
+	r.Get("/api/v1/users/search", h.SearchUsers)
 	r.Get("/api/v1/users/check-username", h.CheckUsernameAvailability)
 	r.Get("/api/v1/users/:identifier", h.GetPublicProfile)
 	r.Put("/api/v1/users/profile", authMiddleware, h.UpdateProfile)
+}
+
+func (h *Handler) SearchUsers(c *fiber.Ctx) error {
+	query := c.Query("query")
+	if query == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "query parameter is required")
+	}
+
+	results, err := h.svc.SearchUsers(c.UserContext(), query)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to search users")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(results)
 }
 
 func (h *Handler) GetPublicProfile(c *fiber.Ctx) error {

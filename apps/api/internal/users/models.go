@@ -42,3 +42,12 @@ func (u *User) ToPublicProfile() PublicProfile {
 		Bio:       u.Bio,
 	}
 }
+
+// UserSearchResult is a lightweight result returned by the curator search endpoint.
+type UserSearchResult struct {
+	ID             uuid.UUID `json:"id"              db:"id"`
+	Username       string    `json:"username"        db:"username"`
+	AvatarURL      *string   `json:"avatar_url"      db:"avatar_url"`
+	Bio            *string   `json:"bio"             db:"bio"`
+	FollowersCount int       `json:"followers_count" db:"followers_count"`
+}

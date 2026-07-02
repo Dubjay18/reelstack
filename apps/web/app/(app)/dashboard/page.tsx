@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useUserLists, useTrendingContent } from '@/lib/hooks/api'
+import { useUserLists, useTrendingContent, useWatchlist } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import { NotificationBell } from '@/components/notification-bell'
 
@@ -12,6 +12,9 @@ export default function Page() {
   const lists = rawLists ?? []
   const { data: rawTrendingMovies, isLoading: trendingLoading } = useTrendingContent()
   const trendingMovies = rawTrendingMovies ?? []
+  const { data: watchlistData } = useWatchlist()
+  const watchlist = watchlistData
+  const watchlistItems = watchlist?.items ?? []
   return (
     <div className="bg-background text-on-background flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
 
@@ -85,6 +88,55 @@ export default function Page() {
                 )}
               </div>
             </div>
+          </section>
+
+          {/* Your Watchlist Section */}
+          <section>
+            <div className="flex justify-between items-end mb-md">
+              <h2 className="font-heading text-heading text-on-surface">Your Watchlist</h2>
+              <Link className="font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors" href="/lists/watchlist">View all</Link>
+            </div>
+            {watchlistItems.length === 0 ? (
+              <div className="bg-surface-container-low border border-outline-variant rounded-xl p-lg text-center">
+                <p className="text-on-surface-variant font-body-sm">Your watchlist is empty. Add movies and shows to keep track of what you want to watch.</p>
+              </div>
+            ) : (
+              <div className="flex gap-md overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-sm">
+                {watchlistItems.slice(0, 6).map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/movie/${item.tmdb_id}?type=${item.media_type}`}
+                    className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-primary/50 transition-colors"
+                  >
+                    {item.content?.poster_path ? (
+                      <Image
+                        className="w-full h-full object-cover"
+                        alt={(item.content as any)?.title || 'Poster'}
+                        src={`https://image.tmdb.org/t/p/w300${item.content.poster_path}`}
+                        fill
+                        sizes="(max-width: 768px) 120px, 160px"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-surface-variant">
+                        <span className="material-symbols-outlined text-on-surface-variant text-[32px]">movie</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
+                    <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">
+                      {(item.content as any)?.title || (item.content as any)?.name || ''}
+                    </div>
+                    {item.watched && (
+                      <div className="absolute top-2 right-2 bg-emerald-600/80 px-1.5 py-0.5 rounded-md">
+                        <span className="font-mono text-[10px] text-white flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-[10px]">check</span>
+                          Watched
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* Your Lists Section */}

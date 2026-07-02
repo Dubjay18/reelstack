@@ -12,6 +12,7 @@ function Sidebar() {
   const isSearchPage = pathname.startsWith('/search')
   const isProfilePage = pathname.startsWith('/profile')
   const isListsPage = pathname.startsWith('/lists')
+  const isWatchlistPage = pathname.startsWith('/watchlist')
   const isNotificationsPage = pathname.startsWith('/notifications')
   const isDashboardPage = pathname === '/dashboard'
 
@@ -44,6 +45,13 @@ function Sidebar() {
           >
             <span className="material-symbols-outlined" style={isSearchPage ? filled : undefined}>search</span>
             Search
+          </Link>
+          <Link
+            className={`flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading ${isWatchlistPage ? filledClassName : ''}`}
+            href="/lists/watchlist"
+          >
+            <span className="material-symbols-outlined" style={isWatchlistPage ? filled : undefined}>bookmark</span>
+            Watchlist
           </Link>
           <Link
             className={`flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading ${isListsPage ? filledClassName : ''}`}

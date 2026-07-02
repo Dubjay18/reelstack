@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
 import { Colors, Radius, Typography, Shadow, Spacing } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { setToastErrorHandler } from '@/lib/toast-bridge';
 
 interface ToastContextType {
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -17,6 +18,24 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [visible, setVisible] = useState(false);
   const translateY = useSharedValue(150);
   const insets = useSafeAreaInsets();
+
+  // Wire up the global mutation error handler once ToastProvider mounts.
+  useEffect(() => {
+    setToastErrorHandler((msg: string) => {
+      setMessage(msg);
+      setToastType('error');
+      setVisible(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      translateY.value = withSpring(0, { damping: 15, stiffness: 120 });
+      setTimeout(() => {
+        translateY.value = withTiming(150, { duration: 250 }, (finished) => {
+          if (finished) {
+            runOnJS(setVisible)(false);
+          }
+        });
+      }, 3000);
+    });
+  }, []);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' | 'info' = 'info') => {
     setMessage(msg);

@@ -54,14 +54,24 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 	query := c.Query("query")
 	if query == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "query parameter is required")
-	}	
-
-	results, err := h.svc.Search(c.Context(), query)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to search content")
 	}
 
-	return c.Status(fiber.StatusOK).JSON(results)
+	searchType := c.Query("type", "")
+
+	switch searchType {
+	case "person":
+		personResults, err := h.svc.SearchPeople(c.Context(), query)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to search people")
+		}
+		return c.Status(fiber.StatusOK).JSON(personResults)
+	default:
+		results, err := h.svc.Search(c.Context(), query)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to search content")
+		}
+		return c.Status(fiber.StatusOK).JSON(results)
+	}
 }
 
 func (h *Handler) GetDetails(c *fiber.Ctx) error {

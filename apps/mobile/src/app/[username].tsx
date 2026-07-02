@@ -97,7 +97,7 @@ export default function PublicProfileScreen() {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'films' | 'lists'>('films');
 
-  const { data: profile, isLoading, isError } = usePublicProfile(username || '');
+  const { data: profile, isLoading, isError, error } = usePublicProfile(username || '');
   const { user } = useAuth();
 
   const isSelf = user?.username === username;
@@ -119,12 +119,12 @@ export default function PublicProfileScreen() {
     if (isFollowing) {
       unfollowMutation.mutate(undefined, {
         onSuccess: () => showToast(`Unfollowed @${username}`, 'success'),
-        onError: () => showToast('Failed to unfollow', 'error'),
+        onError: (err: any) => showToast(err?.message || 'Failed to unfollow', 'error'),
       });
     } else {
       followMutation.mutate(undefined, {
         onSuccess: () => showToast(`Following @${username}`, 'success'),
-        onError: () => showToast('Failed to follow', 'error'),
+        onError: (err: any) => showToast(err?.message || 'Failed to follow', 'error'),
       });
     }
   };
@@ -140,7 +140,7 @@ export default function PublicProfileScreen() {
         showToast('Sharing is not available on this device', 'error');
       }
     } catch (err: any) {
-      showToast('Error sharing profile', 'error');
+      showToast(err?.message || 'Error sharing profile', 'error');
     }
   };
 
@@ -155,7 +155,7 @@ export default function PublicProfileScreen() {
   if (isError || !profile) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={[Typography.bodyLg, styles.errorText]}>User profile not found</Text>
+        <Text style={[Typography.bodyLg, styles.errorText]}>{error?.message || 'User profile not found'}</Text>
         <Pressable onPress={() => router.back()} style={styles.backLink}>
           <Text style={styles.backLinkText}>Go Back</Text>
         </Pressable>

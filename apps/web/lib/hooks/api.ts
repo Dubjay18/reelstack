@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, StreamingProvider, Movie, TVShow, Notification, Comment } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, Comment } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -218,6 +218,41 @@ export function useSearchContent(query: string) {
     queryKey: ['search', query],
     queryFn: () => api.get<SearchResult[]>(`/api/v1/content/search?query=${encodeURIComponent(query)}`),
     enabled: !!query && query.trim().length > 0,
+  })
+}
+
+export function useSearchPeople(query: string) {
+  return useQuery({
+    queryKey: ['search-people', query],
+    queryFn: () => api.get<PersonSearchResult[]>(`/api/v1/content/search?type=person&query=${encodeURIComponent(query)}`),
+    enabled: !!query && query.trim().length > 0,
+  })
+}
+
+export function useSearchCurators(query: string) {
+  return useQuery({
+    queryKey: ['search-curators', query],
+    queryFn: () => api.get<UserSearchResult[]>(`/api/v1/users/search?query=${encodeURIComponent(query)}`),
+    enabled: !!query && query.trim().length > 0,
+  })
+}
+
+export function useWatchlist() {
+  return useQuery({
+    queryKey: ['watchlist'],
+    queryFn: () => api.get<List>('/api/v1/lists/watchlist'),
+  })
+}
+
+export function useAddToWatchlist() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { tmdb_id: number; media_type: 'movie' | 'tv' }) =>
+      api.post<ListItem>('/api/v1/lists/watchlist/items', body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
+    },
   })
 }
 

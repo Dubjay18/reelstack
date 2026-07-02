@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
-import { useContentDetails, useStreamingAvailability, useUserLists } from '@/lib/hooks/api'
+import { useContentDetails, useStreamingAvailability, useUserLists, useWatchlist, useAddToWatchlist } from '@/lib/hooks/api'
 import { api } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { CommentSection } from '@/components/comments'
@@ -45,6 +45,7 @@ export default function Page() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [showListSelector, setShowListSelector] = useState(false)
   const [addingToListId, setAddingToListId] = useState<string | null>(null)
+  const [inWatchlist, setInWatchlist] = useState(false)
 
   // Query Details & Streaming
   const { data: movie, isLoading: movieLoading } = useContentDetails(mediaType, tmdbId)
@@ -52,6 +53,15 @@ export default function Page() {
   const streamingProviders = rawStreamingProviders ?? []
   const { data: rawLists } = useUserLists()
   const lists = rawLists ?? []
+  const { data: watchlistData } = useWatchlist()
+  const watchlistMutation = useAddToWatchlist()
+
+  // Check if this movie is already in the watchlist
+  useEffect(() => {
+    if (watchlistData?.items) {
+      setInWatchlist(watchlistData.items.some(i => i.tmdb_id === tmdbId && i.media_type === mediaType))
+    }
+  }, [watchlistData, tmdbId, mediaType])
 
   // Scroll listener for TopNavBar elevation
   useEffect(() => {
@@ -83,6 +93,18 @@ export default function Page() {
       navigator.clipboard.writeText(window.location.href)
       showToast('Link copied to clipboard!')
     }
+  }
+
+  const handleAddToWatchlist = () => {
+    watchlistMutation.mutate({ tmdb_id: tmdbId, media_type: mediaType }, {
+      onSuccess: () => {
+        setInWatchlist(true)
+        showToast('Added to Watchlist')
+      },
+      onError: (err) => {
+        showToast(err.message || 'Failed to add to watchlist')
+      },
+    })
   }
 
   const handleAddToList = (listId: string, listTitle: string) => {
@@ -220,10 +242,27 @@ export default function Page() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-md relative">
+                  {/* Watchlist Button */}
+                  <button
+                    onClick={handleAddToWatchlist}
+                    disabled={watchlistMutation.isPending || inWatchlist}
+                    className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-[0.98] shadow-lg disabled:opacity-85 ${
+                      inWatchlist
+                        ? 'bg-emerald-600 text-white border border-emerald-500'
+                        : 'bg-primary text-background hover:bg-primary-fixed'
+                    }`}
+                  >
+                    {watchlistMutation.isPending ? (
+                      <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                    ) : (
+                      <span className="material-symbols-outlined">{inWatchlist ? 'check' : 'bookmark_add'}</span>
+                    )}
+                    {watchlistMutation.isPending ? 'Adding...' : inWatchlist ? 'In Watchlist' : 'Watchlist'}
+                  </button>
                   <button 
                     onClick={() => setShowListSelector(!showListSelector)}
                     disabled={addingToListId !== null}
-                    className="px-8 py-3 rounded-xl font-bold bg-primary text-background hover:bg-primary-fixed flex items-center gap-2 transition-all active:scale-[0.98] shadow-lg disabled:opacity-85"
+                    className="px-8 py-3 rounded-xl font-bold bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-100 flex items-center gap-2 transition-all disabled:opacity-85"
                   >
                     {addingToListId !== null ? (
                       <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>

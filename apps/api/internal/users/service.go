@@ -29,6 +29,7 @@ type IUserService interface {
 	GetPublicProfile(ctx context.Context, identifier string) (*PublicProfile, error)
 	UpdateProfile(ctx context.Context, userID string, input UpdateProfileInput) (*User, string, error)
 	CheckUsernameAvailability(ctx context.Context, username string) (bool, error)
+	SearchUsers(ctx context.Context, query string) ([]UserSearchResult, error)
 }
 
 type UserService struct {
@@ -200,4 +201,12 @@ func (s *UserService) CheckUsernameAvailability(ctx context.Context, username st
 		return false, err
 	}
 	return existing == nil, nil
+}
+
+func (s *UserService) SearchUsers(ctx context.Context, query string) ([]UserSearchResult, error) {
+	if query == "" {
+		return []UserSearchResult{}, nil
+	}
+	const maxResults = 20
+	return s.repo.SearchUsers(ctx, query, maxResults)
 }

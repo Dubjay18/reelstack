@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useSearchContent, useTrendingContent } from '@/lib/hooks/api'
+import { useSearchContent, useSearchPeople, useSearchCurators, useTrendingContent } from '@/lib/hooks/api'
 
 interface FilmResult {
   id: string
@@ -15,13 +15,13 @@ interface FilmResult {
   media_type?: 'movie' | 'tv'
 }
 
-const GENRES = ['All', 'Movie', 'TV Show']
+const TABS = ['All', 'Movie', 'TV Show', 'People', 'Curators']
 const SORT_OPTIONS = ['Relevance', 'Rating (High)', 'Year (Newest)', 'Year (Oldest)']
 
 export default function SearchPage() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
-  const [activeGenre, setActiveGenre] = useState('All')
+  const [activeTab, setActiveTab] = useState('All')
   const [activeSort, setActiveSort] = useState('Relevance')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
@@ -32,10 +32,15 @@ export default function SearchPage() {
     return () => clearTimeout(timer)
   }, [query])
 
+  const isPeopleTab = activeTab === 'People'
+  const isCuratorsTab = activeTab === 'Curators'
+
   const { data: apiResults, isLoading: apiLoading } = useSearchContent(debouncedQuery)
+  const { data: peopleResults, isLoading: peopleLoading } = useSearchPeople(isPeopleTab ? debouncedQuery : '')
+  const { data: curatorResults, isLoading: curatorLoading } = useSearchCurators(isCuratorsTab ? debouncedQuery : '')
   const { data: trendingResults, isLoading: trendingLoading } = useTrendingContent()
 
-  const isSearching = apiLoading && !!query.trim()
+  const isSearching = (isPeopleTab ? peopleLoading : isCuratorsTab ? curatorLoading : apiLoading) && !!query.trim()
 
   // Focus the search input on mount
   useEffect(() => {
@@ -71,12 +76,15 @@ export default function SearchPage() {
         director: '',
         media_type: r.media_type,
       }))
-      if (activeGenre !== 'All') mapped = mapped.filter(f => f.genre === activeGenre)
+      if (activeTab === 'Movie') mapped = mapped.filter(f => f.genre === 'Movie')
+      else if (activeTab === 'TV Show') mapped = mapped.filter(f => f.genre === 'TV Show')
       if (activeSort === 'Rating (High)') mapped = [...mapped].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
       else if (activeSort === 'Year (Newest)') mapped = [...mapped].sort((a, b) => parseInt(b.year) - parseInt(a.year))
       else if (activeSort === 'Year (Oldest)') mapped = [...mapped].sort((a, b) => parseInt(a.year) - parseInt(b.year))
       return mapped
     }
+
+    if (isPeopleTab) return []
 
     // Query typed — show search results
     const raw = apiResults ?? []
@@ -92,7 +100,8 @@ export default function SearchPage() {
       director: '',
       media_type: r.media_type,
     }))
-    if (activeGenre !== 'All') mapped = mapped.filter(f => f.genre === activeGenre)
+    if (activeTab === 'Movie') mapped = mapped.filter(f => f.genre === 'Movie')
+    else if (activeTab === 'TV Show') mapped = mapped.filter(f => f.genre === 'TV Show')
     if (activeSort === 'Rating (High)') mapped = [...mapped].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
     else if (activeSort === 'Year (Newest)') mapped = [...mapped].sort((a, b) => parseInt(b.year) - parseInt(a.year))
     else if (activeSort === 'Year (Oldest)') mapped = [...mapped].sort((a, b) => parseInt(a.year) - parseInt(b.year))
@@ -123,7 +132,13 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search any film, director, or genre..."
+              placeholder={
+                isCuratorsTab
+                  ? "Search curators by username..."
+                  : isPeopleTab
+                    ? "Search actors, directors..."
+                    : "Search any film, director, or genre..."
+              }
               className="w-full bg-surface-container-low border border-outline-variant rounded-xl py-4 pl-12 pr-16 font-body-lg text-body-lg text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
             />
             {query && (
@@ -142,36 +157,38 @@ export default function SearchPage() {
 
           {/* Filters Row */}
           <div className="flex items-center justify-between gap-md mb-lg flex-wrap">
-            {/* Genre Pills */}
+            {/* Tab Pills */}
             <div className="flex gap-xs flex-wrap">
-              {GENRES.map(genre => (
+              {TABS.map(tab => (
                 <button
-                  key={genre}
-                  onClick={() => setActiveGenre(genre)}
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
                   className={`px-sm py-1 rounded-full font-caption text-caption transition-all border ${
-                    activeGenre === genre
+                    activeTab === tab
                       ? 'bg-primary text-on-primary border-primary shadow-[0_0_10px_rgba(79,219,200,0.2)]'
                       : 'bg-transparent text-on-surface-variant border-outline-variant hover:border-primary/50 hover:text-on-surface'
                   }`}
                 >
-                  {genre}
+                  {tab}
                 </button>
               ))}
             </div>
 
-            {/* Sort Select */}
-            <div className="relative">
-              <select
-                value={activeSort}
-                onChange={(e) => setActiveSort(e.target.value)}
-                className="appearance-none bg-surface-container border border-outline-variant text-on-surface-variant font-caption text-caption rounded-lg px-sm py-1.5 pr-8 focus:outline-none focus:border-primary cursor-pointer"
-              >
-                {SORT_OPTIONS.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">expand_more</span>
-            </div>
+            {/* Sort Select — hidden when searching people or curators */}
+            {!isPeopleTab && !isCuratorsTab && (
+              <div className="relative">
+                <select
+                  value={activeSort}
+                  onChange={(e) => setActiveSort(e.target.value)}
+                  className="appearance-none bg-surface-container border border-outline-variant text-on-surface-variant font-caption text-caption rounded-lg px-sm py-1.5 pr-8 focus:outline-none focus:border-primary cursor-pointer"
+                >
+                  {SORT_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">expand_more</span>
+              </div>
+            )}
           </div>
 
           {/* Section Label */}
@@ -179,9 +196,13 @@ export default function SearchPage() {
             <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] uppercase">
               {isLoadingResults
                 ? 'Loading...'
-                : query.trim() === ''
-                  ? 'Trending'
-                  : `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`}
+                : isCuratorsTab && query.trim()
+                  ? `${curatorResults?.length ?? 0} curator${(curatorResults?.length ?? 0) !== 1 ? 's' : ''} for "${query}"`
+                  : isPeopleTab && query.trim()
+                    ? `${peopleResults?.length ?? 0} person${(peopleResults?.length ?? 0) !== 1 ? 's' : ''} for "${query}"`
+                    : query.trim() === ''
+                      ? 'Trending'
+                      : `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`}
             </h2>
           </div>
 
@@ -192,6 +213,104 @@ export default function SearchPage() {
                 <div key={i} className="aspect-[2/3] rounded-xl bg-surface-container border border-outline-variant/30 animate-pulse" />
               ))}
             </div>
+          ) : isCuratorsTab && query.trim() ? (
+            curatorResults && curatorResults.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-gutter">
+                {curatorResults.map((curator) => (
+                  <Link
+                    key={curator.id}
+                    href={`/${curator.username}`}
+                    className="group flex items-center gap-md p-md rounded-xl bg-surface-container border border-outline-variant/30 shadow-card hover:border-primary/50 hover:shadow-elevated transition-all duration-300"
+                  >
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-surface-variant flex-shrink-0">
+                      {curator.avatar_url ? (
+                        <img
+                          src={curator.avatar_url}
+                          alt={curator.username}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
+                          <span className="material-symbols-outlined text-[28px]">person</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-body-md text-body-md font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
+                        {curator.username}
+                      </h3>
+                      {curator.bio && (
+                        <p className="font-body-sm text-body-sm text-on-surface-variant/70 line-clamp-2 mt-0.5">
+                          {curator.bio}
+                        </p>
+                      )}
+                      <p className="font-mono text-[11px] text-on-surface-variant/60 uppercase tracking-wide mt-1">
+                        {curator.followers_count} follower{curator.followers_count !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <span className="material-symbols-outlined text-on-surface-variant/40 group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">group</span>
+                <h3 className="font-heading text-heading text-on-surface mb-xs">No curators found</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant max-w-xs">
+                  Try a different username.
+                </p>
+              </div>
+            )
+          ) : isPeopleTab && query.trim() ? (
+            peopleResults && peopleResults.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-gutter">
+                {peopleResults.map((person) => (
+                  <a
+                    key={person.id}
+                    href={`https://www.themoviedb.org/person/${person.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-md p-md rounded-xl bg-surface-container border border-outline-variant/30 shadow-card hover:border-primary/50 hover:shadow-elevated transition-all duration-300"
+                  >
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-surface-variant flex-shrink-0">
+                      {person.profile_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                          alt={person.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
+                          <span className="material-symbols-outlined text-[28px]">person</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-body-md text-body-md font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
+                        {person.name}
+                      </h3>
+                      <p className="font-mono text-[11px] text-on-surface-variant uppercase tracking-wide">
+                        {person.known_for_department}
+                      </p>
+                      {person.known_for.length > 0 && (
+                        <p className="font-body-sm text-body-sm text-on-surface-variant/70 truncate mt-0.5">
+                          Known for: {person.known_for.map(kf => kf.title).join(', ')}
+                        </p>
+                      )}
+                    </div>
+                    <span className="material-symbols-outlined text-on-surface-variant/40 group-hover:text-primary transition-colors text-[20px]">open_in_new</span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">person_search</span>
+                <h3 className="font-heading text-heading text-on-surface mb-xs">No people found</h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant max-w-xs">
+                  Try a different search term.
+                </p>
+              </div>
+            )
           ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">movie_filter</span>
@@ -200,7 +319,7 @@ export default function SearchPage() {
                 Try a different search term or explore a different genre.
               </p>
               <button
-                onClick={() => { setQuery(''); setActiveGenre('All') }}
+                onClick={() => { setQuery(''); setActiveTab('All') }}
                 className="mt-md text-primary font-semibold font-body-sm text-body-sm hover:text-primary-fixed transition-colors"
               >
                 Clear filters
