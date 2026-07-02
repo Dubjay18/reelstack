@@ -15,6 +15,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/lists"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
 	"github.com/Dubjay18/reelstack/api/internal/queue"
+	"github.com/Dubjay18/reelstack/api/internal/saved_lists"
 	"github.com/Dubjay18/reelstack/api/internal/users"
 	"github.com/Dubjay18/reelstack/api/pkg/cache"
 	"github.com/Dubjay18/reelstack/api/pkg/config"
@@ -168,6 +169,12 @@ func main() {
 	commentsSvc := comments.NewCommentService(commentsRepo, queueSvc)
 	commentsHandler := comments.NewHandler(commentsSvc)
 	commentsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
+	// ── Wire: saved_lists ─────────────────────────────────────────────────────
+	savedListsRepo := saved_lists.NewSavedListRepository(database)
+	savedListsSvc := saved_lists.NewSavedListService(savedListsRepo, listsRepo, notificationsSvc, queueSvc)
+	savedListsHandler := saved_lists.NewHandler(savedListsSvc)
+	savedListsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
 	// ── Log Routes ──────────────────────────────────────────────────────────
 	slog.Info("Registered routes:")

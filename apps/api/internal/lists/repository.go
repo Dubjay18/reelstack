@@ -21,6 +21,7 @@ type List struct {
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 	ItemCount    int       `json:"item_count" db:"item_count"`
 	WatchedCount int       `json:"watched_count" db:"watched_count"`
+	SaveCount    int       `json:"save_count" db:"save_count"`
 }
 
 type ListItem struct {
@@ -81,9 +82,11 @@ func (r *ListRepository) GetListByID(ctx context.Context, id string) (*List, err
 	query := `
 		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
-		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count
+		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
+		       COALESCE(count(distinct sl.user_id), 0) as save_count
 		FROM lists l
 		LEFT JOIN list_items li ON l.id = li.list_id
+		LEFT JOIN saved_lists sl ON l.id = sl.list_id
 		WHERE l.id = $1
 		GROUP BY l.id`
 	err := r.db.GetContext(ctx, &list, query, id)
@@ -115,9 +118,11 @@ func (r *ListRepository) GetPublicListsByUserID(ctx context.Context, userID stri
 	query := `
 		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
-		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count
+		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
+		       COALESCE(count(distinct sl.user_id), 0) as save_count
 		FROM lists l
 		LEFT JOIN list_items li ON l.id = li.list_id
+		LEFT JOIN saved_lists sl ON l.id = sl.list_id
 		WHERE l.user_id = $1 AND l.is_public = true
 		GROUP BY l.id
 		ORDER BY l.created_at DESC`
@@ -133,9 +138,11 @@ func (r *ListRepository) GetListsByUserID(ctx context.Context, userID string) ([
 	query := `
 		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
-		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count
+		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
+		       COALESCE(count(distinct sl.user_id), 0) as save_count
 		FROM lists l
 		LEFT JOIN list_items li ON l.id = li.list_id
+		LEFT JOIN saved_lists sl ON l.id = sl.list_id
 		WHERE l.user_id = $1
 		GROUP BY l.id
 		ORDER BY l.created_at DESC`
@@ -151,9 +158,11 @@ func (r *ListRepository) GetWatchlistByUserID(ctx context.Context, userID string
 	query := `
 		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
-		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count
+		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
+		       COALESCE(count(distinct sl.user_id), 0) as save_count
 		FROM lists l
 		LEFT JOIN list_items li ON l.id = li.list_id
+		LEFT JOIN saved_lists sl ON l.id = sl.list_id
 		WHERE l.user_id = $1 AND l.is_watchlist = TRUE
 		GROUP BY l.id`
 	err := r.db.GetContext(ctx, &list, query, userID)
@@ -171,9 +180,11 @@ func (r *ListRepository) GetListBySlug(ctx context.Context, userID string, slug 
 	query := `
 		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
-		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count
+		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
+		       COALESCE(count(distinct sl.user_id), 0) as save_count
 		FROM lists l
 		LEFT JOIN list_items li ON l.id = li.list_id
+		LEFT JOIN saved_lists sl ON l.id = sl.list_id
 		WHERE l.user_id = $1 AND l.slug = $2
 		GROUP BY l.id`
 	err := r.db.GetContext(ctx, &list, query, userID, slug)

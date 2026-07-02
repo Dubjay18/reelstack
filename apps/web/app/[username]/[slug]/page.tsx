@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { useAuth } from '@/components/providers/auth-provider'
 import { useEmbedList, useContentDetails } from '@/lib/hooks/api'
+import { SaveButton } from '@/components/save-button'
 import type { ListItem } from '@/types'
 
 function ProgressBar({ value, total }: { value: number; total: number }) {
@@ -60,6 +62,7 @@ function PublicFilmCard({ item }: { item: ListItem }) {
 }
 
 export default function PublicListPage() {
+  const { user } = useAuth()
   const params = useParams()
   const username = params.username as string
   const slug = params.slug as string
@@ -113,12 +116,20 @@ export default function PublicListPage() {
           Reelstack
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/register" className="px-4 py-1.5 bg-primary text-background rounded-lg text-xs font-bold hover:bg-primary-fixed transition-all active:scale-[0.98]">
-            Sign up
-          </Link>
-          <Link href="/login" className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-300 hover:bg-zinc-900 transition-colors">
-            Log in
-          </Link>
+          {user ? (
+            <Link href="/dashboard" className="px-4 py-1.5 bg-primary text-background rounded-lg text-xs font-bold hover:bg-primary-fixed transition-all active:scale-[0.98]">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/register" className="px-4 py-1.5 bg-primary text-background rounded-lg text-xs font-bold hover:bg-primary-fixed transition-all active:scale-[0.98]">
+                Sign up
+              </Link>
+              <Link href="/login" className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-300 hover:bg-zinc-900 transition-colors">
+                Log in
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -138,13 +149,18 @@ export default function PublicListPage() {
                 </Link>
               </p>
             </div>
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 text-zinc-300 hover:text-primary px-4 py-2 rounded-xl transition-all font-bold text-sm bg-transparent border border-zinc-800 hover:border-primary/50 self-start"
-            >
-              <span className="material-symbols-outlined text-[16px]">ios_share</span>
-              Share List
-            </button>
+            <div className="flex items-center gap-2">
+              {user && (
+                <SaveButton listId={list.id} listOwnerId={list.user_id} />
+              )}
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 text-zinc-300 hover:text-primary px-4 py-2 rounded-xl transition-all font-bold text-sm bg-transparent border border-zinc-800 hover:border-primary/50 self-start"
+              >
+                <span className="material-symbols-outlined text-[16px]">ios_share</span>
+                Share List
+              </button>
+            </div>
           </div>
 
           <div className="max-w-2xl">

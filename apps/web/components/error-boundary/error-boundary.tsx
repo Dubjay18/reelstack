@@ -1,15 +1,15 @@
 'use client'
 
-import { ErrorBoundary } from 'react-error-boundary'
+import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import type { ReactNode } from 'react'
 
-function DefaultFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+function DefaultFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-md bg-zinc-950 px-md text-center">
       <span className="material-symbols-outlined text-[48px] text-red-400">error_outline</span>
       <h2 className="font-heading-sm text-zinc-50">Something went wrong</h2>
       <p className="font-body-sm text-zinc-400 max-w-sm">
-        {error.message || 'An unexpected error occurred. Please try again.'}
+        {(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.')}
       </p>
       <button
         onClick={resetErrorBoundary}

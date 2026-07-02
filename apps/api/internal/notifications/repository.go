@@ -12,6 +12,7 @@ type INotificationRepository interface {
 	MarkAsRead(ctx context.Context, notificationID, userID string) error
 	MarkAllAsRead(ctx context.Context, userID string) error
 	DeleteFollowNotification(ctx context.Context, userID, actorID string) error
+	DeleteSavedListNotification(ctx context.Context, userID, actorID, listID string) error
 }
 
 type NotificationRepository struct {
@@ -38,8 +39,7 @@ func (r *NotificationRepository) GetNotifications(ctx context.Context, userID st
 		       COALESCE(l.title, c.body) AS entity_title
 		FROM notifications n
 		JOIN users u ON n.actor_id = u.id
-		LEFT JOIN lists l ON n.entity_id = l.id AND n.type = 'list_created'
-		LEFT JOIN comments c ON n.entity_id = c.id AND n.type = 'comment_reply'
+		LEFT JOIN lists l ON n.entity_id = l.id AND (n.type = 'list_created' OR n.type = 'list_saved')
 		WHERE n.user_id = $1
 		ORDER BY n.created_at DESC`
 	err := r.db.SelectContext(ctx, &notifs, query, userID)
@@ -74,5 +74,11 @@ func (r *NotificationRepository) MarkAllAsRead(ctx context.Context, userID strin
 func (r *NotificationRepository) DeleteFollowNotification(ctx context.Context, userID, actorID string) error {
 	query := `DELETE FROM notifications WHERE user_id = $1 AND actor_id = $2 AND type = 'new_follower'`
 	_, err := r.db.ExecContext(ctx, query, userID, actorID)
+	return err
+}
+
+func (r *NotificationRepository) DeleteSavedListNotification(ctx context.Context, userID, actorID, listID string) error {
+	query := `DELETE FROM notifications WHERE user_id = $1 AND actor_id = $2 AND type = 'list_saved' AND entity_id = $3`
+	_, err := r.db.ExecContext(ctx, query, userID, actorID, listID)
 	return err
 }

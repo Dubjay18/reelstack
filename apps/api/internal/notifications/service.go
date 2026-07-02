@@ -15,6 +15,7 @@ type INotificationService interface {
 	MarkAsRead(ctx context.Context, notificationID, userID string) error
 	MarkAllAsRead(ctx context.Context, userID string) error
 	DeleteFollowNotification(ctx context.Context, userID, actorID string) error
+	DeleteSavedListNotification(ctx context.Context, userID, actorID, listID string) error
 }
 
 type NotificationService struct {
@@ -56,4 +57,8 @@ func (s *NotificationService) MarkAllAsRead(ctx context.Context, userID string) 
 
 func (s *NotificationService) DeleteFollowNotification(ctx context.Context, userID, actorID string) error {
 	return s.repo.DeleteFollowNotification(ctx, userID, actorID)
+}
+
+func (s *NotificationService) DeleteSavedListNotification(ctx context.Context, userID, actorID, listID string) error {
+	return s.repo.DeleteSavedListNotification(ctx, userID, actorID, listID)
 }

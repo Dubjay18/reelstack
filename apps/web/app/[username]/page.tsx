@@ -2,8 +2,6 @@ import { ListCard } from '../../components/list-card'
 import { ShareButton } from '../../components/share-button'
 import { FollowButton } from '../../components/follow-button'
 import Link from 'next/link'
-import { NotificationBell } from '@/components/notification-bell'
-import { useAuth } from '@/components/providers/auth-provider'
 
 interface PageProps {
   params: {

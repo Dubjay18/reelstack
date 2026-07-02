@@ -14,6 +14,7 @@ import {
   useContentDetails
 } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
+import { SaveButton } from '@/components/save-button'
 import type { List, ListItem } from '@/types'
 
 const SUGGESTED_ADDITIONS = [
@@ -505,6 +506,9 @@ export default function Page() {
                   <span className="material-symbols-outlined text-[16px]">ios_share</span>
                   Share
                 </button>
+                {!isOwner && user && (
+                  <SaveButton listId={list.id} listOwnerId={list.user_id} />
+                )}
                 {isOwner && (
                   <button 
                     onClick={handleTogglePrivacy}

@@ -21,6 +21,7 @@ export interface List {
   slug: string
   item_count: number
   watched_count: number
+  save_count: number
   created_at: string
   updated_at: string
   // Populated on detail view
@@ -140,13 +141,23 @@ export interface Notification {
   id: string
   user_id: string
   actor_id: string
-  type: 'new_follower' | 'list_created'
+  type: 'new_follower' | 'list_created' | 'list_saved'
   entity_id?: string
   is_read: boolean
   created_at: string
   actor_username?: string
   actor_avatar_url?: string
   entity_title?: string
+}
+
+export interface SaveStatusResponse {
+  saved: boolean
+  save_count: number
+}
+
+export interface SavedList extends List {
+  owner_username: string
+  owner_avatar: string | null
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

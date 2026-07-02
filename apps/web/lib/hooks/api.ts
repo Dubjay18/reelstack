@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, Comment } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -351,7 +351,45 @@ export function useFollowStatus(userId: string, enabled = true) {
   })
 }
 
-// 8. Notification Hooks
+// 9. Save List Hooks
+export function useSaveList(listId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post<{ success: boolean }>(`/api/v1/lists/${listId}/save`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['save-status', listId] })
+      queryClient.invalidateQueries({ queryKey: ['saved-lists'] })
+    },
+  })
+}
+
+export function useUnsaveList(listId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.delete<{ success: boolean }>(`/api/v1/lists/${listId}/save`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['save-status', listId] })
+      queryClient.invalidateQueries({ queryKey: ['saved-lists'] })
+    },
+  })
+}
+
+export function useSaveStatus(listId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['save-status', listId],
+    queryFn: () => api.get<SaveStatusResponse>(`/api/v1/lists/${listId}/save-status`),
+    enabled: !!listId && enabled,
+  })
+}
+
+export function useSavedLists() {
+  return useQuery({
+    queryKey: ['saved-lists'],
+    queryFn: () => api.get<SavedList[]>('/api/v1/saved-lists'),
+  })
+}
+
+// 10. Notification Hooks
 export function useNotifications(enabled = true) {
   return useQuery({
     queryKey: ['notifications'],
