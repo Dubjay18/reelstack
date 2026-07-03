@@ -36,7 +36,7 @@ func (r *NotificationRepository) GetNotifications(ctx context.Context, userID st
 	query := `
 		SELECT n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
 		       u.username AS actor_username, u.avatar_url AS actor_avatar_url,
-		       COALESCE(l.title, c.body) AS entity_title
+		       l.title AS entity_title
 		FROM notifications n
 		JOIN users u ON n.actor_id = u.id
 		LEFT JOIN lists l ON n.entity_id = l.id AND (n.type = 'list_created' OR n.type = 'list_saved')
