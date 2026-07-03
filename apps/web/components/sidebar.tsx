@@ -23,7 +23,7 @@ function Sidebar() {
 
   return (
     <>
-      <nav className={isMoviePage ? "md:hidden" : "hidden md:flex flex-col bg-surface-dim border-r border-outline-variant w-[--sidebar-width] h-full fixed left-0 top-0 py-lg z-50"}>
+      <nav className="hidden md:flex flex-col bg-surface-dim border-r border-outline-variant w-[--sidebar-width] h-full fixed left-0 top-0 py-lg z-50">
 
         <div className="px-md mb-xl">
           <Link href="/dashboard">

@@ -127,7 +127,7 @@ export default function Page() {
 
   if (movieLoading) {
     return (
-      <div className="bg-[#131315] text-on-surface min-h-screen flex items-center justify-center">
+      <div className="text-on-surface min-h-screen flex items-center justify-center">
         <span className="material-symbols-outlined text-[36px] text-primary animate-spin">progress_activity</span>
       </div>
     )
@@ -135,7 +135,7 @@ export default function Page() {
 
   if (!movie) {
     return (
-      <div className="bg-[#131315] text-on-surface min-h-screen flex items-center justify-center">
+      <div className="text-on-surface min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-md">Movie Not Found</h1>
           <Link href="/dashboard" className="text-primary hover:underline">Back to Dashboard</Link>
@@ -160,41 +160,7 @@ export default function Page() {
     : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=500&h=750'
 
   return (
-    <div className="bg-[#131315] text-zinc-100 min-h-screen font-sans selection:bg-primary/30 selection:text-primary overflow-x-hidden pb-16 lg:pb-0">
-      {/* TopNavBar */}
-      <header 
-        className={`fixed top-0 w-full z-[100] h-16 flex items-center transition-all duration-300 ${
-          scrolled ? 'bg-zinc-950/95 shadow-sm border-b border-zinc-800 backdrop-blur-md' : 'bg-transparent border-b border-transparent'
-        }`}
-      >
-        <div className="flex justify-between items-center w-full px-lg py-md max-w-[1120px] mx-auto">
-          <div className="flex items-center gap-xl">
-            <Link href="/dashboard" className="font-display-lg text-[24px] tracking-tighter text-primary font-extrabold">
-              Reelstack
-            </Link>
-            <nav className="hidden md:flex items-center gap-lg">
-              <Link href="/dashboard" className="text-zinc-400 hover:text-primary transition-colors font-body-md">
-                Home
-              </Link>
-              <Link href="/lists" className="text-zinc-400 hover:text-primary transition-colors font-body-md">
-                Lists
-              </Link>
-              <Link href="/profile" className="text-zinc-400 hover:text-primary transition-colors font-body-md">
-                Profile
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-md">
-            <Link
-              href="/search"
-              className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full pl-4 pr-12 py-1.5 text-body-md text-zinc-400 hover:border-primary transition-all cursor-pointer"
-            >
-              Search films...
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <div className="text-zinc-100 min-h-screen font-sans selection:bg-primary/30 selection:text-primary overflow-x-hidden pb-16 lg:pb-0">
       <main className="min-h-screen relative">
         {/* Hero Section with Background Poster */}
         <div className="relative w-full min-h-[50dvh] lg:min-h-[80dvh]">
