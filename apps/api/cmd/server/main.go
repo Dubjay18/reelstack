@@ -142,7 +142,7 @@ func main() {
 	// ── Wire: lists ──────────────────────────────────────────────────────────
 	listsSvc := lists.NewListService(listsRepo, &followerFetcherAdapter{followsSvc: followsSvc}, queueSvc)
 	listsHandler := lists.NewHandler(listsSvc)
-	listsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+	listsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret), auth.OptionalFiberAuthMiddleware(cfg.JWTSecret))
 
 	// Re-wire auth with watchlist creator now that listsSvc is available
 	watchlistCreator := &watchlistCreatorAdapter{listsSvc: listsSvc}

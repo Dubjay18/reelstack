@@ -150,9 +150,7 @@ export default function PublicListPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {user && (
-                <SaveButton listId={list.id} listOwnerId={list.user_id} />
-              )}
+              <SaveButton listId={list.id} listOwnerId={list.user_id} />
               <button
                 onClick={handleShare}
                 className="flex items-center gap-2 text-zinc-300 hover:text-primary px-4 py-2 rounded-xl transition-all font-bold text-sm bg-transparent border border-zinc-800 hover:border-primary/50 self-start"

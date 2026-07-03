@@ -41,7 +41,10 @@ axiosInstance.interceptors.response.use(
 
       if (status === 401) {
         const isAuthRoute = error.config?.url?.includes('/api/v1/auth/')
-        if (!isAuthRoute) {
+        // Only do a hard redirect if the user had an active session that expired.
+        // Guests (no token) will naturally receive 401s — don't redirect them.
+        const hadToken = !!getStoredToken()
+        if (!isAuthRoute && hadToken) {
           if (typeof window !== 'undefined') {
             clearToken()
             window.location.href = '/login'

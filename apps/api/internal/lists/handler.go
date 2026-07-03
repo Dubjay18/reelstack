@@ -12,19 +12,35 @@ func NewHandler(svc IListService) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(r fiber.Router, authMiddleware fiber.Handler) {
+// getUserID safely extracts the userID from the Fiber context locals.
+// Returns an empty string if no authenticated user is present (guest access).
+func getUserID(c *fiber.Ctx) string {
+	if id, ok := c.Locals("userID").(string); ok {
+		return id
+	}
+	return ""
+}
+
+func (h *Handler) RegisterRoutes(r fiber.Router, authMiddleware fiber.Handler, optionalAuthMiddleware fiber.Handler) {
+	// Public-read group: uses optional auth so guests can access public lists
+	publicLists := r.Group("/api/v1/lists", optionalAuthMiddleware)
+	publicLists.Get("/:id", h.GetListByID)
+
+	// Items sub-group also public-read
+	publicItems := publicLists.Group("/:listId/items")
+	publicItems.Get("", h.GetItemsByListID)
+
+	// Auth-required group: all write operations
 	lists := r.Group("/api/v1/lists", authMiddleware)
 	lists.Post("", h.CreateList)
 	lists.Get("", h.GetLists)
 	lists.Get("/watchlist", h.GetWatchlist)
 	lists.Post("/watchlist/items", h.AddItemToWatchlist)
-	lists.Get("/:id", h.GetListByID)
 	lists.Put("/:id", h.UpdateList)
 	lists.Delete("/:id", h.DeleteList)
 
 	items := lists.Group("/:listId/items")
 	items.Post("", h.AddItemToList)
-	items.Get("", h.GetItemsByListID)
 	items.Put("/:itemId", h.UpdateListItem)
 	items.Delete("/:itemId", h.DeleteListItem)
 }
@@ -49,7 +65,7 @@ func (h *Handler) CreateList(c *fiber.Ctx) error {
 
 func (h *Handler) GetListByID(c *fiber.Ctx) error {
 	listID := c.Params("id")
-	userID := c.Locals("userID").(string)
+	userID := getUserID(c) // safe: empty string for guests
 
 	list, err := h.svc.GetListByID(c.Context(), listID, userID)
 	if err != nil {
@@ -130,7 +146,7 @@ func (h *Handler) AddItemToList(c *fiber.Ctx) error {
 
 func (h *Handler) GetItemsByListID(c *fiber.Ctx) error {
 	listID := c.Params("listId")
-	userID := c.Locals("userID").(string)
+	userID := getUserID(c) // safe: empty string for guests
 	
 	items, err := h.svc.GetItemsByListID(c.Context(), listID, userID)
 	if err != nil {

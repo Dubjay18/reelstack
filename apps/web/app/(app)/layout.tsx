@@ -1,18 +1,48 @@
-// TASK-042 — Authenticated shell layout
-// Wraps all /dashboard, /lists, /search routes.
-// Includes sidebar (desktop) + bottom tab bar (mobile).
-// TODO: add AuthProvider check and redirect to /login if no token.
+'use client'
 
-import Sidebar from "@/components/sidebar";
-
-
+import { useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { useAuth } from '@/components/providers/auth-provider'
+import Sidebar from "@/components/sidebar"
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  
+  const { user, isLoading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const isPublicListRoute =
+    pathname.startsWith('/lists/') &&
+    pathname !== '/lists/new' &&
+    pathname !== '/lists/watchlist'
+
+  useEffect(() => {
+    if (!isLoading && !user && !isPublicListRoute) {
+      router.push('/login')
+    }
+  }, [user, isLoading, router, isPublicListRoute])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">
+        <span className="material-symbols-outlined text-[36px] text-primary animate-spin">
+          progress_activity
+        </span>
+      </div>
+    )
+  }
+
+  if (!user && !isPublicListRoute) {
+    return null
+  }
+
+  const showSidebar = !!user
+
   return (
     <div className="flex min-h-dvh">
-  <Sidebar/>
-      <main className="flex-1 md:ml-[--sidebar-width]">{children}</main>
+      {showSidebar && <Sidebar />}
+      <main className={showSidebar ? "flex-1 md:ml-[--sidebar-width]" : "flex-1 w-full"}>
+        {children}
+      </main>
     </div>
   )
 }

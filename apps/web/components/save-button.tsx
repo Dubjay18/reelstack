@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useSaveList, useUnsaveList, useSaveStatus } from '@/lib/hooks/api'
 
@@ -10,6 +11,7 @@ interface SaveButtonProps {
 
 export function SaveButton({ listId, listOwnerId }: SaveButtonProps) {
   const { user } = useAuth()
+  const router = useRouter()
 
   const isSelf = user?.id === listOwnerId
   const { data: status, isLoading } = useSaveStatus(listId, !!user && !isSelf)
@@ -17,7 +19,7 @@ export function SaveButton({ listId, listOwnerId }: SaveButtonProps) {
   const saveMutation = useSaveList(listId)
   const unsaveMutation = useUnsaveList(listId)
 
-  if (!user || isSelf) {
+  if (isSelf) {
     return null
   }
 
@@ -26,6 +28,10 @@ export function SaveButton({ listId, listOwnerId }: SaveButtonProps) {
   const isPending = saveMutation.isPending || unsaveMutation.isPending
 
   const handleToggle = async () => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
     if (isPending) return
     if (isSaved) {
       unsaveMutation.mutate()

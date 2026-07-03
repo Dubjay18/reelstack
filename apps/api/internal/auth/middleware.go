@@ -32,6 +32,24 @@ func AuthMiddleware(secret string) func(next http.Handler) http.Handler {
 	}
 }
 
+// OptionalFiberAuthMiddleware parses the JWT token if present and sets userID context,
+// but does NOT reject the request if the token is missing or invalid.
+// Use this for routes that are publicly readable but can also serve richer data to authenticated users.
+func OptionalFiberAuthMiddleware(secret string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		authHeader := c.Get("Authorization")
+		if authHeader == "" {
+			return c.Next() // No token — continue as guest
+		}
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		userID, err := ValidateToken(tokenString, secret)
+		if err == nil && userID != "" {
+			c.Locals("userID", userID)
+		}
+		return c.Next()
+	}
+}
+
 // FiberAuthMiddleware parses JWT token from Authorization header and sets userID context.
 func FiberAuthMiddleware(secret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {

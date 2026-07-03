@@ -341,7 +341,22 @@ export default function Page() {
   const watchedCount = items?.filter(f => f.watched).length ?? 0
 
   return (
-    <div className="bg-background text-on-background min-h-screen overflow-x-hidden">
+    <div className={`bg-background text-on-background min-h-screen overflow-x-hidden ${!user ? 'pt-16' : ''}`}>
+      {!user && (
+        <header className="bg-[#131315]/85 backdrop-blur-md fixed top-0 left-0 w-full z-[45] border-b border-zinc-800/80 flex justify-between items-center px-6 h-16">
+          <Link href="/" className="font-display-lg text-[22px] tracking-tighter text-primary font-extrabold hover:opacity-90 transition-opacity">
+            Reelstack
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/register" className="px-4 py-1.5 bg-primary text-background rounded-lg text-xs font-bold hover:bg-primary-fixed transition-all active:scale-[0.98]">
+              Sign up
+            </Link>
+            <Link href="/login" className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-300 hover:bg-zinc-900 transition-colors">
+              Log in
+            </Link>
+          </div>
+        </header>
+      )}
       <main className="flex-1 w-full pb-24 md:pb-8">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl space-y-xl">
           {/* List Header */}
@@ -506,7 +521,7 @@ export default function Page() {
                   <span className="material-symbols-outlined text-[16px]">ios_share</span>
                   Share
                 </button>
-                {!isOwner && user && (
+                {!isOwner && (
                   <SaveButton listId={list.id} listOwnerId={list.user_id} />
                 )}
                 {isOwner && (

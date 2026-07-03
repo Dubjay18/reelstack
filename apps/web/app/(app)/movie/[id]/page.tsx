@@ -209,7 +209,7 @@ export default function Page() {
                 </div>
                 <div className="flex flex-wrap gap-md relative">
                   {/* Watchlist Button */}
-                  <button
+                  {/* <button
                     onClick={handleAddToWatchlist}
                     disabled={watchlistMutation.isPending || inWatchlist}
                     className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-[0.98] shadow-lg disabled:opacity-85 ${
@@ -224,7 +224,7 @@ export default function Page() {
                       <span className="material-symbols-outlined">{inWatchlist ? 'check' : 'bookmark_add'}</span>
                     )}
                     {watchlistMutation.isPending ? 'Adding...' : inWatchlist ? 'In Watchlist' : 'Watchlist'}
-                  </button>
+                  </button> */}
                   <button 
                     onClick={() => setShowListSelector(!showListSelector)}
                     disabled={addingToListId !== null}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useFollowUser, useUnfollowUser, useFollowStatus } from '@/lib/hooks/api'
 
@@ -10,6 +11,7 @@ interface FollowButtonProps {
 
 export function FollowButton({ targetUserId, targetUsername }: FollowButtonProps) {
   const { user } = useAuth()
+  const router = useRouter()
   
   // Fetch follow status. Enabled only if logged in and target user is not self.
   const isSelf = user?.id === targetUserId
@@ -18,8 +20,8 @@ export function FollowButton({ targetUserId, targetUsername }: FollowButtonProps
   const followMutation = useFollowUser(targetUserId)
   const unfollowMutation = useUnfollowUser(targetUserId)
 
-  // Don't render Follow button for anonymous users or self
-  if (!user || isSelf) {
+  // Don't render Follow button for self
+  if (isSelf) {
     return null
   }
 
@@ -27,6 +29,10 @@ export function FollowButton({ targetUserId, targetUsername }: FollowButtonProps
   const isPending = followMutation.isPending || unfollowMutation.isPending
 
   const handleFollowToggle = async () => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
     if (isPending) return
     if (isFollowing) {
       unfollowMutation.mutate()
