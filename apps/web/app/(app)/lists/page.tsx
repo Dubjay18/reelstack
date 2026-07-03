@@ -131,7 +131,7 @@ export default function ListsPage() {
         </div>
       </header>
       {/* Main */}
-      <main className="flex-1 w-full md:ml-[--sidebar-width] pt-16 md:pt-0 pb-20 md:pb-0">
+      <main className="flex-1 w-full pt-16 md:pt-0 pb-20 md:pb-0">
         <div className="max-w-3xl mx-auto px-lg md:px-xl py-lg md:py-xl">
 
           {/* Page Header */}

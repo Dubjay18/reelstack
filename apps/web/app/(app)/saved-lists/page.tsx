@@ -7,7 +7,7 @@ import { NotificationBell } from '@/components/notification-bell'
 
 export default function SavedListsPage() {
   const { user } = useAuth()
-  const { data: lists, isLoading } = useSavedLists()
+  const { data: lists, isLoading, isError, refetch } = useSavedLists()
   const savedLists = lists ?? []
 
   const totalFilms = savedLists.reduce((a, b) => a + b.item_count, 0)
@@ -21,7 +21,7 @@ export default function SavedListsPage() {
         </div>
       </header>
 
-      <main className="flex-1 w-full md:ml-[--sidebar-width] pt-16 md:pt-0 pb-20 md:pb-0">
+      <main className="flex-1 w-full pt-16 md:pt-0 pb-20 md:pb-0">
         <div className="max-w-3xl mx-auto px-lg md:px-xl py-lg md:py-xl">
           <div className="flex items-start justify-between mb-xl">
             <div>
@@ -42,6 +42,21 @@ export default function SavedListsPage() {
             <div className="flex flex-col gap-md">
               <div className="h-28 bg-surface-container-low border border-outline-variant/30 rounded-xl animate-pulse" />
               <div className="h-28 bg-surface-container-low border border-outline-variant/30 rounded-xl animate-pulse" />
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
+              <span className="material-symbols-outlined text-[48px] text-error/60 mb-md">cloud_off</span>
+              <h3 className="font-heading text-heading text-on-surface mb-xs">Couldn&apos;t load saved lists</h3>
+              <p className="font-body-sm text-body-sm text-on-surface-variant mb-md max-w-xs">
+                Something went wrong fetching your saved lists. Check your connection and try again.
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="flex items-center gap-sm px-lg py-sm bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-full font-heading text-heading transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">refresh</span>
+                Retry
+              </button>
             </div>
           ) : savedLists.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">

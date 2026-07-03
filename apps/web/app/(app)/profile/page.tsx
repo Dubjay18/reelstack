@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
 
       {/* Main */}
-      <main className="flex-1 w-full md:ml-[--sidebar-width] pb-20 md:pb-0">
+      <main className="flex-1 w-full pb-20 md:pb-0">
         {/* Profile Header */}
         <div className="relative overflow-hidden">
           {/* Ambient background */}

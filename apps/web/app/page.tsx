@@ -13,7 +13,7 @@ const FilmStrip = Icons.FilmStrip as any
 
 export default function LandingPage() {
   return (
-    <div className="bg-[#09090b] text-zinc-100 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300 relative overflow-x-hidden">
+    <div className="text-zinc-100 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300 relative overflow-x-hidden">
       {/* Floating Header */}
       <FloatingNav />
 

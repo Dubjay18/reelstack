@@ -29,7 +29,7 @@ function NotificationsPage() {
           )}
         </div>
       </header>
-         <main className="flex-1 overflow-x-hidden w-full md:ml-[--sidebar-width] pt-16 md:pt-0 pb-20 md:pb-0">
+         <main className="flex-1 overflow-x-hidden w-full pt-16 md:pt-0 pb-20 md:pb-0">
         <div className="max-w-3xl mx-auto px-lg md:px-xl py-lg md:py-xl">
      <h1 className="font-display-md text-display-md text-on-surface mb-xs">Notifications</h1>
         <div className="max-h-72 overflow-y-auto divide-y divide-outline-variant/20">

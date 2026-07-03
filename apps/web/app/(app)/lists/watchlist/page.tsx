@@ -28,7 +28,7 @@ export default function WatchlistPage() {
         </div>
       </header>
 
-      <main className="flex-1 w-full md:ml-[--sidebar-width] pt-16 md:pt-0 pb-20 md:pb-0">
+      <main className="flex-1 w-full pt-16 md:pt-0 pb-20 md:pb-0">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl">
           <div className="flex items-start justify-between mb-xl">
             <div>

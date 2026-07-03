@@ -54,10 +54,10 @@ function Sidebar() {
             My Lists
           </Link>
           <Link
-            className={`flex items-center gap-sm text-on-surface-variant hover:text-on-surface pl-xl pr-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading text-sm ${isSavedListsPage ? filledClassName : ''}`}
+            className={`flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading ${isSavedListsPage ? filledClassName : ''}`}
             href="/saved-lists"
           >
-            <span className="material-symbols-outlined text-[18px]" style={isSavedListsPage ? filled : undefined}>bookmark</span>
+            <span className="material-symbols-outlined" style={isSavedListsPage ? filled : undefined}>bookmark</span>
             Saved Lists
           </Link>
           <Link

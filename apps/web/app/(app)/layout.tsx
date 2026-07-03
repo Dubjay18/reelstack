@@ -10,9 +10,9 @@ import Sidebar from "@/components/sidebar";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   return (
-    <div className="flex min-h-dvh bg-zinc-950">
+    <div className="flex min-h-dvh">
   <Sidebar/>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 md:ml-[--sidebar-width]">{children}</main>
     </div>
   )
 }

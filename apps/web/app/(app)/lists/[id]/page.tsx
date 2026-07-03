@@ -342,7 +342,7 @@ export default function Page() {
 
   return (
     <div className="bg-background text-on-background min-h-screen overflow-x-hidden">
-      <main className="flex-1 w-full md:ml-[--sidebar-width] pb-24 md:pb-8">
+      <main className="flex-1 w-full pb-24 md:pb-8">
         <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl space-y-xl">
           {/* List Header */}
           <header className="space-y-md border-b border-outline-variant/30 pb-lg">

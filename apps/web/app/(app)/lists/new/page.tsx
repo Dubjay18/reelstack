@@ -128,7 +128,7 @@ export default function NewListPage() {
 
   return (
     <div className="bg-background text-on-background min-h-screen overflow-x-hidden">
-      <main className="flex-1 w-full md:ml-[--sidebar-width]">
+      <main className="flex-1 w-full">
         <div className="max-w-2xl mx-auto px-lg md:px-xl py-lg md:py-xl">
           
           {/* Breadcrumb */}
