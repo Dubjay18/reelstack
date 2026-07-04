@@ -15,7 +15,6 @@ type SavedListResponse struct {
 	Description  *string `json:"description" db:"description"`
 	IsPublic     bool    `json:"is_public" db:"is_public"`
 	Slug         string  `json:"slug" db:"slug"`
-	IsWatchlist  bool    `json:"is_watchlist" db:"is_watchlist"`
 	CreatedAt    string  `json:"created_at" db:"created_at"`
 	UpdatedAt    string  `json:"updated_at" db:"updated_at"`
 	ItemCount    int     `json:"item_count" db:"item_count"`

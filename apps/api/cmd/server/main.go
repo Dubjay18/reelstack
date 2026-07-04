@@ -109,8 +109,17 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	// ── Wire: auth (phase 1 — without watchlist creator) ──────────────────────
+	// ── Wire: auth ────────────────────────────────────────────────────────────
 	userRepo := users.NewUserRepository(database)
+	authSvc := auth.NewAuthService(
+		userRepo,
+		cfg.JWTSecret,
+		cfg.GoogleClientID,
+		cfg.GoogleClientSecret,
+		cfg.GoogleRedirectURL,
+	)
+	authHandler := auth.NewHandler(authSvc, cfg.AppURL)
+	authHandler.RegisterRoutes(app)
 
 	// ── Wire: users ─────────────────────────────────────────────────────────
 	listsRepo := lists.NewListRepository(database)
@@ -143,19 +152,6 @@ func main() {
 	listsSvc := lists.NewListService(listsRepo, &followerFetcherAdapter{followsSvc: followsSvc}, queueSvc)
 	listsHandler := lists.NewHandler(listsSvc)
 	listsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret), auth.OptionalFiberAuthMiddleware(cfg.JWTSecret))
-
-	// Re-wire auth with watchlist creator now that listsSvc is available
-	watchlistCreator := &watchlistCreatorAdapter{listsSvc: listsSvc}
-	authSvc := auth.NewAuthService(
-		userRepo,
-		cfg.JWTSecret,
-		cfg.GoogleClientID,
-		cfg.GoogleClientSecret,
-		cfg.GoogleRedirectURL,
-		watchlistCreator,
-	)
-	authHandler := auth.NewHandler(authSvc, cfg.AppURL)
-	authHandler.RegisterRoutes(app)
 
 	// ── Wire: content ────────────────────────────────────────────────────────
 	tmdbClient := content.NewTMDBClient(cfg.TMDBAPIKey, redisClient.Redis())
@@ -248,11 +244,4 @@ func (a *followerFetcherAdapter) GetFollowerIDs(ctx context.Context, userID stri
 	return ids, nil
 }
 
-type watchlistCreatorAdapter struct {
-	listsSvc lists.IListService
-}
 
-func (a *watchlistCreatorAdapter) CreateWatchlist(ctx context.Context, userID string) error {
-	_, err := a.listsSvc.CreateWatchlist(ctx, userID)
-	return err
-}

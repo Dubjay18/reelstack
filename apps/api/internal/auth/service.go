@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"regexp"
 	"strings"
 
@@ -20,11 +19,6 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
-// IWatchlistCreator allows the auth service to create a watchlist on registration.
-type IWatchlistCreator interface {
-	CreateWatchlist(ctx context.Context, userID string) error
-}
-
 // IAuthService is the contract consumed by the HTTP handler.
 type IAuthService interface {
 	RegisterUser(email, password, username string) (*users.User, error)
@@ -35,17 +29,15 @@ type IAuthService interface {
 
 // AuthService implements IAuthService.
 type AuthService struct {
-	userRepo        users.IUserRepository
-	secret          string
-	oauthConfig     *oauth2.Config
-	watchlistCreator IWatchlistCreator
+	userRepo    users.IUserRepository
+	secret      string
+	oauthConfig *oauth2.Config
 }
 
 // NewAuthService wires all dependencies into the service.
 func NewAuthService(
 	userRepo users.IUserRepository,
 	secret, clientID, clientSecret, redirectURL string,
-	watchlistCreator IWatchlistCreator,
 ) *AuthService {
 	oauthCfg := &oauth2.Config{
 		ClientID:     clientID,
@@ -55,10 +47,9 @@ func NewAuthService(
 		Endpoint:     google.Endpoint,
 	}
 	return &AuthService{
-		userRepo:         userRepo,
-		secret:           secret,
-		oauthConfig:      oauthCfg,
-		watchlistCreator: watchlistCreator,
+		userRepo:    userRepo,
+		secret:      secret,
+		oauthConfig: oauthCfg,
 	}
 }
 
@@ -90,13 +81,6 @@ func (s *AuthService) RegisterUser(email, password, username string) (*users.Use
 			return nil, ErrUserAlreadyExists
 		}
 		return nil, err
-	}
-
-	// Create default watchlist for the new user
-	if s.watchlistCreator != nil {
-		if err := s.watchlistCreator.CreateWatchlist(context.Background(), newUser.ID.String()); err != nil {
-			slog.Error("failed to create watchlist for new user", "user_id", newUser.ID.String(), "error", err)
-		}
 	}
 
 	return newUser, nil
@@ -179,9 +163,7 @@ func (s *AuthService) processGoogleProfile(profile *GoogleProfile) (string, erro
 		user, _ = s.userRepo.GetUserByEmail(profile.Email)
 	}
 
-	isNewUser := false
 	if user == nil {
-		isNewUser = true
 		username := generateUsername(profile.Name, profile.ID)
 		picture := profile.Picture
 		googleID := profile.ID
@@ -203,13 +185,6 @@ func (s *AuthService) processGoogleProfile(profile *GoogleProfile) (string, erro
 
 	if err := s.userRepo.UpsertGoogleUser(user); err != nil {
 		return "", fmt.Errorf("upsert user: %w", err)
-	}
-
-	// Create watchlist for new Google users
-	if isNewUser && s.watchlistCreator != nil {
-		if err := s.watchlistCreator.CreateWatchlist(context.Background(), user.ID.String()); err != nil {
-			slog.Error("failed to create watchlist for new Google user", "user_id", user.ID.String(), "error", err)
-		}
 	}
 
 	return GenerateToken(user.ID.String(), user.Username, s.secret)

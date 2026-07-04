@@ -37,8 +37,8 @@ export default function LandingPage() {
             </div>
 
             <h1 className="font-sans font-extrabold text-4xl sm:text-5xl md:text-7xl tracking-tighter leading-[0.95] text-zinc-50 mb-6">
-              The watchlist <br />
-              that <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 font-black">speaks for you.</span>
+              Your lists <br />
+              that <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 font-black">speak for you.</span>
             </h1>
 
             <p className="font-sans text-base sm:text-lg text-zinc-400 leading-relaxed max-w-[55ch] mb-8">

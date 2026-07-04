@@ -77,8 +77,6 @@ export const ListCard: React.FC<ListCardProps> = ({ list, username, onPress }) =
     transform: [{ scale: scale.value }],
   }));
 
-  const watchlistAccent = list.is_watchlist ? Colors.primary : undefined;
-
   return (
     <Pressable
       onPressIn={handlePressIn}
@@ -88,7 +86,6 @@ export const ListCard: React.FC<ListCardProps> = ({ list, username, onPress }) =
     >
       <Animated.View style={[
         styles.card,
-        list.is_watchlist && { borderColor: Colors.primary, borderWidth: 1.5 },
         animatedStyle,
       ]}>
         <View style={styles.cardHeader}>
@@ -96,46 +93,40 @@ export const ListCard: React.FC<ListCardProps> = ({ list, username, onPress }) =
           <View style={styles.stackContainer}>
             {/* Card 3 (Background) */}
             <LinearGradient
-              colors={list.is_watchlist ? ['rgba(79, 219, 200, 0.3)', '#131315'] as [string, string] : g3.colors}
-              style={[styles.stackCard, styles.cardBg3, { borderColor: list.is_watchlist ? 'rgba(79, 219, 200, 0.3)' : g3.borderColor }]}
+              colors={g3.colors}
+              style={[styles.stackCard, styles.cardBg3, { borderColor: g3.borderColor }]}
             >
               <Text style={styles.stackTextMini}>★</Text>
             </LinearGradient>
 
             {/* Card 2 (Midground) */}
             <LinearGradient
-              colors={list.is_watchlist ? ['rgba(79, 219, 200, 0.4)', '#131315'] as [string, string] : g2.colors}
-              style={[styles.stackCard, styles.cardBg2, { borderColor: list.is_watchlist ? 'rgba(79, 219, 200, 0.4)' : g2.borderColor }]}
+              colors={g2.colors}
+              style={[styles.stackCard, styles.cardBg2, { borderColor: g2.borderColor }]}
             >
               <Text style={styles.stackTextMini}>•••</Text>
             </LinearGradient>
 
             {/* Card 1 (Foreground) */}
             <LinearGradient
-              colors={list.is_watchlist ? ['rgba(79, 219, 200, 0.5)', '#131315'] as [string, string] : g1.colors}
-              style={[styles.stackCard, styles.cardBg1, { borderColor: list.is_watchlist ? 'rgba(79, 219, 200, 0.5)' : g1.borderColor }]}
+              colors={g1.colors}
+              style={[styles.stackCard, styles.cardBg1, { borderColor: g1.borderColor }]}
             >
-              <Text numberOfLines={2} style={[styles.stackTextMain, list.is_watchlist && { color: Colors.primary }]}>
-                {list.is_watchlist ? 'WATCHLIST' : firstWord.toUpperCase()}
+              <Text numberOfLines={2} style={styles.stackTextMain}>
+                {firstWord.toUpperCase()}
               </Text>
             </LinearGradient>
           </View>
 
-          {list.is_watchlist ? (
-            <Text style={[Typography.caption, { color: Colors.primary, fontWeight: '700', fontSize: 10 }]}>
-              WATCHLIST
-            </Text>
-          ) : (
-            <PrivacyBadge isPublic={list.is_public} />
-          )}
+          <PrivacyBadge isPublic={list.is_public} />
         </View>
 
         <View style={styles.cardBody}>
           <Text numberOfLines={1} style={[Typography.heading, styles.title]}>
-            {list.is_watchlist ? 'Watchlist' : list.title}
+            {list.title}
           </Text>
 
-          {list.description && !list.is_watchlist ? (
+          {list.description ? (
             <Text numberOfLines={2} style={[Typography.bodySm, styles.description]}>
               {list.description}
             </Text>

@@ -16,7 +16,6 @@ type List struct {
 	Description  *string   `json:"description" db:"description"`
 	IsPublic     bool      `json:"is_public" db:"is_public"`
 	Slug         string    `json:"slug" db:"slug"`
-	IsWatchlist  bool      `json:"is_watchlist" db:"is_watchlist"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 	ItemCount    int       `json:"item_count" db:"item_count"`
@@ -45,7 +44,6 @@ type IListRepository interface {
 	GetPublicListsByUserID(ctx context.Context, userID string) ([]*List, error)
 	GetListsByUserID(ctx context.Context, userID string) ([]*List, error)
 	GetListBySlug(ctx context.Context, userID string, slug string) (*List, error)
-	GetWatchlistByUserID(ctx context.Context, userID string) (*List, error)
 	
 	// List item operations
 	AddItemToList(ctx context.Context, listID string, item *ListItem) error
@@ -65,8 +63,8 @@ func NewListRepository(db *sqlx.DB) *ListRepository {
 
 func (r *ListRepository) CreateList(ctx context.Context, list *List) error {
 	query := `
-		INSERT INTO lists (id, user_id, title, description, is_public, slug, is_watchlist, created_at, updated_at)
-		VALUES (:id, :user_id, :title, :description, :is_public, :slug, :is_watchlist, NOW(), NOW())`
+		INSERT INTO lists (id, user_id, title, description, is_public, slug, created_at, updated_at)
+		VALUES (:id, :user_id, :title, :description, :is_public, :slug, NOW(), NOW())`
 	_, err := r.db.NamedExecContext(ctx, query, list)
 	if err != nil {
 		if apperrors.IsUniqueViolation(err) {
@@ -80,7 +78,7 @@ func (r *ListRepository) CreateList(ctx context.Context, list *List) error {
 func (r *ListRepository) GetListByID(ctx context.Context, id string) (*List, error) {
 	var list List
 	query := `
-		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
+		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
 		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
 		       COALESCE(count(distinct sl.user_id), 0) as save_count
@@ -116,7 +114,7 @@ func (r *ListRepository) DeleteList(ctx context.Context, id string) error {
 func (r *ListRepository) GetPublicListsByUserID(ctx context.Context, userID string) ([]*List, error) {
 	var lists []*List
 	query := `
-		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
+		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
 		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
 		       COALESCE(count(distinct sl.user_id), 0) as save_count
@@ -136,7 +134,7 @@ func (r *ListRepository) GetPublicListsByUserID(ctx context.Context, userID stri
 func (r *ListRepository) GetListsByUserID(ctx context.Context, userID string) ([]*List, error) {
 	var lists []*List
 	query := `
-		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
+		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
 		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
 		       COALESCE(count(distinct sl.user_id), 0) as save_count
@@ -153,32 +151,10 @@ func (r *ListRepository) GetListsByUserID(ctx context.Context, userID string) ([
 	return lists, nil
 }
 
-func (r *ListRepository) GetWatchlistByUserID(ctx context.Context, userID string) (*List, error) {
-	var list List
-	query := `
-		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
-		       COALESCE(count(li.id), 0) as item_count,
-		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
-		       COALESCE(count(distinct sl.user_id), 0) as save_count
-		FROM lists l
-		LEFT JOIN list_items li ON l.id = li.list_id
-		LEFT JOIN saved_lists sl ON l.id = sl.list_id
-		WHERE l.user_id = $1 AND l.is_watchlist = TRUE
-		GROUP BY l.id`
-	err := r.db.GetContext(ctx, &list, query, userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &list, nil
-}
-
 func (r *ListRepository) GetListBySlug(ctx context.Context, userID string, slug string) (*List, error) {
 	var list List
 	query := `
-		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist, l.created_at, l.updated_at,
+		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
 		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,
 		       COALESCE(count(distinct sl.user_id), 0) as save_count

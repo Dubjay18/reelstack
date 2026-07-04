@@ -17,7 +17,6 @@ export interface List {
   title: string
   description: string | null
   is_public: boolean
-  is_watchlist: boolean
   slug: string
   item_count: number
   watched_count: number

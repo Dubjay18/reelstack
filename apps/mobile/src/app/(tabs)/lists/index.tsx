@@ -30,12 +30,9 @@ export default function ListsScreen() {
       : filterIndex === 2
         ? lists.filter((l) => !l.is_public)
         : lists;
-    // Sort: watchlist first, then by created_at desc
-    return [...filtered].sort((a, b) => {
-      if (a.is_watchlist) return -1;
-      if (b.is_watchlist) return 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+    return [...filtered].sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   };
 
   const filteredLists = getFilteredLists();
@@ -103,13 +100,7 @@ export default function ListsScreen() {
               <ListCard
                 list={item}
                 username={user?.username || 'user'}
-                onPress={() => {
-                  if (item.is_watchlist) {
-                    router.push('/(tabs)/lists/watchlist');
-                  } else {
-                    router.push(`/(tabs)/lists/${item.id}`);
-                  }
-                }}
+                onPress={() => router.push(`/(tabs)/lists/${item.id}`)}
               />
             )}
           />

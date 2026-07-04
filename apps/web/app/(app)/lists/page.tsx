@@ -27,28 +27,18 @@ function ListCard({ list }: { list: List }) {
 
   return (
     <Link
-      href={list.is_watchlist ? '/lists/watchlist' : `/lists/${list.id}`}
-      className={`group flex bg-surface-container-low border rounded-xl overflow-hidden hover:bg-surface-container transition-all duration-200 cursor-pointer shadow-card hover:shadow-elevated ${
-        list.is_watchlist
-          ? 'border-primary/40 hover:border-primary'
-          : 'border-outline-variant hover:border-outline-variant/80'
-      }`}
+      href={`/lists/${list.id}`}
+      className="group flex bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden hover:bg-surface-container hover:border-outline-variant/80 transition-all duration-200 cursor-pointer shadow-card hover:shadow-elevated"
     >
       {/* Thumbnail Strip */}
       <div className="flex -space-x-[20%] w-[112px] flex-shrink-0 self-stretch items-center pl-3">
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            className={`relative w-[60px] aspect-[2/3] rounded-md overflow-hidden border shadow-md flex items-center justify-center flex-shrink-0 ${
-              list.is_watchlist
-                ? 'bg-primary/10 border-primary/20'
-                : 'bg-surface-variant border-surface-container-low'
-            }`}
+            className="relative w-[60px] aspect-[2/3] rounded-md overflow-hidden border shadow-md flex items-center justify-center flex-shrink-0 bg-surface-variant border-surface-container-low"
             style={{ zIndex: 30 - i * 10, opacity: 1 - i * 0.3, transform: `scale(${1 - i * 0.05})` }}
           >
-            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-              {list.is_watchlist ? 'bookmark' : 'movie'}
-            </span>
+            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">movie</span>
           </div>
         ))}
       </div>
@@ -57,13 +47,9 @@ function ListCard({ list }: { list: List }) {
       <div className="flex flex-col justify-center flex-1 p-md gap-xs min-w-0">
         <div className="flex items-start justify-between gap-sm">
           <h3 className="font-heading text-heading text-on-surface group-hover:text-primary transition-colors line-clamp-1">
-            {list.is_watchlist ? 'Watchlist' : list.title}
+            {list.title}
           </h3>
-          {list.is_watchlist ? (
-            <span className="flex-shrink-0 font-mono text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
-              Watchlist
-            </span>
-          ) : list.is_public ? (
+          {list.is_public ? (
             <span className="flex-shrink-0 font-mono text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
               Public
             </span>
@@ -104,12 +90,9 @@ export default function ListsPage() {
     return true
   }) || []
 
-  // Sort: watchlist first, then by created_at desc
-  const sorted = [...filtered].sort((a, b) => {
-    if (a.is_watchlist) return -1
-    if (b.is_watchlist) return 1
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  })
+  const sorted = [...filtered].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
 
   const totalFilms = lists?.reduce((a, b) => a + b.item_count, 0) ?? 0
   const totalWatched = lists?.reduce((a, b) => a + b.watched_count, 0) ?? 0

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useUserLists, useTrendingContent, useWatchlist } from '@/lib/hooks/api'
+import { useUserLists, useTrendingContent } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import { NotificationBell } from '@/components/notification-bell'
 
@@ -12,9 +12,6 @@ export default function Page() {
   const lists = rawLists ?? []
   const { data: rawTrendingMovies, isLoading: trendingLoading } = useTrendingContent()
   const trendingMovies = rawTrendingMovies ?? []
-  const { data: watchlistData } = useWatchlist()
-  const watchlist = watchlistData
-  const watchlistItems = watchlist?.items ?? []
   return (
     <div className="bg-background text-on-background flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
 

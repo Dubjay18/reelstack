@@ -12,8 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isPublicListRoute =
     pathname.startsWith('/lists/') &&
-    pathname !== '/lists/new' &&
-    pathname !== '/lists/watchlist'
+    pathname !== '/lists/new'
 
   useEffect(() => {
     if (!isLoading && !user && !isPublicListRoute) {

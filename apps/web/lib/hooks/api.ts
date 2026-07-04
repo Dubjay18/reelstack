@@ -237,25 +237,6 @@ export function useSearchCurators(query: string) {
   })
 }
 
-export function useWatchlist() {
-  return useQuery({
-    queryKey: ['watchlist'],
-    queryFn: () => api.get<List>('/api/v1/lists/watchlist'),
-  })
-}
-
-export function useAddToWatchlist() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (body: { tmdb_id: number; media_type: 'movie' | 'tv' }) =>
-      api.post<ListItem>('/api/v1/lists/watchlist/items', body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
-      queryClient.invalidateQueries({ queryKey: ['lists'] })
-    },
-  })
-}
-
 export function useTrendingContent() {
   return useQuery({
     queryKey: ['trending'],

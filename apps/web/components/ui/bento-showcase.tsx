@@ -330,7 +330,7 @@ export function BentoShowcase() {
     <div className="w-full max-w-5xl mx-auto py-12 px-4 md:px-0">
       <div className="text-center md:text-left mb-10">
         <h2 className="font-sans font-bold text-2xl md:text-3xl tracking-tight text-zinc-100 mb-2">
-          Watchlists evolved.
+          Lists, evolved.
         </h2>
         <p className="font-sans text-sm text-zinc-500 max-w-md">
           A modular collection engine constructed for cinephiles. Discover five pillars of premium list architecture.

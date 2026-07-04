@@ -47,7 +47,7 @@ func (r *SavedListRepository) IsSaved(ctx context.Context, userID, listID string
 func (r *SavedListRepository) GetSavedLists(ctx context.Context, userID string) ([]*SavedListResponse, error) {
 	var savedLists []*SavedListResponse
 	query := `
-		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug, l.is_watchlist,
+		SELECT l.id, l.user_id, l.title, l.description, l.is_public, l.slug,
 		       l.created_at, l.updated_at,
 		       COALESCE(count(li.id), 0) as item_count,
 		       COALESCE(count(case when li.watched = true then 1 end), 0) as watched_count,

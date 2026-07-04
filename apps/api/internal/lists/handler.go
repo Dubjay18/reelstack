@@ -34,8 +34,6 @@ func (h *Handler) RegisterRoutes(r fiber.Router, authMiddleware fiber.Handler, o
 	lists := r.Group("/api/v1/lists", authMiddleware)
 	lists.Post("", h.CreateList)
 	lists.Get("", h.GetLists)
-	lists.Get("/watchlist", h.GetWatchlist)
-	lists.Post("/watchlist/items", h.AddItemToWatchlist)
 	lists.Put("/:id", h.UpdateList)
 	lists.Delete("/:id", h.DeleteList)
 
@@ -209,32 +207,5 @@ func (h *Handler) GetLists(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(lists)
 }
 
-func (h *Handler) GetWatchlist(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
-	list, err := h.svc.EnsureWatchlistExists(c.Context(), userID)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to retrieve watchlist")
-	}
-	if list == nil {
-		return fiber.NewError(fiber.StatusNotFound, "watchlist not found")
-	}
-	return c.Status(fiber.StatusOK).JSON(list)
-}
 
-func (h *Handler) AddItemToWatchlist(c *fiber.Ctx) error {
-	var item ListItem
-	if err := c.BodyParser(&item); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
-	}
-	userID := c.Locals("userID").(string)
-	
-	if err := h.svc.AddItemToWatchlist(c.Context(), userID, &item); err != nil {
-		if err == ErrDuplicateItem {
-			return fiber.NewError(fiber.StatusConflict, err.Error())
-		}
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to add item to watchlist")
-	}
-	
-	return c.Status(fiber.StatusCreated).JSON(item)
-}	
 
