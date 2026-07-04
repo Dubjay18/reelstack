@@ -243,26 +243,38 @@ func main() {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
 
+		if emailClient == nil {
+			slog.Error("backfill: email client not initialized (RESEND_API_KEY missing)")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "email client not initialized, RESEND_API_KEY may be missing",
+			})
+		}
+
 		users, err := userRepo.GetAllUsers(c.Context())
 		if err != nil {
 			slog.Error("backfill: failed to get users", "error", err)
 			return c.SendStatus(fiber.StatusInternalServerError)
 		}
 
-		var enqueued int
+		var sent int
+		var errors []string
 		for _, u := range users {
-			if err := queueSvc.Enqueue(c.Context(), queue.JobTypeSendWelcomeEmail, queue.SendWelcomeEmailPayload{
-				Email:    u.Email,
-				Username: u.Username,
-			}); err != nil {
-				slog.Error("backfill: failed to enqueue welcome email", "email", u.Email, "error", err)
+			if err := emailClient.SendWelcome(c.Context(), u.Email, u.Username); err != nil {
+				errMsg := u.Email + ": " + err.Error()
+				slog.Error("backfill: failed to send welcome email", "email", u.Email, "error", err)
+				errors = append(errors, errMsg)
 				continue
 			}
-			enqueued++
+			sent++
 		}
 
-		slog.Info("backfill: welcome emails enqueued", "total", enqueued)
-		return c.JSON(fiber.Map{"enqueued": enqueued})
+		if len(errors) > 0 {
+			slog.Error("backfill: completed with errors", "sent", sent, "failed", len(errors))
+			return c.JSON(fiber.Map{"sent": sent, "failed": len(errors), "errors": errors})
+		}
+
+		slog.Info("backfill: welcome emails sent", "total", sent)
+		return c.JSON(fiber.Map{"sent": sent})
 	})
 
 	// ── Log Routes ──────────────────────────────────────────────────────────
