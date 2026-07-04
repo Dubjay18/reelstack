@@ -14,6 +14,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type mockEnqueuer struct{}
+
+func (m *mockEnqueuer) Enqueue(_ context.Context, _ string, _ any) error { return nil }
+
 // ── Mock repository ───────────────────────────────────────────────────────────
 
 type mockUserRepo struct {
@@ -46,6 +50,9 @@ func (m *mockUserRepo) UpdateUser(u *users.User) error { return nil }
 func (m *mockUserRepo) GetFollowCounts(userID string) (followers int, following int, err error) {
 	return 0, 0, nil
 }
+func (m *mockUserRepo) SearchUsers(_ context.Context, _ string, _ int) ([]users.UserSearchResult, error) {
+	return nil, nil
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -57,7 +64,7 @@ const (
 )
 
 func newService(repo users.IUserRepository) *auth.AuthService {
-	return auth.NewAuthService(repo, testSecret, testClientID, testClientSecret, testRedirectURL)
+	return auth.NewAuthService(repo, testSecret, testClientID, testClientSecret, testRedirectURL, &mockEnqueuer{})
 }
 
 // mockGoogleServer starts a local HTTP server that returns a fixed userinfo JSON.

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 
+	"github.com/Dubjay18/reelstack/api/internal/email"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
 )
 
@@ -25,6 +26,45 @@ func NewSendNotificationHandler(notifSvc *notifications.NotificationService) Job
 			"user_id", payload.UserID,
 			"actor_id", payload.ActorID,
 			"type", payload.Type,
+		)
+		return nil
+	}
+}
+
+func NewSendEmailHandler(emailClient *email.Client) JobHandler {
+	return func(ctx context.Context, job *Job) error {
+		var payload SendEmailPayload
+		if err := json.Unmarshal(job.Payload, &payload); err != nil {
+			return err
+		}
+
+		if err := emailClient.Send(ctx, payload.Subject, payload.HTML, payload.PlainText, payload.To); err != nil {
+			return err
+		}
+
+		slog.Debug("email sent",
+			"to", payload.To,
+			"subject", payload.Subject,
+			"type", payload.Type,
+		)
+		return nil
+	}
+}
+
+func NewSendWelcomeEmailHandler(emailClient *email.Client) JobHandler {
+	return func(ctx context.Context, job *Job) error {
+		var payload SendWelcomeEmailPayload
+		if err := json.Unmarshal(job.Payload, &payload); err != nil {
+			return err
+		}
+
+		if err := emailClient.SendWelcome(ctx, payload.Email, payload.Username); err != nil {
+			return err
+		}
+
+		slog.Debug("welcome email sent",
+			"to", payload.Email,
+			"username", payload.Username,
 		)
 		return nil
 	}

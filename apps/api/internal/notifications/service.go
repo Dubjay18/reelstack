@@ -12,6 +12,7 @@ var ErrNotFound = errors.New("notification not found")
 type INotificationService interface {
 	CreateNotification(ctx context.Context, userID, actorID, notifType string, entityID *string) error
 	GetNotifications(ctx context.Context, userID string) ([]*Notification, error)
+	GetUnreadGroupedByUser(ctx context.Context) (map[string][]*Notification, error)
 	MarkAsRead(ctx context.Context, notificationID, userID string) error
 	MarkAllAsRead(ctx context.Context, userID string) error
 	DeleteFollowNotification(ctx context.Context, userID, actorID string) error
@@ -45,6 +46,10 @@ func (s *NotificationService) CreateNotification(ctx context.Context, userID, ac
 
 func (s *NotificationService) GetNotifications(ctx context.Context, userID string) ([]*Notification, error) {
 	return s.repo.GetNotifications(ctx, userID)
+}
+
+func (s *NotificationService) GetUnreadGroupedByUser(ctx context.Context) (map[string][]*Notification, error) {
+	return s.repo.GetUnreadGroupedByUser(ctx)
 }
 
 func (s *NotificationService) MarkAsRead(ctx context.Context, notificationID, userID string) error {

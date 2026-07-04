@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/Dubjay18/reelstack/api/internal/users"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -32,12 +33,14 @@ type AuthService struct {
 	userRepo    users.IUserRepository
 	secret      string
 	oauthConfig *oauth2.Config
+	enqueuer    queue.Enqueuer
 }
 
 // NewAuthService wires all dependencies into the service.
 func NewAuthService(
 	userRepo users.IUserRepository,
 	secret, clientID, clientSecret, redirectURL string,
+	enqueuer queue.Enqueuer,
 ) *AuthService {
 	oauthCfg := &oauth2.Config{
 		ClientID:     clientID,
@@ -50,6 +53,7 @@ func NewAuthService(
 		userRepo:    userRepo,
 		secret:      secret,
 		oauthConfig: oauthCfg,
+		enqueuer:    enqueuer,
 	}
 }
 
@@ -82,6 +86,8 @@ func (s *AuthService) RegisterUser(email, password, username string) (*users.Use
 		}
 		return nil, err
 	}
+
+	s.enqueueWelcomeEmail(context.Background(), newUser.Email, newUser.Username)
 
 	return newUser, nil
 }
@@ -174,6 +180,8 @@ func (s *AuthService) processGoogleProfile(profile *GoogleProfile) (string, erro
 			AvatarURL: &picture,
 			GoogleID:  &googleID,
 		}
+
+		s.enqueueWelcomeEmail(context.Background(), user.Email, user.Username)
 	} else {
 		picture := profile.Picture
 		user.AvatarURL = &picture
@@ -188,4 +196,14 @@ func (s *AuthService) processGoogleProfile(profile *GoogleProfile) (string, erro
 	}
 
 	return GenerateToken(user.ID.String(), user.Username, s.secret)
+}
+
+func (s *AuthService) enqueueWelcomeEmail(ctx context.Context, email, username string) {
+	if s.enqueuer == nil {
+		return
+	}
+	_ = s.enqueuer.Enqueue(ctx, queue.JobTypeSendWelcomeEmail, queue.SendWelcomeEmailPayload{
+		Email:    email,
+		Username: username,
+	})
 }

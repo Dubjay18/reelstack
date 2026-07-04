@@ -10,6 +10,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/auth"
 	"github.com/Dubjay18/reelstack/api/internal/comments"
 	"github.com/Dubjay18/reelstack/api/internal/content"
+	"github.com/Dubjay18/reelstack/api/internal/email"
 	"github.com/Dubjay18/reelstack/api/internal/embed"
 	"github.com/Dubjay18/reelstack/api/internal/follows"
 	"github.com/Dubjay18/reelstack/api/internal/lists"
@@ -109,6 +110,23 @@ func main() {
 	}
 	defer redisClient.Close()
 
+	// ── Queue ───────────────────────────────────────────────────────────────
+	queueClient, err := queue.NewClient(cfg.RabbitMQURL)
+	if err != nil {
+		slog.Error("queue client failed", "error", err)
+		os.Exit(1)
+	}
+	defer queueClient.Close()
+	queueSvc := queue.NewService(queueClient, queue.DefaultConfig())
+
+	// ── Email (Resend) ────────────────────────────────────────────────────────
+	emailFrom := "Reelstack <noreply@jemails.jayfolio.dev>"
+	emailClient := email.NewClient(cfg.ResendAPIKey, emailFrom, cfg.AppURL)
+	if emailClient != nil {
+		queueSvc.RegisterHandler(queue.JobTypeSendEmail, queue.NewSendEmailHandler(emailClient))
+		queueSvc.RegisterHandler(queue.JobTypeSendWelcomeEmail, queue.NewSendWelcomeEmailHandler(emailClient))
+	}
+
 	// ── Wire: auth ────────────────────────────────────────────────────────────
 	userRepo := users.NewUserRepository(database)
 	authSvc := auth.NewAuthService(
@@ -117,6 +135,7 @@ func main() {
 		cfg.GoogleClientID,
 		cfg.GoogleClientSecret,
 		cfg.GoogleRedirectURL,
+		queueSvc,
 	)
 	authHandler := auth.NewHandler(authSvc, cfg.AppURL)
 	authHandler.RegisterRoutes(app)
@@ -133,14 +152,6 @@ func main() {
 	notificationsHandler := notifications.NewHandler(notificationsSvc)
 	notificationsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
-	// ── Queue ───────────────────────────────────────────────────────────────
-	queueClient, err := queue.NewClient(cfg.RabbitMQURL)
-	if err != nil {
-		slog.Error("queue client failed", "error", err)
-		os.Exit(1)
-	}
-	defer queueClient.Close()
-	queueSvc := queue.NewService(queueClient, queue.DefaultConfig())
 	queueSvc.RegisterHandler(queue.JobTypeSendNotification, queue.NewSendNotificationHandler(notificationsSvc))
 
 	// ── Wire: follows ───────────────────────────────────────────────────────
@@ -176,6 +187,55 @@ func main() {
 	savedListsSvc := saved_lists.NewSavedListService(savedListsRepo, listsRepo, notificationsSvc, queueSvc)
 	savedListsHandler := saved_lists.NewHandler(savedListsSvc)
 	savedListsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
+	// ── Cron: weekly digest ─────────────────────────────────────────────────
+	app.Post("/api/v1/cron/digests", func(c *fiber.Ctx) error {
+		if cfg.CronSecret == "" || c.Get("X-Cron-Secret") != cfg.CronSecret {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		}
+
+		grouped, err := notificationsSvc.GetUnreadGroupedByUser(c.Context())
+		if err != nil {
+			slog.Error("digest: failed to get unread notifications", "error", err)
+			return c.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		var sent int
+		for userID, notifs := range grouped {
+			user, err := userRepo.GetUserByID(userID)
+			if err != nil || user == nil {
+				slog.Warn("digest: skipping user", "user_id", userID, "error", err)
+				continue
+			}
+
+			items := make([]email.DigestItem, 0, len(notifs))
+			for _, n := range notifs {
+				actorName := ""
+				if n.ActorUsername != nil {
+					actorName = *n.ActorUsername
+				}
+				entityTitle := ""
+				if n.EntityTitle != nil {
+					entityTitle = *n.EntityTitle
+				}
+				items = append(items, email.DigestItem{
+					Type:        n.Type,
+					ActorName:   actorName,
+					EntityTitle: entityTitle,
+					CreatedAt:   n.CreatedAt.Format("Jan 2"),
+				})
+			}
+
+			if err := emailClient.SendDigest(c.Context(), user.Email, user.Username, items); err != nil {
+				slog.Error("digest: failed to send", "user_id", userID, "error", err)
+				continue
+			}
+			sent++
+		}
+
+		slog.Info("digest: weekly digest sent", "users", sent)
+		return c.JSON(fiber.Map{"sent": sent})
+	})
 
 	// ── Log Routes ──────────────────────────────────────────────────────────
 	slog.Info("Registered routes:")

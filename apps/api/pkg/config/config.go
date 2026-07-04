@@ -20,6 +20,8 @@ type Config struct {
 	AllowedOrigins     string
 	AppURL             string
 	RabbitMQURL        string
+	ResendAPIKey       string
+	CronSecret         string
 }
 
 func Load() (*Config, error) {
@@ -36,6 +38,8 @@ func Load() (*Config, error) {
 		AllowedOrigins:     getEnv("ALLOWED_ORIGINS", "http://localhost:3001"),
 		AppURL:             getEnv("APP_URL", "http://localhost:3000"),
 		RabbitMQURL:        getEnv("RABBITMQ_URL", "amqp://localhost:5672"),
+		ResendAPIKey:       os.Getenv("RESEND_API_KEY"),
+		CronSecret:         os.Getenv("CRON_SECRET"),
 	}
 
 	// Required field validation

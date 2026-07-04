@@ -9,6 +9,7 @@ import (
 type INotificationRepository interface {
 	CreateNotification(ctx context.Context, notif *Notification) error
 	GetNotifications(ctx context.Context, userID string) ([]*Notification, error)
+	GetUnreadGroupedByUser(ctx context.Context) (map[string][]*Notification, error)
 	MarkAsRead(ctx context.Context, notificationID, userID string) error
 	MarkAllAsRead(ctx context.Context, userID string) error
 	DeleteFollowNotification(ctx context.Context, userID, actorID string) error
@@ -69,6 +70,29 @@ func (r *NotificationRepository) MarkAllAsRead(ctx context.Context, userID strin
 	query := `UPDATE notifications SET is_read = TRUE WHERE user_id = $1`
 	_, err := r.db.ExecContext(ctx, query, userID)
 	return err
+}
+
+func (r *NotificationRepository) GetUnreadGroupedByUser(ctx context.Context) (map[string][]*Notification, error) {
+	var notifs []*Notification
+	query := `
+		SELECT n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
+		       u.username AS actor_username, u.avatar_url AS actor_avatar_url,
+		       l.title AS entity_title
+		FROM notifications n
+		JOIN users u ON n.actor_id = u.id
+		LEFT JOIN lists l ON n.entity_id = l.id AND (n.type = 'list_created' OR n.type = 'list_saved')
+		WHERE n.is_read = FALSE
+		ORDER BY n.user_id, n.created_at DESC`
+	err := r.db.SelectContext(ctx, &notifs, query)
+	if err != nil {
+		return nil, err
+	}
+
+	grouped := make(map[string][]*Notification)
+	for _, n := range notifs {
+		grouped[n.UserID] = append(grouped[n.UserID], n)
+	}
+	return grouped, nil
 }
 
 func (r *NotificationRepository) DeleteFollowNotification(ctx context.Context, userID, actorID string) error {
