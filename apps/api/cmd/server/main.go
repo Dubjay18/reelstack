@@ -134,8 +134,13 @@ func main() {
 	notificationsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
 	// ── Queue ───────────────────────────────────────────────────────────────
-	queueRepo := queue.NewRepository(database)
-	queueSvc := queue.NewService(queueRepo, queue.DefaultConfig())
+	queueClient, err := queue.NewClient(cfg.RabbitMQURL)
+	if err != nil {
+		slog.Error("queue client failed", "error", err)
+		os.Exit(1)
+	}
+	defer queueClient.Close()
+	queueSvc := queue.NewService(queueClient, queue.DefaultConfig())
 	queueSvc.RegisterHandler(queue.JobTypeSendNotification, queue.NewSendNotificationHandler(notificationsSvc))
 
 	// ── Wire: follows ───────────────────────────────────────────────────────

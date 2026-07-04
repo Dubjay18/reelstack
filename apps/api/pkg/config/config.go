@@ -19,6 +19,7 @@ type Config struct {
 	GoogleRedirectURL  string
 	AllowedOrigins     string
 	AppURL             string
+	RabbitMQURL        string
 }
 
 func Load() (*Config, error) {
@@ -34,6 +35,7 @@ func Load() (*Config, error) {
 		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
 		AllowedOrigins:     getEnv("ALLOWED_ORIGINS", "http://localhost:3001"),
 		AppURL:             getEnv("APP_URL", "http://localhost:3000"),
+		RabbitMQURL:        getEnv("RABBITMQ_URL", "amqp://localhost:5672"),
 	}
 
 	// Required field validation

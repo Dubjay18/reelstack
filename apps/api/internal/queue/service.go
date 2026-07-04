@@ -2,38 +2,38 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"sync"
 	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type JobHandler func(ctx context.Context, job *Job) error
-
 type Service struct {
-	repo     *Repository
+	client   *Client
 	handlers map[string]JobHandler
 	mu       sync.RWMutex
 	cfg      Config
 
-	workerCancel context.CancelFunc
-	workerDone   chan struct{}
+	consumerChan *amqp.Channel
+	cancel       context.CancelFunc
+	done         chan struct{}
 }
 
 type Config struct {
-	PollInterval time.Duration
-	BatchSize    int
+	QueueName string
 }
 
 func DefaultConfig() Config {
 	return Config{
-		PollInterval: 2 * time.Second,
-		BatchSize:    10,
+		QueueName: "notifications",
 	}
 }
 
-func NewService(repo *Repository, cfg Config) *Service {
+func NewService(client *Client, cfg Config) *Service {
 	return &Service{
-		repo:     repo,
+		client:   client,
 		handlers: make(map[string]JobHandler),
 		cfg:      cfg,
 	}
@@ -46,81 +46,103 @@ func (s *Service) RegisterHandler(jobType string, handler JobHandler) {
 }
 
 func (s *Service) Enqueue(ctx context.Context, jobType string, payload any) error {
-	return s.repo.Enqueue(ctx, jobType, payload)
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	return s.client.Publish(ctx, jobType, raw)
 }
 
 func (s *Service) Start(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
-	s.workerCancel = cancel
-	s.workerDone = make(chan struct{})
+	s.cancel = cancel
+	s.done = make(chan struct{})
 
-	go s.runLoop(ctx)
-	slog.Info("queue worker started", "poll_interval", s.cfg.PollInterval, "batch_size", s.cfg.BatchSize)
+	ch, err := s.client.Conn().Channel()
+	if err != nil {
+		slog.Error("failed to open consumer channel", "error", err)
+		return
+	}
+	s.consumerChan = ch
+
+	q, err := ch.QueueDeclare(s.cfg.QueueName, true, false, false, false, nil)
+	if err != nil {
+		slog.Error("queue declare failed", "error", err)
+		return
+	}
+
+	s.mu.RLock()
+	for jobType := range s.handlers {
+		if err := ch.QueueBind(q.Name, jobType, s.client.Exchange(), false, nil); err != nil {
+			slog.Error("queue bind failed", "queue", q.Name, "routing_key", jobType, "error", err)
+		}
+	}
+	s.mu.RUnlock()
+
+	deliveries, err := ch.Consume(q.Name, "", false, false, false, false, nil)
+	if err != nil {
+		slog.Error("consume failed", "error", err)
+		return
+	}
+
+	go s.runLoop(ctx, deliveries)
+	slog.Info("queue worker started", "queue", q.Name)
 }
 
 func (s *Service) Shutdown() {
-	if s.workerCancel != nil {
-		s.workerCancel()
+	if s.cancel != nil {
+		s.cancel()
 	}
-	if s.workerDone != nil {
-		<-s.workerDone
+	if s.done != nil {
+		<-s.done
+	}
+	if s.consumerChan != nil {
+		s.consumerChan.Close()
 	}
 }
 
-func (s *Service) runLoop(ctx context.Context) {
-	defer close(s.workerDone)
-
-	ticker := time.NewTicker(s.cfg.PollInterval)
-	defer ticker.Stop()
+func (s *Service) runLoop(ctx context.Context, deliveries <-chan amqp.Delivery) {
+	defer close(s.done)
 
 	for {
 		select {
 		case <-ctx.Done():
 			slog.Info("queue worker shutting down")
 			return
-		case <-ticker.C:
-			s.processBatch(ctx)
+		case d, ok := <-deliveries:
+			if !ok {
+				slog.Info("deliveries channel closed")
+				return
+			}
+			s.processDelivery(ctx, d)
 		}
 	}
 }
 
-func (s *Service) processBatch(ctx context.Context) {
-	jobs, err := s.repo.Dequeue(ctx, s.cfg.BatchSize)
-	if err != nil {
-		slog.Error("queue dequeue failed", "error", err)
-		return
-	}
-
-	for _, job := range jobs {
-		s.processJob(ctx, job)
-	}
-}
-
-func (s *Service) processJob(ctx context.Context, job *Job) {
+func (s *Service) processDelivery(ctx context.Context, d amqp.Delivery) {
 	s.mu.RLock()
-	handler, ok := s.handlers[job.Type]
+	handler, ok := s.handlers[d.RoutingKey]
 	s.mu.RUnlock()
 
 	if !ok {
-		slog.Warn("no handler registered for job type", "type", job.Type, "job_id", job.ID)
-		if err := s.repo.MarkFailed(ctx, job.ID, "no handler registered"); err != nil {
-			slog.Error("failed to mark job as failed", "job_id", job.ID, "error", err)
-		}
+		slog.Warn("no handler for routing key", "routing_key", d.RoutingKey)
+		d.Nack(false, false)
 		return
+	}
+
+	job := &Job{
+		Type:    d.RoutingKey,
+		Payload: d.Body,
 	}
 
 	jobCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	if err := handler(jobCtx, job); err != nil {
-		slog.Error("job failed", "type", job.Type, "job_id", job.ID, "error", err)
-		if err := s.repo.MarkFailed(ctx, job.ID, err.Error()); err != nil {
-			slog.Error("failed to mark job as failed", "job_id", job.ID, "error", err)
-		}
+		slog.Error("job failed", "type", job.Type, "error", err)
+		d.Nack(false, false)
 		return
 	}
 
-	if err := s.repo.MarkDone(ctx, job.ID); err != nil {
-		slog.Error("failed to mark job as done", "job_id", job.ID, "error", err)
-	}
+	d.Ack(false)
 }
