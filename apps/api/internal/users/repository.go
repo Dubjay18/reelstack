@@ -24,6 +24,7 @@ type IUserRepository interface {
 	UpdateUser(user *User) error
 	GetFollowCounts(userID string) (followers int, following int, err error)
 	SearchUsers(ctx context.Context, query string, limit int) ([]UserSearchResult, error)
+	GetAllUsers(ctx context.Context) ([]*User, error)
 }
 
 // UserRepository is the sqlx-backed implementation.
@@ -183,6 +184,16 @@ func (r *UserRepository) SearchUsers(ctx context.Context, query string, limit in
 		return []UserSearchResult{}, nil
 	}
 	return results, nil
+}
+
+// GetAllUsers returns every user in the system.
+func (r *UserRepository) GetAllUsers(ctx context.Context) ([]*User, error) {
+	var users []*User
+	err := r.db.SelectContext(ctx, &users, "SELECT * FROM users ORDER BY created_at")
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // GetFollowCounts returns the followers and following count for a user.

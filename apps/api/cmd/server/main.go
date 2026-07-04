@@ -237,6 +237,34 @@ func main() {
 		return c.JSON(fiber.Map{"sent": sent})
 	})
 
+	// ── Cron: backfill welcome emails ──────────────────────────────────────
+	app.Post("/api/v1/cron/backfill-welcome", func(c *fiber.Ctx) error {
+		if cfg.CronSecret == "" || c.Get("X-Cron-Secret") != cfg.CronSecret {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		}
+
+		users, err := userRepo.GetAllUsers(c.Context())
+		if err != nil {
+			slog.Error("backfill: failed to get users", "error", err)
+			return c.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		var enqueued int
+		for _, u := range users {
+			if err := queueSvc.Enqueue(c.Context(), queue.JobTypeSendWelcomeEmail, queue.SendWelcomeEmailPayload{
+				Email:    u.Email,
+				Username: u.Username,
+			}); err != nil {
+				slog.Error("backfill: failed to enqueue welcome email", "email", u.Email, "error", err)
+				continue
+			}
+			enqueued++
+		}
+
+		slog.Info("backfill: welcome emails enqueued", "total", enqueued)
+		return c.JSON(fiber.Map{"enqueued": enqueued})
+	})
+
 	// ── Log Routes ──────────────────────────────────────────────────────────
 	slog.Info("Registered routes:")
 	for _, route := range app.GetRoutes(true) {

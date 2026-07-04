@@ -53,6 +53,9 @@ func (m *mockUserRepo) GetFollowCounts(userID string) (followers int, following 
 func (m *mockUserRepo) SearchUsers(_ context.Context, _ string, _ int) ([]users.UserSearchResult, error) {
 	return nil, nil
 }
+func (m *mockUserRepo) GetAllUsers(_ context.Context) ([]*users.User, error) {
+	return nil, nil
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
