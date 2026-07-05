@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   useListDetail,
   useListItems,
@@ -10,6 +10,7 @@ import {
   useAddListItem,
   useUpdateListItem,
   useDeleteListItem,
+  useDeleteList,
   useSearchContent,
   useContentDetails
 } from '@/lib/hooks/api'
@@ -144,6 +145,7 @@ function FilmItemCard({
 export default function Page() {
   const params = useParams()
   const id = params.id as string
+  const router = useRouter()
 
   const { user } = useAuth()
   
@@ -159,6 +161,7 @@ export default function Page() {
   const addListItemMutation = useAddListItem(id)
   const updateListItemMutation = useUpdateListItem(id)
   const deleteListItemMutation = useDeleteListItem(id)
+  const deleteListMutation = useDeleteList()
 
   // Local state for editing metadata
   const [listTitle, setListTitle] = useState('')
@@ -170,6 +173,7 @@ export default function Page() {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
 
@@ -310,6 +314,17 @@ export default function Page() {
         }
       }
     )
+  }
+
+  const handleDeleteList = async () => {
+    try {
+      await deleteListMutation.mutateAsync(id)
+      showToast('List deleted')
+      router.push('/lists')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete list')
+    }
+    setShowDeleteConfirm(false)
   }
 
   const handleShare = () => {
@@ -525,16 +540,27 @@ export default function Page() {
                   <SaveButton listId={list.id} listOwnerId={list.user_id} />
                 )}
                 {isOwner && (
-                  <button 
-                    onClick={handleTogglePrivacy}
-                    disabled={updateListMutation.isPending}
-                    className="flex items-center gap-xs text-on-background hover:text-primary px-sm py-xs rounded transition-colors font-body-sm text-body-sm bg-transparent border border-outline-variant hover:border-primary/50 disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {list.is_public ? 'lock' : 'public'}
-                    </span>
-                    Make {list.is_public ? 'Private' : 'Public'}
-                  </button>
+                  <>
+                    <button 
+                      onClick={handleTogglePrivacy}
+                      disabled={updateListMutation.isPending}
+                      className="flex items-center gap-xs text-on-background hover:text-primary px-sm py-xs rounded transition-colors font-body-sm text-body-sm bg-transparent border border-outline-variant hover:border-primary/50 disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {list.is_public ? 'lock' : 'public'}
+                      </span>
+                      Make {list.is_public ? 'Private' : 'Public'}
+                    </button>
+                    <div className="w-[1px] h-5 bg-outline-variant/30" />
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={deleteListMutation.isPending}
+                      className="flex items-center gap-xs text-error hover:text-red-300 px-sm py-xs rounded transition-colors font-body-sm text-body-sm bg-transparent border border-error/40 hover:border-error disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      Delete
+                    </button>
+                  </>
                 )}
               </div>
               {isOwner && (
@@ -692,6 +718,52 @@ export default function Page() {
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface-container-high border border-outline-variant rounded-2xl max-w-sm w-full shadow-modal overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-lg border-b border-outline-variant/30">
+              <div className="flex items-center gap-sm">
+                <span className="material-symbols-outlined text-error text-[22px]">delete</span>
+                <h2 className="font-heading text-heading text-on-background">Delete list?</h2>
+              </div>
+            </div>
+            <div className="p-lg space-y-md">
+              <p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                Are you sure you want to delete <span className="font-semibold text-on-surface">&ldquo;{listTitle}&rdquo;</span>? 
+                This action cannot be undone.
+              </p>
+              <div className="flex gap-sm justify-end">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteListMutation.isPending}
+                  className="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm font-medium px-md py-sm rounded-md border border-outline-variant hover:border-outline transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteList}
+                  disabled={deleteListMutation.isPending}
+                  className="bg-error text-on-error font-body-sm text-body-sm font-semibold px-md py-sm rounded-md hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-xs"
+                >
+                  {deleteListMutation.isPending ? (
+                    <>
+                      <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      Delete
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
