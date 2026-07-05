@@ -47,6 +47,7 @@ export interface Movie {
   runtime: number | null
   genres: string[]
   vote_average: number
+  trailer_key?: string | null
 }
 
 export interface TVShow {
@@ -59,6 +60,7 @@ export interface TVShow {
   number_of_seasons: number
   genres: string[]
   vote_average: number
+  trailer_key?: string | null
 }
 
 export interface SearchResult {

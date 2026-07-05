@@ -30,6 +30,32 @@ func NewTMDBClient(apiKey string, redisClient *redis.Client) *TMDBClient {
 	}
 }
 
+func pickTrailerKey(videos *tmdbVideosResponse) *string {
+	if videos == nil || len(videos.Results) == 0 {
+		return nil
+	}
+
+	var best *string
+	// Priority: official Trailer > Trailer > Teaser
+	for _, v := range videos.Results {
+		if v.Site != "YouTube" {
+			continue
+		}
+		if best == nil {
+			best = &v.Key
+			continue
+		}
+		// Upgrade: prefer "Trailer" over "Teaser"
+		if v.Type == "Trailer" {
+			best = &v.Key
+			if v.Official {
+				break // official trailer is the best possible match
+			}
+		}
+	}
+	return best
+}
+
 // Example method to fetch movie details from TMDB API
 func (c *TMDBClient) GetMovieDetails(movieID int) (*MovieDetails, error) {
 	// Check Redis cache first
@@ -54,6 +80,7 @@ func (c *TMDBClient) GetMovieDetails(movieID int) (*MovieDetails, error) {
 		}
 		q := req.URL.Query()
 		q.Add("api_key", c.APIKey)
+		q.Add("append_to_response", "videos")
 		req.URL.RawQuery = q.Encode()
 
 		resp, err := c.httpClient.Do(req)
@@ -87,6 +114,7 @@ func (c *TMDBClient) GetMovieDetails(movieID int) (*MovieDetails, error) {
 			BackdropPath: raw.BackdropPath,
 			Runtime:      raw.Runtime,
 			VoteAverage:  raw.VoteAverage,
+			TrailerKey:   pickTrailerKey(raw.Videos),
 		}
 
 		// Cache the result in Redis
@@ -117,18 +145,31 @@ type MovieDetails struct {
 	BackdropPath *string  `json:"backdrop_path"`
 	Runtime      *int     `json:"runtime"`
 	VoteAverage  float64  `json:"vote_average"`
+	TrailerKey   *string  `json:"trailer_key"`
+}
+
+type tmdbVideo struct {
+	Key      string `json:"key"`
+	Site     string `json:"site"`
+	Type     string `json:"type"`
+	Official bool   `json:"official"`
+}
+
+type tmdbVideosResponse struct {
+	Results []tmdbVideo `json:"results"`
 }
 
 type tmdbMovieDetails struct {
-	ID           int         `json:"id"`
-	Title        string      `json:"title"`
-	Overview     string      `json:"overview"`
-	ReleaseDate  string      `json:"release_date"`
-	Genres       []tmdbGenre `json:"genres"`
-	PosterPath   *string     `json:"poster_path"`
-	BackdropPath *string     `json:"backdrop_path"`
-	Runtime      *int        `json:"runtime"`
-	VoteAverage  float64     `json:"vote_average"`
+	ID           int                `json:"id"`
+	Title        string             `json:"title"`
+	Overview     string             `json:"overview"`
+	ReleaseDate  string             `json:"release_date"`
+	Genres       []tmdbGenre        `json:"genres"`
+	PosterPath   *string            `json:"poster_path"`
+	BackdropPath *string            `json:"backdrop_path"`
+	Runtime      *int               `json:"runtime"`
+	VoteAverage  float64            `json:"vote_average"`
+	Videos       *tmdbVideosResponse `json:"videos"`
 }	
 
 func (c *TMDBClient) GetTVShowDetails(showID int) (*TVShowDetails, error) {
@@ -155,6 +196,7 @@ func (c *TMDBClient) GetTVShowDetails(showID int) (*TVShowDetails, error) {
 		}
 		q := req.URL.Query()
 		q.Add("api_key", c.APIKey)
+		q.Add("append_to_response", "videos")
 		req.URL.RawQuery = q.Encode()
 
 		resp, err := c.httpClient.Do(req)
@@ -188,6 +230,7 @@ func (c *TMDBClient) GetTVShowDetails(showID int) (*TVShowDetails, error) {
 			BackdropPath:    raw.BackdropPath,
 			NumberOfSeasons: raw.NumberOfSeasons,
 			VoteAverage:     raw.VoteAverage,
+			TrailerKey:      pickTrailerKey(raw.Videos),
 		}
 
 		// Cache the result in Redis
@@ -213,18 +256,20 @@ type TVShowDetails struct {
 	BackdropPath    *string  `json:"backdrop_path"`
 	NumberOfSeasons int      `json:"number_of_seasons"`
 	VoteAverage     float64  `json:"vote_average"`
+	TrailerKey      *string  `json:"trailer_key"`
 }
 
 type tmdbTVShowDetails struct {
-	ID              int         `json:"id"`
-	Name            string      `json:"name"`
-	Overview        string      `json:"overview"`
-	FirstAirDate    string      `json:"first_air_date"`
-	Genres          []tmdbGenre `json:"genres"`
-	PosterPath      *string     `json:"poster_path"`
-	BackdropPath    *string     `json:"backdrop_path"`
-	NumberOfSeasons int         `json:"number_of_seasons"`
-	VoteAverage     float64     `json:"vote_average"`
+	ID              int                 `json:"id"`
+	Name            string              `json:"name"`
+	Overview        string              `json:"overview"`
+	FirstAirDate    string              `json:"first_air_date"`
+	Genres          []tmdbGenre         `json:"genres"`
+	PosterPath      *string             `json:"poster_path"`
+	BackdropPath    *string             `json:"backdrop_path"`
+	NumberOfSeasons int                 `json:"number_of_seasons"`
+	VoteAverage     float64             `json:"vote_average"`
+	Videos          *tmdbVideosResponse `json:"videos"`
 }
 
 func (c *TMDBClient) SearchPeople(ctx context.Context, query string) ([]PersonSearchResult, error) {

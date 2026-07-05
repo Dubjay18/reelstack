@@ -45,6 +45,7 @@ export default function Page() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [showListSelector, setShowListSelector] = useState(false)
   const [addingToListId, setAddingToListId] = useState<string | null>(null)
+  const [showTrailer, setShowTrailer] = useState(false)
 
   // Query Details & Streaming
   const { data: movie, isLoading: movieLoading } = useContentDetails(mediaType, tmdbId)
@@ -273,6 +274,43 @@ export default function Page() {
                   </div>
                 )}
               </section>
+
+              {/* Trailer */}
+              {movie.trailer_key && (
+                <section>
+                  <h3 className="font-section-title text-section-title mb-md flex items-center gap-2 text-zinc-100 font-semibold mb-sm">
+                    <span className="material-symbols-outlined text-primary">play_circle</span>
+                    Trailer
+                  </h3>
+                  {showTrailer ? (
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                      <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src={`https://www.youtube-nocookie.com/embed/${movie.trailer_key}?autoplay=1&rel=0`}
+                        title="Trailer"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowTrailer(true)}
+                      className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 group cursor-pointer"
+                    >
+                      <img
+                        className="absolute inset-0 w-full h-full object-cover"
+                        src={`https://img.youtube.com/vi/${movie.trailer_key}/hqdefault.jpg`}
+                        alt="Play trailer"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/50 transition-colors">
+                        <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <span className="material-symbols-outlined text-[32px] text-white">play_arrow</span>
+                        </div>
+                      </div>
+                    </button>
+                  )}
+                </section>
+              )}
 
               {/* Plot & Cast */}
               <section>

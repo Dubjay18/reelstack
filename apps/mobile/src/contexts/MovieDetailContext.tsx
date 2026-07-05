@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, Pressable, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -216,8 +216,20 @@ export const MovieDetailProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     </View>
                   </View>
 
-                  {/* Actions (Add to List) */}
+                  {/* Actions (Trailer + Add to List) */}
                   <View style={styles.actionsRow}>
+                    {movieDetails && (movieDetails as any).trailer_key && (
+                      <Pressable
+                        style={styles.trailerButton}
+                        onPress={() => {
+                          const key = (movieDetails as any).trailer_key as string;
+                          Linking.openURL(`https://www.youtube.com/watch?v=${key}`);
+                        }}
+                      >
+                        <MaterialIcons name="play-circle-filled" size={20} color={Colors.primary} />
+                        <Text style={[Typography.bodySm, styles.trailerButtonText]}>Watch Trailer</Text>
+                      </Pressable>
+                    )}
                     <Pressable
                       style={styles.addButton}
                       onPress={() => setShowListSelector(true)}
@@ -389,6 +401,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.surfaceContainerLow,
     paddingTop: Spacing.md,
+  },
+  trailerButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    flexDirection: 'row',
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  trailerButtonText: {
+    color: Colors.primary,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   addButton: {
     backgroundColor: Colors.primary,
