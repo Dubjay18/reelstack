@@ -116,9 +116,9 @@ export default function FollowingPage() {
                       {user.bio}
                     </p>
                   )}
-                  <p className="font-mono text-mono text-on-surface-variant/60 mt-0.5">
+                  {/* <p className="font-mono text-mono text-on-surface-variant/60 mt-0.5">
                     {user.followers_count} followers
-                  </p>
+                  </p> */}
                 </div>
                 <div className="shrink-0" onClick={(e) => e.preventDefault()}>
                   <FollowButton targetUserId={user.id} targetUsername={user.username} />
