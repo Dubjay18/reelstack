@@ -107,9 +107,13 @@ export default async function Page({ params }: PageProps) {
               <span className="w-[3px] h-[3px] rounded-full bg-outline-variant shrink-0"></span>
               <span>{totalWatched} {totalWatched === 1 ? 'film watched' : 'films watched'}</span>
               <span className="w-[3px] h-[3px] rounded-full bg-outline-variant shrink-0"></span>
-              <span>{profile.followers_count ?? 0} followers</span>
+              <Link href={`/${profile.username}/followers`} className="hover:text-primary transition-colors">
+                {profile.followers_count ?? 0} followers
+              </Link>
               <span className="w-[3px] h-[3px] rounded-full bg-outline-variant shrink-0"></span>
-              <span>{profile.following_count ?? 0} following</span>
+              <Link href={`/${profile.username}/following`} className="hover:text-primary transition-colors">
+                {profile.following_count ?? 0} following
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-md mt-md md:mt-0">

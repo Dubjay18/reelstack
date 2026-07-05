@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -329,6 +329,22 @@ export function useFollowStatus(userId: string, enabled = true) {
     queryKey: ['follow-status', userId],
     queryFn: () => api.get<{ is_following: boolean }>(`/api/v1/users/${userId}/follow-status`),
     enabled: !!userId && enabled,
+  })
+}
+
+export function useFollowers(userId: string) {
+  return useQuery({
+    queryKey: ['followers', userId],
+    queryFn: () => api.get<UserProfile[]>(`/api/v1/users/${userId}/followers`),
+    enabled: !!userId,
+  })
+}
+
+export function useFollowing(userId: string) {
+  return useQuery({
+    queryKey: ['following', userId],
+    queryFn: () => api.get<UserProfile[]>(`/api/v1/users/${userId}/following`),
+    enabled: !!userId,
   })
 }
 

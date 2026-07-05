@@ -93,6 +93,15 @@ export interface PersonSearchResult {
   known_for: PersonKnownFor[]
 }
 
+export interface UserProfile {
+  id: string
+  username: string
+  avatar_url: string | null
+  bio: string | null
+  followers_count: number
+  following_count: number
+}
+
 export interface UserSearchResult {
   id: string
   username: string
