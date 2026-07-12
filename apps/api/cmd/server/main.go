@@ -10,6 +10,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/auth"
 	"github.com/Dubjay18/reelstack/api/internal/comments"
 	"github.com/Dubjay18/reelstack/api/internal/content"
+	"github.com/Dubjay18/reelstack/api/internal/curators"
 	"github.com/Dubjay18/reelstack/api/internal/email"
 	"github.com/Dubjay18/reelstack/api/internal/embed"
 	"github.com/Dubjay18/reelstack/api/internal/follows"
@@ -142,9 +143,17 @@ func main() {
 
 	// ── Wire: users ─────────────────────────────────────────────────────────
 	listsRepo := lists.NewListRepository(database)
-	usersSvc := users.NewUserService(userRepo, listsRepo, redisClient, cfg.JWTSecret)
+	curatorsRepo := curators.NewCuratorRepository(database)
+	curatorsSvc := curators.NewCuratorService(curatorsRepo)
+	scoreFetcher := &scoreFetcherAdapter{curatorsSvc: curatorsSvc}
+	usersSvc := users.NewUserService(userRepo, listsRepo, scoreFetcher, redisClient, cfg.JWTSecret)
 	usersHandler := users.NewHandler(usersSvc)
 	usersHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
+	// ── Wire: curators ────────────────────────────────────────────────────
+	curatorsHandler := curators.NewHandler(curatorsSvc, cfg.CronSecret)
+	curatorsHandler.RegisterRoutes(app)
+	curatorsHandler.RegisterCronRoute(app)
 
 	// ── Wire: notifications ─────────────────────────────────────────────────
 	notificationsRepo := notifications.NewNotificationRepository(database)
@@ -347,6 +356,18 @@ func (a *followerFetcherAdapter) GetFollowerIDs(ctx context.Context, userID stri
 		ids[i] = f.ID.String()
 	}
 	return ids, nil
+}
+
+type scoreFetcherAdapter struct {
+	curatorsSvc curators.ICuratorService
+}
+
+func (a *scoreFetcherAdapter) GetUserScoreWithRank(ctx context.Context, userID string) (int, *int, error) {
+	score, rank, err := a.curatorsSvc.GetUserScoreWithRank(ctx, userID)
+	if err != nil {
+		return 0, nil, err
+	}
+	return score.Score, rank, nil
 }
 
 

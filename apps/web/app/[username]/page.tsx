@@ -1,6 +1,7 @@
 import { ListCard } from '../../components/list-card'
 import { ShareButton } from '../../components/share-button'
 import { FollowButton } from '../../components/follow-button'
+import { ScoreBadge } from '../../components/score-badge'
 import Link from 'next/link'
 
 interface PageProps {
@@ -18,6 +19,8 @@ interface PublicProfile {
   item_count?: number
   followers_count?: number
   following_count?: number
+  score?: number
+  rank?: number | null
 }
 
 async function getProfile(username: string): Promise<PublicProfile | null> {
@@ -92,7 +95,12 @@ export default async function Page({ params }: PageProps) {
             />
           </div>
           <div className="flex-1 text-center md:text-left flex flex-col gap-sm">
-            <h1 className="font-display-md text-display-md text-on-surface">@{profile.username}</h1>
+            <div className="flex items-center gap-sm flex-wrap justify-center md:justify-start">
+              <h1 className="font-display-md text-display-md text-on-surface">@{profile.username}</h1>
+              {profile.score !== undefined && profile.score !== null && (
+                <ScoreBadge score={profile.score} rank={profile.rank} size="sm" />
+              )}
+            </div>
             {profile.bio ? (
               <p className="font-body-sm text-body-sm text-on-surface-variant max-w-2xl">
                 {profile.bio}

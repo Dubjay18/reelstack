@@ -13,6 +13,7 @@ function Sidebar() {
   const isProfilePage = pathname.startsWith('/profile')
   const isListsPage = pathname.startsWith('/lists')
   const isSavedListsPage = pathname.startsWith('/saved-lists')
+  const isLeaderboardPage = pathname.startsWith('/leaderboard')
   const isNotificationsPage = pathname.startsWith('/notifications')
   const isDashboardPage = pathname === '/dashboard'
 
@@ -59,6 +60,13 @@ function Sidebar() {
           >
             <span className="material-symbols-outlined" style={isSavedListsPage ? filled : undefined}>bookmark</span>
             Saved Lists
+          </Link>
+          <Link
+            className={`flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading ${isLeaderboardPage ? filledClassName : ''}`}
+            href="/leaderboard"
+          >
+            <span className="material-symbols-outlined" style={isLeaderboardPage ? filled : undefined}>leaderboard</span>
+            Leaderboard
           </Link>
           <Link
             className={`flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-r-lg border-l-[3px] border-transparent font-heading text-heading ${isProfilePage ? filledClassName : ''}`}

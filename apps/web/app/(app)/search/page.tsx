@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchContent, useSearchPeople, useSearchCurators, useTrendingContent } from '@/lib/hooks/api'
+import { ScoreBadge } from '@/components/score-badge'
 
 interface FilmResult {
   id: string
@@ -236,9 +237,14 @@ export default function SearchPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-body-md text-body-md font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
-                        {curator.username}
-                      </h3>
+                      <div className="flex items-center gap-sm">
+                        <h3 className="font-body-md text-body-md font-semibold text-on-surface group-hover:text-primary transition-colors truncate">
+                          {curator.username}
+                        </h3>
+                        {curator.score !== undefined && curator.score !== null && (
+                          <ScoreBadge score={curator.score} rank={curator.rank} size="sm" showLabel={false} />
+                        )}
+                      </div>
                       {curator.bio && (
                         <p className="font-body-sm text-body-sm text-on-surface-variant/70 line-clamp-2 mt-0.5">
                           {curator.bio}

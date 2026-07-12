@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList, LeaderboardEntry } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -63,6 +63,8 @@ export function usePublicProfile(username: string) {
       item_count: number
       followers_count: number
       following_count: number
+      score: number
+      rank: number | null
     }>(`/api/v1/users/${username}`),
     enabled: !!username,
   })
@@ -413,5 +415,16 @@ export function useMarkAllNotificationsRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
+  })
+}
+
+// 11. Leaderboard Hooks
+export function useLeaderboard(limit = 20, offset = 0) {
+  return useQuery({
+    queryKey: ['leaderboard', limit, offset],
+    queryFn: () => api.get<{ curators: LeaderboardEntry[]; computed_at: string }>(
+      `/api/v1/curators/leaderboard?limit=${limit}&offset=${offset}`
+    ),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

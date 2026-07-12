@@ -102,6 +102,8 @@ export interface UserProfile {
   bio: string | null
   followers_count: number
   following_count: number
+  score: number
+  rank: number | null
 }
 
 export interface UserSearchResult {
@@ -110,6 +112,20 @@ export interface UserSearchResult {
   avatar_url: string | null
   bio: string | null
   followers_count: number
+  score: number
+  rank: number | null
+}
+
+export interface LeaderboardEntry {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  score: number
+  rank: number
+  followers_count: number
+  list_count: number
+  item_count: number
+  watched_count: number
 }
 
 export interface StreamingProvider {

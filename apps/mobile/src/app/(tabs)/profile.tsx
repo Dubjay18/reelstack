@@ -11,6 +11,7 @@ import { useUserLists, usePublicProfile, useUpdateProfile, useCheckUsernameAvail
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ScoreBadge } from '@/components/ui/ScoreBadge';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 
@@ -226,7 +227,12 @@ export default function ProfileScreen() {
 
           {/* Username */}
           <Text style={[Typography.displayMd, styles.username]}>{username}</Text>
-          <Text style={[Typography.mono, styles.handle]}>@{username}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <Text style={[Typography.mono, styles.handle]}>@{username}</Text>
+            {profile?.score !== undefined && profile?.score !== null && (
+              <ScoreBadge score={profile.score} rank={profile.rank} size="sm" />
+            )}
+          </View>
 
           {/* Bio text */}
           {/* Bio text / Profile Edit Form */}

@@ -60,6 +60,8 @@ export function usePublicProfile(username: string) {
       item_count: number;
       followers_count: number;
       following_count: number;
+      score: number;
+      rank: number | null;
     }>(`/api/v1/users/${username}`),
     enabled: !!username,
   });

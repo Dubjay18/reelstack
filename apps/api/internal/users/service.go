@@ -32,19 +32,26 @@ type IUserService interface {
 	SearchUsers(ctx context.Context, query string) ([]UserSearchResult, error)
 }
 
-type UserService struct {
-	repo      IUserRepository
-	listRepo  lists.IListRepository
-	cache     *cache.Client
-	jwtSecret string
+// ScoreFetcher provides curator scores for embedding in profiles.
+type ScoreFetcher interface {
+	GetUserScoreWithRank(ctx context.Context, userID string) (score int, rank *int, err error)
 }
 
-func NewUserService(repo IUserRepository, listRepo lists.IListRepository, cache *cache.Client, jwtSecret string) *UserService {
+type UserService struct {
+	repo         IUserRepository
+	listRepo     lists.IListRepository
+	scoreFetcher ScoreFetcher
+	cache        *cache.Client
+	jwtSecret    string
+}
+
+func NewUserService(repo IUserRepository, listRepo lists.IListRepository, scoreFetcher ScoreFetcher, cache *cache.Client, jwtSecret string) *UserService {
 	return &UserService{
-		repo:      repo,
-		listRepo:  listRepo,
-		cache:     cache,
-		jwtSecret: jwtSecret,
+		repo:         repo,
+		listRepo:     listRepo,
+		scoreFetcher: scoreFetcher,
+		cache:        cache,
+		jwtSecret:    jwtSecret,
 	}
 }
 
@@ -105,6 +112,15 @@ func (s *UserService) GetPublicProfile(ctx context.Context, identifier string) (
 		totalItems += l.ItemCount
 	}
 	profile.ItemCount = totalItems
+
+	// Fetch curator score (best-effort, don't fail profile on score error)
+	if s.scoreFetcher != nil {
+		score, rank, err := s.scoreFetcher.GetUserScoreWithRank(ctx, user.ID.String())
+		if err == nil {
+			profile.Score = score
+			profile.Rank = rank
+		}
+	}
 
 	// 3. Serialize and save to Redis cache for 5 minutes (UserProfileTTL)
 	profileBytes, err := json.Marshal(profile)

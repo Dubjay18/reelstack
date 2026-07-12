@@ -22,7 +22,7 @@ dev-ios:
 
 # ── Docker ───────────────────────────────────────────────────────────────────
 docker-up:
-	@echo "▸ Starting postgres, redis, adminer..."
+	@echo "▸ Starting postgres, redis..."
 	docker compose up -d
 
 docker-down:

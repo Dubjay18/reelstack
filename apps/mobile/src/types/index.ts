@@ -95,6 +95,8 @@ export interface UserSearchResult {
   avatar_url: string | null
   bio: string | null
   followers_count: number
+  score: number
+  rank: number | null
 }
 
 export interface StreamingProvider {

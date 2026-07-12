@@ -102,7 +102,7 @@ func TestGetPublicProfile_Integration(t *testing.T) {
 	}
 
 	userRepo := NewUserRepository(database)
-	usersSvc := NewUserService(userRepo, listsRepo, redisClient, "testsecret")
+	usersSvc := NewUserService(userRepo, listsRepo, nil, redisClient, "testsecret")
 	usersHandler := NewHandler(usersSvc)
 
 	app := fiber.New()
@@ -254,7 +254,7 @@ func TestUpdateProfile_Integration(t *testing.T) {
 
 	listsRepo := lists.NewListRepository(database)
 	userRepo := NewUserRepository(database)
-	usersSvc := NewUserService(userRepo, listsRepo, redisClient, "testsecret")
+	usersSvc := NewUserService(userRepo, listsRepo, nil, redisClient, "testsecret")
 	usersHandler := NewHandler(usersSvc)
 
 	// App with authenticated user ID set in local context

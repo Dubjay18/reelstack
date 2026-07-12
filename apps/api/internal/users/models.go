@@ -32,6 +32,8 @@ type PublicProfile struct {
 	ItemCount      int       `json:"item_count,omitempty"`
 	FollowersCount int       `json:"followers_count"`
 	FollowingCount int       `json:"following_count"`
+	Score          int       `json:"score"`
+	Rank           *int      `json:"rank,omitempty"`
 }
 
 func (u *User) ToPublicProfile() PublicProfile {

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUserLists, usePublicProfile, useListItems, useContentDetails, useUpdateProfile, useCheckUsernameAvailability } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
+import { ScoreBadge } from '@/components/score-badge'
 import type { ListItem } from '@/types'
 
 function FilmItemCardProfile({ item }: { item: ListItem }) {
@@ -230,7 +231,12 @@ export default function ProfilePage() {
 
               {/* Info */}
               <div className="flex-1 text-center sm:text-left min-w-0">
-                <h1 className="font-display-md text-display-md text-on-surface capitalize">{username}</h1>
+                <div className="flex items-center gap-sm flex-wrap justify-center sm:justify-start">
+                  <h1 className="font-display-md text-display-md text-on-surface capitalize">{username}</h1>
+                  {profile?.score !== undefined && profile?.score !== null && (
+                    <ScoreBadge score={profile.score} rank={profile.rank} size="sm" />
+                  )}
+                </div>
                 <p className="font-mono text-mono text-primary mb-xs">@{username}</p>
                 
                 {/* Bio / Profile Edit Form */}

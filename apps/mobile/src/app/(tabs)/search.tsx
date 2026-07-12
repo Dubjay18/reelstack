@@ -7,6 +7,7 @@ import { GenrePills } from '@/components/ui/GenrePills';
 import { PosterGrid } from '@/components/ui/PosterGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useSearchContent, useSearchPeople, useSearchCurators, useTrendingContent } from '@/lib/hooks/api';
+import { ScoreBadge } from '@/components/ui/ScoreBadge';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
 
@@ -142,9 +143,14 @@ export default function SearchScreen() {
                   )}
                 </View>
                 <View style={styles.personInfo}>
-                  <Text style={[Typography.bodyLg, { color: Colors.onSurface, fontWeight: '600' }]}>
-                    {curator.username}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[Typography.bodyLg, { color: Colors.onSurface, fontWeight: '600' }]}>
+                      {curator.username}
+                    </Text>
+                    {curator.score !== undefined && curator.score !== null && (
+                      <ScoreBadge score={curator.score} rank={curator.rank} size="sm" />
+                    )}
+                  </View>
                   {curator.bio && (
                     <Text style={[Typography.bodySm, { color: Colors.onSurfaceVariant, opacity: 0.7 }]} numberOfLines={2}>
                       {curator.bio}

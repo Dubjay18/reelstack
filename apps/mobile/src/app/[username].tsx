@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ScoreBadge } from '@/components/ui/ScoreBadge';
 import { MaterialIcons } from '@expo/vector-icons';
 
 function ProfileFilmCard({ item }: { item: any }) {
@@ -197,7 +198,12 @@ export default function PublicProfileScreen() {
 
           {/* Username */}
           <Text style={[Typography.displayMd, styles.username]}>{profile.username}</Text>
-          <Text style={[Typography.mono, styles.handle]}>@{profile.username}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <Text style={[Typography.mono, styles.handle]}>@{profile.username}</Text>
+            {profile.score !== undefined && profile.score !== null && (
+              <ScoreBadge score={profile.score} rank={profile.rank} size="sm" />
+            )}
+          </View>
 
           {/* Bio */}
           {profile.bio ? (
