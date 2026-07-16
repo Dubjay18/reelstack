@@ -7,6 +7,7 @@ import { Colors, Radius, Typography, Spacing, Shadow } from '@/constants/theme';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { useContentDetails, useStreamingAvailability, useUserLists } from '@/lib/hooks/api';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MovieDetailMedia {
   id: number;
@@ -30,7 +31,8 @@ export const MovieDetailProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [showListSelector, setShowListSelector] = useState(false);
 
   const { showToast } = useToast();
-  const { data: userLists } = useUserLists();
+  const { user } = useAuth();
+  const { data: userLists } = useUserLists(!!user);
 
   // Fetch detailed info & streaming availability when an item is selected
   const { data: movieDetails, isLoading: isDetailsLoading } = useContentDetails(
@@ -237,6 +239,17 @@ export const MovieDetailProvider: React.FC<{ children: React.ReactNode }> = ({ c
                       <MaterialIcons name="playlist-add" size={20} color={Colors.onPrimary} />
                       <Text style={[Typography.bodySm, styles.addButtonText]}>Add to list...</Text>
                     </Pressable>
+                    <Pressable
+                      style={styles.commentsButton}
+                      onPress={() => {
+                        setShowDetailSheet(false);
+                        const { router } = require('expo-router');
+                        router.push(`/comments/${selectedMedia.media_type}/${selectedMedia.id}`);
+                      }}
+                    >
+                      <MaterialIcons name="chat-bubble-outline" size={18} color={Colors.onSurfaceVariant} />
+                      <Text style={[Typography.bodySm, styles.commentsButtonText]}>View Comments</Text>
+                    </Pressable>
                   </View>
                 </ScrollView>
               )
@@ -429,6 +442,18 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: Colors.onPrimary,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  commentsButton: {
+    flexDirection: 'row',
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+  },
+  commentsButtonText: {
+    color: Colors.onSurfaceVariant,
     fontWeight: '600',
     marginLeft: 6,
   },

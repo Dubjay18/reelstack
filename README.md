@@ -10,6 +10,10 @@ A social film/TV watchlist platform — think Spotify for your movie taste. Sear
 |---|---|---|
 | ![Landing page](docs/screenshots/landing.png) | ![Login page](docs/screenshots/login.png) | ![Register page](docs/screenshots/register.png) |
 
+| Dashboard | Search | Lists | Leaderboard |
+|-----------|--------|-------|-------------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Search](docs/screenshots/search.png) | ![Lists](docs/screenshots/lists.png) | ![Leaderboard](docs/screenshots/leaderboard.png) |
+
 ## Stack
 
 | Layer | Tech |

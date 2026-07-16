@@ -17,6 +17,7 @@ export interface List {
   slug: string
   item_count: number
   watched_count: number
+  save_count: number
   created_at: string
   updated_at: string
   items?: ListItem[]
@@ -97,6 +98,52 @@ export interface UserSearchResult {
   followers_count: number
   score: number
   rank: number | null
+}
+
+export interface UserProfile {
+  id: string
+  username: string
+  avatar_url: string | null
+  bio: string | null
+  followers_count: number
+  following_count: number
+  score: number
+  rank: number | null
+}
+
+export interface LeaderboardEntry {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  bio: string | null
+  score: number
+  rank: number
+  followers_count: number
+  list_count: number
+}
+
+export interface Comment {
+  id: string
+  user_id: string
+  tmdb_id: number
+  media_type: 'movie' | 'tv'
+  body: string
+  parent_id: string | null
+  created_at: string
+  updated_at: string
+  username?: string
+  avatar_url?: string | null
+  replies?: Comment[]
+}
+
+export interface SaveStatusResponse {
+  saved: boolean
+  save_count: number
+}
+
+export interface SavedList extends List {
+  owner_username: string
+  owner_avatar: string | null
 }
 
 export interface StreamingProvider {

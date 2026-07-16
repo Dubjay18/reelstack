@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ScoreBadge } from '@/components/ui/ScoreBadge';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 function ProfileFilmCard({ item }: { item: any }) {
   const router = useRouter();
@@ -94,6 +95,7 @@ function ProfileListRow({ listId, listTitle }: { listId: string; listTitle: stri
 }
 
 export default function ProfileScreen() {
+  const { isAuthorized } = useAuthGuard();
   const { user, logout } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
@@ -105,7 +107,7 @@ export default function ProfileScreen() {
 
   const username = user?.username || '';
   const { data: profile, isLoading: isProfileLoading } = usePublicProfile(username);
-  const { data: lists, isLoading: isListsLoading } = useUserLists();
+  const { data: lists, isLoading: isListsLoading } = useUserLists(!!user);
   const displayBio = profile?.bio || '';
 
   const startEditing = () => {
@@ -194,7 +196,7 @@ export default function ProfileScreen() {
     );
   };
 
-  if (isProfileLoading || isListsLoading) {
+  if (!isAuthorized || isProfileLoading || isListsLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -303,17 +305,30 @@ export default function ProfileScreen() {
           {/* Stats count row */}
           <View style={styles.statsRow}>
             {[
-              { value: totalLists, label: 'Lists' },
-              { value: totalFilms, label: 'Films' },
-              { value: totalWatched, label: 'Watched' },
-              { value: profile?.followers_count || 0, label: 'Followers' },
-              { value: profile?.following_count || 0, label: 'Following' },
-            ].map((stat) => (
-              <View key={stat.label} style={styles.statCell}>
-                <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>
-                <Text style={[Typography.caption, styles.statLabel]}>{stat.label}</Text>
-              </View>
-            ))}
+              { value: totalLists, label: 'Lists', route: null },
+              { value: totalFilms, label: 'Films', route: null },
+              { value: totalWatched, label: 'Watched', route: null },
+              { value: profile?.followers_count || 0, label: 'Followers', route: 'followers' as const },
+              { value: profile?.following_count || 0, label: 'Following', route: 'following' as const },
+            ].map((stat) => {
+              const cell = (
+                <View style={styles.statCell}>
+                  <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>
+                  <Text style={[Typography.caption, styles.statLabel]}>{stat.label}</Text>
+                </View>
+              );
+              if (!stat.route || !user?.username) {
+                return <View key={stat.label}>{cell}</View>;
+              }
+              return (
+                <Pressable
+                  key={stat.label}
+                  onPress={() => router.push({ pathname: `/[username]/${stat.route}`, params: { username: user.username } })}
+                >
+                  {cell}
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* Action Row */}

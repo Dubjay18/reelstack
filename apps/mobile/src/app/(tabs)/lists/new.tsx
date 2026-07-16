@@ -6,8 +6,10 @@ import { useCreateList } from '@/lib/hooks/api';
 import { useToast } from '@/contexts/ToastContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function CreateListScreen() {
+  const { isAuthorized } = useAuthGuard();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -15,6 +17,14 @@ export default function CreateListScreen() {
   const router = useRouter();
   const { showToast } = useToast();
   const createListMutation = useCreateList();
+
+  if (!isAuthorized) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -129,6 +139,12 @@ export default function CreateListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.background,
   },
   scrollContainer: {

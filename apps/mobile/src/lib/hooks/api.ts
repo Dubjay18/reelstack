@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification } from '@/types';
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, LeaderboardEntry, Comment, SavedList, SaveStatusResponse, UserProfile } from '@/types';
 
 // Auth Input Types
 export interface LoginCredentials {
@@ -101,10 +101,11 @@ export function useCheckUsernameAvailability(username: string) {
 }
 
 // 3. Lists Hooks
-export function useUserLists() {
+export function useUserLists(enabled = true) {
   return useQuery({
     queryKey: ['lists'],
     queryFn: () => api.get<List[]>('/api/v1/lists'),
+    enabled,
   });
 }
 
@@ -291,6 +292,22 @@ export function useFollowStatus(userId: string, enabled = true) {
   });
 }
 
+export function useFollowers(userId: string) {
+  return useQuery({
+    queryKey: ['followers', userId],
+    queryFn: () => api.get<UserProfile[]>(`/api/v1/users/${userId}/followers`),
+    enabled: !!userId,
+  });
+}
+
+export function useFollowing(userId: string) {
+  return useQuery({
+    queryKey: ['following', userId],
+    queryFn: () => api.get<UserProfile[]>(`/api/v1/users/${userId}/following`),
+    enabled: !!userId,
+  });
+}
+
 // 7. Notification Hooks
 export function useNotifications(enabled = true) {
   return useQuery({
@@ -318,5 +335,85 @@ export function useMarkAllNotificationsRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
+  });
+}
+
+// 8. Saved Lists Hooks
+export function useSaveList(listId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<{ success: boolean }>(`/api/v1/lists/${listId}/save`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['save-status', listId] });
+      queryClient.invalidateQueries({ queryKey: ['saved-lists'] });
+    },
+  });
+}
+
+export function useUnsaveList(listId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete<{ success: boolean }>(`/api/v1/lists/${listId}/save`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['save-status', listId] });
+      queryClient.invalidateQueries({ queryKey: ['saved-lists'] });
+    },
+  });
+}
+
+export function useSaveStatus(listId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['save-status', listId],
+    queryFn: () => api.get<SaveStatusResponse>(`/api/v1/lists/${listId}/save-status`),
+    enabled: !!listId && enabled,
+  });
+}
+
+export function useSavedLists() {
+  return useQuery({
+    queryKey: ['saved-lists'],
+    queryFn: () => api.get<SavedList[]>('/api/v1/saved-lists'),
+  });
+}
+
+// 9. Comment Hooks
+export function useComments(tmdbId: number, mediaType: string) {
+  return useQuery({
+    queryKey: ['comments', mediaType, tmdbId],
+    queryFn: () => api.get<Comment[]>(`/api/v1/content/${mediaType}/${tmdbId}/comments`),
+    enabled: !!tmdbId && !!mediaType,
+  });
+}
+
+export function useCreateComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tmdbId, mediaType, body, parentId }: { tmdbId: number; mediaType: string; body: string; parentId?: string }) =>
+      api.post<Comment>(`/api/v1/content/${mediaType}/${tmdbId}/comments`, { body, parent_id: parentId }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['comments', data.media_type, data.tmdb_id] });
+    },
+  });
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ commentId, tmdbId, mediaType }: { commentId: string; tmdbId: number; mediaType: string }) =>
+      api.delete<void>(`/api/v1/content/${mediaType}/${tmdbId}/comments/${commentId}`),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['comments', variables.mediaType, variables.tmdbId] });
+    },
+  });
+}
+
+// 10. Leaderboard Hooks
+export function useLeaderboard(limit = 20, offset = 0) {
+  return useQuery({
+    queryKey: ['leaderboard', limit, offset],
+    queryFn: () => api.get<{ curators: LeaderboardEntry[]; computed_at: string }>(
+      `/api/v1/curators/leaderboard?limit=${limit}&offset=${offset}`
+    ),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
