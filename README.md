@@ -6,9 +6,9 @@ A social film/TV watchlist platform — think Spotify for your movie taste. Sear
 
 ## Screenshots
 
-| Home | Login | Register |
-|------|-------|----------|
-| ![Home](docs/screenshots/home.png) | ![Login](docs/screenshots/login.png) | ![Register](docs/screenshots/register.png) |
+| Landing | Sign in | Create account |
+|---|---|---|
+| ![Landing page](docs/screenshots/landing.png) | ![Login page](docs/screenshots/login.png) | ![Register page](docs/screenshots/register.png) |
 
 | Dashboard | Search | Lists | Leaderboard |
 |-----------|--------|-------|-------------|
