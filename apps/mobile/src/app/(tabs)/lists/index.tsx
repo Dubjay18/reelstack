@@ -9,19 +9,29 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ListCard } from '@/components/ui/ListCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function ListsScreen() {
+  const { isAuthorized } = useAuthGuard();
   const router = useRouter();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filterIndex, setFilterIndex] = useState(0); // 0: All, 1: Public, 2: Private
   const AnyFlashList = FlashList as any;
 
-  const { data: lists, isLoading, isRefetching, refetch } = useUserLists();
+  const { data: lists, isLoading, isRefetching, refetch } = useUserLists(!!user);
 
   const handleRefresh = async () => {
     queryClient.invalidateQueries({ queryKey: ['lists'] });
   };
+
+  if (!isAuthorized) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   const getFilteredLists = () => {
     if (!lists) return [];
@@ -42,12 +52,20 @@ export default function ListsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[Typography.displayMd, styles.title]}>My Lists</Text>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => router.push('/(tabs)/lists/new')}
-        >
-          <MaterialIcons name="add" size={24} color={Colors.onPrimary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            style={styles.savedButton}
+            onPress={() => router.push('/(tabs)/lists/saved')}
+          >
+            <MaterialIcons name="bookmark" size={22} color={Colors.onSurfaceVariant} />
+          </Pressable>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => router.push('/(tabs)/lists/new')}
+          >
+            <MaterialIcons name="add" size={24} color={Colors.onPrimary} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Segmented Control */}
@@ -136,6 +154,18 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.onSurface,
     fontWeight: '700',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  savedButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addButton: {
     width: 44,

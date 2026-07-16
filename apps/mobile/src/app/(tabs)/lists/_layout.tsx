@@ -13,6 +13,7 @@ export default function ListsLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="new" />
       <Stack.Screen name="[id]" />
+      <Stack.Screen name="saved" />
     </Stack>
   );
 }

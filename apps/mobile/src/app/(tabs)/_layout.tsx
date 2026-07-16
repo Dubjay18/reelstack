@@ -3,12 +3,15 @@ import { View, ActivityIndicator } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useAuth } from '@/contexts/AuthContext';
 
+// Tabs render for guests too — Search stays browsable while logged out.
+// Each individual tab screen is responsible for its own auth gating via
+// useAuthGuard, since Home/Lists/Profile are personal and Search is not.
 export default function TabsLayout() {
-  const { isAuthorized } = useAuthGuard();
+  const { isLoading } = useAuth();
 
-  if (!isAuthorized) {
+  if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={Colors.primary} />

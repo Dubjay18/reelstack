@@ -6,12 +6,13 @@ import * as Sharing from 'expo-sharing';
 import { Colors, Radius, Typography, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useMovieDetail } from '@/contexts/MovieDetailContext';
-import { usePublicProfile, useFollowUser, useUnfollowUser, useFollowStatus } from '@/lib/hooks/api';
+import { usePublicProfile } from '@/lib/hooks/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { ListCard } from '@/components/ui/ListCard';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScoreBadge } from '@/components/ui/ScoreBadge';
+import { FollowButton } from '@/components/ui/FollowButton';
 import { MaterialIcons } from '@expo/vector-icons';
 
 function ProfileFilmCard({ item }: { item: any }) {
@@ -102,33 +103,6 @@ export default function PublicProfileScreen() {
   const { user } = useAuth();
 
   const isSelf = user?.username === username;
-  const targetUserId = profile?.id || '';
-
-  const { data: followStatus, isLoading: isFollowStatusLoading } = useFollowStatus(
-    targetUserId,
-    !!user && !isSelf && !!targetUserId
-  );
-
-  const followMutation = useFollowUser(targetUserId);
-  const unfollowMutation = useUnfollowUser(targetUserId);
-
-  const isFollowing = followStatus?.is_following ?? false;
-  const isPending = followMutation.isPending || unfollowMutation.isPending;
-
-  const handleFollowToggle = () => {
-    if (isPending) return;
-    if (isFollowing) {
-      unfollowMutation.mutate(undefined, {
-        onSuccess: () => showToast(`Unfollowed @${username}`, 'success'),
-        onError: (err: any) => showToast(err?.message || 'Failed to unfollow', 'error'),
-      });
-    } else {
-      followMutation.mutate(undefined, {
-        onSuccess: () => showToast(`Following @${username}`, 'success'),
-        onError: (err: any) => showToast(err?.message || 'Failed to follow', 'error'),
-      });
-    }
-  };
 
   const handleShare = async () => {
     try {
@@ -215,46 +189,36 @@ export default function PublicProfileScreen() {
           {/* Stats count row */}
           <View style={styles.statsRow}>
             {[
-              { value: totalLists, label: 'Lists' },
-              { value: totalFilms, label: 'Films' },
-              { value: totalWatched, label: 'Watched' },
-              { value: profile.followers_count || 0, label: 'Followers' },
-              { value: profile.following_count || 0, label: 'Following' },
-            ].map((stat) => (
-              <View key={stat.label} style={styles.statCell}>
-                <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>
-                <Text style={[Typography.caption, styles.statLabel]}>{stat.label}</Text>
-              </View>
-            ))}
+              { value: totalLists, label: 'Lists', route: null },
+              { value: totalFilms, label: 'Films', route: null },
+              { value: totalWatched, label: 'Watched', route: null },
+              { value: profile.followers_count || 0, label: 'Followers', route: 'followers' as const },
+              { value: profile.following_count || 0, label: 'Following', route: 'following' as const },
+            ].map((stat) => {
+              const cell = (
+                <View style={styles.statCell}>
+                  <Text style={[Typography.heading, styles.statValue]}>{stat.value}</Text>
+                  <Text style={[Typography.caption, styles.statLabel]}>{stat.label}</Text>
+                </View>
+              );
+              if (!stat.route) {
+                return <View key={stat.label}>{cell}</View>;
+              }
+              return (
+                <Pressable
+                  key={stat.label}
+                  onPress={() => router.push({ pathname: `/[username]/${stat.route}`, params: { username: username || '' } })}
+                >
+                  {cell}
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* Action Row */}
           {!isSelf && user && (
             <View style={styles.actionRow}>
-              <Pressable
-                onPress={handleFollowToggle}
-                disabled={isFollowStatusLoading || isPending}
-                style={[
-                  styles.followBtn,
-                  isFollowing ? styles.followingBtnActive : styles.followBtnActive,
-                  isPending && { opacity: 0.7 }
-                ]}
-              >
-                <MaterialIcons 
-                  name={isFollowing ? "person-remove" : "person-add"} 
-                  size={16} 
-                  color={isFollowing ? Colors.onSurfaceVariant : Colors.onPrimary} 
-                  style={styles.shareIcon} 
-                />
-                <Text 
-                  style={[
-                    Typography.bodySm, 
-                    isFollowing ? styles.followingBtnText : styles.followBtnText
-                  ]}
-                >
-                  {isPending ? 'Saving...' : isFollowing ? 'Unfollow' : 'Follow'}
-                </Text>
-              </Pressable>
+              <FollowButton targetUserId={profile.id} targetUsername={profile.username} variant="full" />
             </View>
           )}
         </View>
@@ -341,34 +305,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     width: '100%',
     justifyContent: 'center',
-  },
-  followBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    justifyContent: 'center',
-    width: '60%',
-  },
-  followBtnActive: {
-    backgroundColor: Colors.primary,
-  },
-  followBtnText: {
-    color: Colors.onPrimary,
-    fontWeight: '700',
-  },
-  followingBtnActive: {
-    backgroundColor: Colors.surfaceContainer,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-  },
-  followingBtnText: {
-    color: Colors.onSurfaceVariant,
-    fontWeight: '600',
-  },
-  shareIcon: {
-    marginRight: 6,
   },
   errorText: {
     color: Colors.error,

@@ -20,10 +20,12 @@ import { PrivacyBadge } from '@/components/ui/PrivacyBadge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PosterCard } from '@/components/ui/PosterCard';
 import { AddFilmSheet } from '@/components/AddFilmSheet';
+import { SaveButton } from '@/components/ui/SaveButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 function FilmItemCard({
   item,
@@ -75,6 +77,7 @@ function FilmItemCard({
 }
 
 export default function ListDetailScreen() {
+  const { isAuthorized } = useAuthGuard();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
@@ -185,7 +188,7 @@ export default function ListDetailScreen() {
     }
   };
 
-  if (isListLoading || isItemsLoading) {
+  if (!isAuthorized || isListLoading || isItemsLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -308,6 +311,9 @@ export default function ListDetailScreen() {
                 <Text style={[Typography.bodyLg, styles.addFilmBtnText]}>Add Film</Text>
               </Pressable>
             )}
+
+            {/* Non-owner save action button */}
+            <SaveButton listId={id} listOwnerId={list.user_id} />
           </View>
         )}
 

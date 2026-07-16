@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, RefreshControl, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
@@ -11,8 +11,10 @@ import { ListCard } from '@/components/ui/ListCard';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 export default function HomeScreen() {
+  const { isAuthorized } = useAuthGuard();
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -24,12 +26,12 @@ export default function HomeScreen() {
     isRefetching: isTrendingRefetching 
   } = useTrendingContent();
 
-  const { 
-    data: lists, 
-    isLoading: isListsLoading, 
+  const {
+    data: lists,
+    isLoading: isListsLoading,
     isRefetching: isListsRefetching,
-    refetch: refetchLists 
-  } = useUserLists();
+    refetch: refetchLists
+  } = useUserLists(!!user);
 
   const { data: notifications } = useNotifications(!!user);
   const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
@@ -42,6 +44,14 @@ export default function HomeScreen() {
   };
 
   const previewLists = lists ? lists.slice(0, 4) : [];
+
+  if (!isAuthorized) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -74,8 +84,14 @@ export default function HomeScreen() {
               </View>
             )}
           </Pressable>
-          <Pressable 
-            onPress={() => router.push('/(tabs)/profile')} 
+          <Pressable
+            onPress={() => router.push('/leaderboard')}
+            style={styles.bellButton}
+          >
+            <MaterialIcons name="leaderboard" size={24} color={Colors.onSurfaceVariant} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/(tabs)/profile')}
             style={styles.avatarButton}
           >
             <MaterialIcons name="account-circle" size={32} color={Colors.primary} />
@@ -154,6 +170,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.background,
   },
   contentContainer: {

@@ -74,6 +74,8 @@ function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; font
           <Stack.Screen name="[username]" />
           <Stack.Screen name="auth/callback" options={{ gestureEnabled: false }} />
           <Stack.Screen name="notifications" />
+          <Stack.Screen name="leaderboard" />
+          <Stack.Screen name="comments/[type]/[tmdbId]" />
         </Stack>
       </AppErrorBoundary>
     </ServerWakeGate>
