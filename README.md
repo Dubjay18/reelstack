@@ -4,6 +4,12 @@
 
 A social film/TV watchlist platform — think Spotify for your movie taste. Search any title, see which streaming services have it, save it to a list, share your list publicly.
 
+## Screenshots
+
+| Landing | Sign in | Create account |
+|---|---|---|
+| ![Landing page](docs/screenshots/landing.png) | ![Login page](docs/screenshots/login.png) | ![Register page](docs/screenshots/register.png) |
+
 ## Stack
 
 | Layer | Tech |
