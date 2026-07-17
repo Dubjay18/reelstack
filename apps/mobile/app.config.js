@@ -13,6 +13,10 @@ module.exports = {
     },
     android: {
       package: "com.reelstack.app",
+      // Bump on every release build — eas.json uses appVersionSource "local",
+      // so EAS won't auto-increment this. A repeated versionCode blocks
+      // installing an update over an existing install.
+      versionCode: 1,
       adaptiveIcon: {
         backgroundColor: "#17120e",
         foregroundImage: "./assets/images/android-icon-foreground.png"

@@ -17,6 +17,9 @@ apps/web/.turbo/
 # Docker
 .docker/
 
+# Built mobile artifacts (hosted as GitHub Release assets, not committed)
+apps/web/public/downloads/*.apk
+
 # OS
 .DS_Store
 Thumbs.db

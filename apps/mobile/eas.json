@@ -28,6 +28,15 @@
       "env": {
         "API_URL": "https://reelstack-bv9f.onrender.com"
       }
+    },
+    "production-apk": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "API_URL": "https://reelstack-bv9f.onrender.com"
+      }
     }
   },
   "submit": {

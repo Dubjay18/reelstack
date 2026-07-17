@@ -5,7 +5,11 @@ import { motion } from 'framer-motion'
 import { FloatingNav } from '@/components/ui/floating-nav'
 import { HeroGallery } from '@/components/ui/hero-gallery'
 import { BentoShowcase } from '@/components/ui/bento-showcase'
-import { Film, BarChart2, Share2 } from 'lucide-react'
+import { Film, BarChart2, Share2, Smartphone, Download } from 'lucide-react'
+
+const ANDROID_APK_URL =
+  process.env.NEXT_PUBLIC_ANDROID_APK_URL ||
+  'https://github.com/Dubjay18/reelstack/releases/download/mobile-v1.0.0/reelstack.apk'
 
 const features = [
   {
@@ -100,6 +104,36 @@ export default function LandingPage() {
           >
             <HeroGallery />
           </motion.div>
+        </section>
+
+        {/* Android app download banner */}
+        <section className="max-w-[1280px] mx-auto px-12 w-full pb-16">
+          <div className="bg-surface border border-outline-variant rounded-2xl p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center">
+                <Smartphone size={22} className="text-primary" strokeWidth={1.75} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[17px] text-on-surface mb-1" style={{ letterSpacing: '-0.01em' }}>
+                  Get Reelstack on Android
+                </h3>
+                <p className="text-[14px] leading-[1.6] text-on-surface-variant max-w-[52ch]">
+                  Direct APK download — no Play Store required. You&apos;ll need to allow installs from unknown sources. iOS is coming soon.
+                </p>
+              </div>
+            </div>
+            <a
+              href={ANDROID_APK_URL}
+              download
+              className="shrink-0 inline-flex items-center gap-2 bg-primary text-on-primary font-semibold px-6 py-3 rounded-full text-[15px] transition-all hover:opacity-90 active:scale-[0.97] whitespace-nowrap"
+            >
+              <Download size={17} strokeWidth={2} />
+              Download APK
+            </a>
+          </div>
+          <div className="font-mono text-[11px] text-on-surface-variant uppercase tracking-[0.08em] mt-2.5 ml-1">
+            v1.0.0 · Android 8+
+          </div>
         </section>
 
         {/* Divider */}
