@@ -2,127 +2,150 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { FloatingNav, Magnetic } from '@/components/ui/floating-nav'
+import { FloatingNav } from '@/components/ui/floating-nav'
 import { HeroGallery } from '@/components/ui/hero-gallery'
 import { BentoShowcase } from '@/components/ui/bento-showcase'
-import * as Icons from '@phosphor-icons/react'
+import { Film, BarChart2, Share2 } from 'lucide-react'
 
-const ArrowRight = Icons.ArrowRight as any
-const Compass = Icons.Compass as any
-const FilmStrip = Icons.FilmStrip as any
+const features = [
+  {
+    icon: Film,
+    title: "Curate, don't scroll",
+    desc: 'Build ranked lists instead of feeding a feed no one controls.',
+  },
+  {
+    icon: BarChart2,
+    title: 'A living taste score',
+    desc: 'Every save, follow and list you publish moves your Curator Score.',
+  },
+  {
+    icon: Share2,
+    title: 'One link, your whole shelf',
+    desc: 'Share a single profile page instead of screenshotting your history.',
+  },
+]
 
 export default function LandingPage() {
   return (
-    <div className="text-zinc-100 min-h-[100dvh] flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300 relative overflow-x-hidden">
-      {/* Floating Header */}
+    <div className="text-on-surface min-h-[100dvh] flex flex-col font-sans relative overflow-x-hidden bg-background">
+      {/* Sticky Nav */}
       <FloatingNav />
 
-      {/* Hero Section */}
       <main className="flex-grow flex flex-col relative z-10">
-        
-        {/* Asymmetric Hero: Content and Assets */}
-        <section className="w-full max-w-7xl mx-auto px-6 md:px-8 min-h-[100dvh] flex flex-col lg:flex-row items-center justify-between pt-28 lg:pt-0 gap-12 lg:gap-8">
-          
-          {/* Left Column: Typographic Lockup & Action CTAs */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
+
+        {/* Hero */}
+        <section className="w-full max-w-[1280px] mx-auto px-12 min-h-[80vh] flex items-center gap-14 pt-28 lg:pt-0">
+
+          {/* Left: copy + CTAs */}
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ type: "spring", stiffness: 80, damping: 15, delay: 0.2 }}
-            className="flex-1 flex flex-col justify-center text-left max-w-2xl lg:pr-8"
+            transition={{ type: 'spring', stiffness: 80, damping: 16, delay: 0.15 }}
+            className="flex-1 max-w-[560px]"
           >
-            {/* Visual indicator tag */}
-            <div className="inline-flex items-center gap-1.5 self-start mb-6 bg-zinc-900 border border-zinc-800 rounded-full px-3 py-1 text-xs text-zinc-400">
-              <FilmStrip className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Version 2.0 live</span>
+            {/* Eyebrow pill */}
+            <div className="inline-flex items-center gap-2 border border-outline-variant rounded-full px-3.5 py-1.5 text-xs text-on-surface-variant mb-7">
+              <Film size={14} className="text-primary" />
+              Now tracking 50,000+ titles
             </div>
 
-            <h1 className="font-sans font-extrabold text-4xl sm:text-5xl md:text-7xl tracking-tighter leading-[0.95] text-zinc-50 mb-6">
-              Your lists <br />
-              that <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 font-black">speak for you.</span>
+            <h1
+              className="font-bold text-[56px] leading-[1.08] text-on-surface mb-7"
+              style={{ letterSpacing: '-0.03em' }}
+            >
+              Every film you&apos;ve loved,<br />
+              now <span className="text-primary">one link away.</span>
             </h1>
 
-            <p className="font-sans text-base sm:text-lg text-zinc-400 leading-relaxed max-w-[55ch] mb-8">
-              Reelstack turns what you watch into a public taste profile. Curate collections, discover critically acclaimed cinema, and construct your digital film gallery.
+            <p className="text-[17px] leading-[1.6] text-on-surface-variant max-w-[46ch] mb-9">
+              Reelstack is a public record of your taste: rate, collect, and share what you watch — without the noise of a feed telling you what to think of it.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-              <Magnetic>
-                <Link 
-                  href="/register" 
-                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold px-8 py-3 rounded-full text-base shadow-[0_4px_25px_-4px_rgba(16,185,129,0.5)] transition-all duration-300 active:scale-[0.97]"
-                >
-                  <span>Get started free</span>
-                  <ArrowRight weight="bold" className="w-4 h-4" />
-                </Link>
-              </Magnetic>
-
-              <Link 
-                href="/search" 
-                className="inline-flex items-center justify-center gap-2 bg-transparent border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900/50 px-8 py-3 rounded-full text-base transition-all duration-300 active:scale-[0.97]"
+            <div className="flex gap-3.5 mb-11">
+              <Link
+                href="/register"
+                className="bg-primary text-on-primary font-semibold px-7 py-3.5 rounded-full text-[15px] transition-all hover:opacity-90 active:scale-[0.97] shadow-[0_4px_24px_-4px_rgba(235,156,62,0.5)]"
               >
-                <Compass className="w-5 h-5 opacity-75" />
-                <span>Browse sample</span>
+                Start your stack
+              </Link>
+              <Link
+                href="/search"
+                className="bg-transparent text-on-surface border border-outline-variant px-7 py-3.5 rounded-full text-[15px] transition-all hover:bg-surface active:scale-[0.97]"
+              >
+                Browse titles
               </Link>
             </div>
 
-            {/* Micro details */}
-            <div className="mt-12 flex gap-8 border-t border-zinc-900 pt-6">
-              <div>
-                <span className="block font-mono text-xs text-zinc-600">FILM BASE</span>
-                <span className="font-sans font-bold text-zinc-300 text-sm">48.2k titles</span>
-              </div>
-              <div className="w-px bg-zinc-900" />
-              <div>
-                <span className="block font-mono text-xs text-zinc-600">CURATORS</span>
-                <span className="font-sans font-bold text-zinc-300 text-sm">12.5k active</span>
-              </div>
-              <div className="w-px bg-zinc-900" />
-              <div>
-                <span className="block font-mono text-xs text-zinc-600">INTEGRATION</span>
-                <span className="font-sans font-bold text-emerald-400/90 text-sm">100% manual feed</span>
-              </div>
+            {/* Stats row */}
+            <div className="flex gap-7 pt-6 border-t border-outline-variant">
+              {[
+                { value: '50,000+', label: 'Titles catalogued' },
+                { value: '14,000+', label: 'Active curators' },
+                { value: 'Zero', label: 'Ads or algorithm' },
+              ].map((s) => (
+                <div key={s.label}>
+                  <div className="text-[20px] font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>{s.value}</div>
+                  <div className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] mt-1 font-mono">{s.label}</div>
+                </div>
+              ))}
             </div>
           </motion.div>
 
-          {/* Right Column: Parallax float visual gallery */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
+          {/* Right: poster collage */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 80, damping: 15, delay: 0.3 }}
-            className="flex-1 w-full relative min-h-[480px] lg:min-h-screen z-10"
+            transition={{ type: 'spring', stiffness: 80, damping: 16, delay: 0.25 }}
+            className="flex-1 relative min-h-[500px] hidden lg:block"
           >
             <HeroGallery />
           </motion.div>
-
         </section>
 
-        {/* Separator Line */}
-        <div className="w-full max-w-7xl mx-auto px-6 md:px-8">
-          <div className="w-full h-px bg-zinc-900" />
+        {/* Divider */}
+        <div className="max-w-[1280px] mx-auto px-12 w-full">
+          <div className="h-px bg-outline-variant" />
         </div>
 
-        {/* Feature Bento Grid Section */}
-        <section className="w-full py-20 bg-gradient-to-b from-[#09090b] to-[#0c0c0e]">
+        {/* Features section */}
+        <section className="max-w-[1280px] mx-auto px-12 py-20 w-full">
+          <div className="font-mono text-[12px] tracking-[0.1em] text-primary uppercase mb-3">Why Reelstack</div>
+          <h2
+            className="font-bold text-[36px] text-on-surface mb-12 max-w-[20ch]"
+            style={{ letterSpacing: '-0.02em' }}
+          >
+            A shelf you actually own.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {features.map((f) => (
+              <div
+                key={f.title}
+                className="bg-surface border border-outline-variant rounded-2xl p-7"
+              >
+                <f.icon size={26} className="text-primary mb-[18px]" strokeWidth={1.75} />
+                <h3 className="font-semibold text-[19px] text-on-surface mb-2" style={{ letterSpacing: '-0.01em' }}>{f.title}</h3>
+                <p className="text-[14px] leading-[1.6] text-on-surface-variant">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Bento showcase (live interactive demos) */}
+        <section className="w-full py-20 bg-gradient-to-b from-background to-surface-container">
           <BentoShowcase />
         </section>
 
       </main>
 
-      {/* Footer Strip */}
-      <footer className="w-full py-8 px-6 md:px-8 border-t border-zinc-900 z-20 bg-[#0c0c0e]/95 backdrop-blur-md shrink-0">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-sans font-extrabold text-lg tracking-tighter text-emerald-400">Reelstack</span>
-            <span className="text-[10px] font-mono text-zinc-600 mt-0.5">© 2026</span>
-          </div>
-          <div className="font-mono text-zinc-500 tracking-wider uppercase text-[10px] opacity-70">
-            No ads. No algorithms. Pure curation.
-          </div>
-          <div className="flex gap-6 text-xs text-zinc-500 font-sans">
-            <Link href="/privacy" className="hover:text-zinc-300 transition-colors duration-200">Privacy</Link>
-            <Link href="/terms" className="hover:text-zinc-300 transition-colors duration-200">Terms</Link>
-            <Link href="https://github.com" className="hover:text-zinc-300 transition-colors duration-200">Open source</Link>
-          </div>
+      {/* Footer */}
+      <footer className="max-w-[1280px] mx-auto px-12 py-8 w-full flex justify-between items-center border-t border-outline-variant">
+        <span className="font-bold text-primary" style={{ letterSpacing: '-0.02em' }}>Reelstack</span>
+        <span className="font-mono text-[11px] text-on-surface-variant uppercase tracking-[0.08em]">
+          No ads. No algorithm. Pure curation.
+        </span>
+        <div className="flex gap-6 text-[13px] text-on-surface-variant">
+          <Link href="/privacy" className="hover:text-on-surface transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-on-surface transition-colors">Terms</Link>
         </div>
       </footer>
     </div>

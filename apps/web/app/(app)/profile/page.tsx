@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useUserLists, usePublicProfile, useListItems, useContentDetails, useUpdateProfile, useCheckUsernameAvailability } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import { ScoreBadge } from '@/components/score-badge'
+import { Loader2, Share2, Plus, List, Film, CheckCircle2, Pencil, ChevronRight, Info } from 'lucide-react'
 import type { ListItem } from '@/types'
 
 function FilmItemCardProfile({ item }: { item: ListItem }) {
@@ -22,23 +23,30 @@ function FilmItemCardProfile({ item }: { item: ListItem }) {
   const title = 'title' in movie ? movie.title : (movie as any).name
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
-    : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&q=80&w=300&h=450'
+    : null
+
+  const stripeStyle = {
+    background: 'repeating-linear-gradient(135deg, #31261a 0px, #31261a 9px, #241c15 9px, #241c15 18px)',
+  }
 
   return (
     <Link
       href={`/movie/${item.tmdb_id}`}
-      className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 shadow-[0_1px_3px_rgba(0,0,0,0.4),0_1px_2px_rgba(0,0,0,0.3)] hover:border-primary/50 transition-all"
+      className="group relative aspect-[2/3] rounded-xl overflow-hidden border border-outline-variant/30 hover:border-primary/50 transition-all"
+      style={posterUrl ? undefined : stripeStyle}
     >
       {item.watched && (
         <div className="absolute top-1.5 right-1.5 z-30 bg-secondary text-on-secondary rounded-full w-[18px] h-[18px] flex items-center justify-center shadow-md">
-          <span className="material-symbols-outlined text-[10px] font-bold">check</span>
+          <CheckCircle2 size={10} strokeWidth={3} />
         </div>
       )}
-      <img
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-        src={posterUrl}
-        alt={title}
-      />
+      {posterUrl && (
+        <img
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          src={posterUrl}
+          alt={title}
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 p-xs w-full z-10 pointer-events-none">
         <h3 className="font-mono text-[9px] text-white truncate font-medium drop-shadow-md">
@@ -84,9 +92,9 @@ function ListFilmsRow({ listId, listTitle }: { listId: string; listTitle: string
 }
 
 export default function ProfilePage() {
-  const { user: authUser, isLoading: authLoading, logout } = useAuth()
+  const { user: authUser, isLoading: authLoading } = useAuth()
   const router = useRouter()
-  
+
   const [activeTab, setActiveTab] = useState<'films' | 'lists'>('films')
   const [isEditingBio, setIsEditingBio] = useState(false)
   const [bioText, setBioText] = useState('')
@@ -95,12 +103,9 @@ export default function ProfilePage() {
 
   const updateProfileMutation = useUpdateProfile()
 
-  // Debounce username
   const [debouncedUsername, setDebouncedUsername] = useState('')
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedUsername(usernameInput)
-    }, 300)
+    const timer = setTimeout(() => setDebouncedUsername(usernameInput), 300)
     return () => clearTimeout(timer)
   }, [usernameInput])
 
@@ -119,10 +124,10 @@ export default function ProfilePage() {
     (isUsernameChanged && (!isUsernameFormatValid || isAvailabilityLoading || availabilityData?.available === false))
 
   let statusText = ''
-  let statusColor = 'text-zinc-500 font-mono text-[10px] mt-1'
+  let statusColor = 'text-on-surface-variant font-mono text-[10px] mt-1'
   if (isUsernameChanged) {
     if (!isUsernameFormatValid) {
-      statusText = 'Invalid format (3-50 chars, alphanumeric & underscores only)'
+      statusText = 'Invalid format (3–50 chars, alphanumeric & underscores only)'
       statusColor = 'text-error font-mono text-[10px] mt-1'
     } else if (isAvailabilityLoading) {
       statusText = 'Checking availability...'
@@ -140,7 +145,7 @@ export default function ProfilePage() {
     updateProfileMutation.mutate(
       {
         bio: bioText,
-        username: usernameInput !== username ? usernameInput : undefined
+        username: isUsernameChanged ? usernameInput : undefined,
       },
       {
         onSuccess: () => {
@@ -154,7 +159,6 @@ export default function ProfilePage() {
     )
   }
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/login')
@@ -165,14 +169,9 @@ export default function ProfilePage() {
   const { data: rawLists, isLoading: listsLoading } = useUserLists()
   const lists = rawLists ?? []
 
-  // Sync profile bio and username
   useEffect(() => {
-    if (profile?.bio) {
-      setBioText(profile.bio)
-    }
-    if (profile?.username) {
-      setUsernameInput(profile.username)
-    }
+    if (profile?.bio) setBioText(profile.bio)
+    if (profile?.username) setUsernameInput(profile.username)
   }, [profile])
 
   const showToast = (msg: string) => {
@@ -189,15 +188,14 @@ export default function ProfilePage() {
 
   if (authLoading || profileLoading || listsLoading) {
     return (
-      <div className="bg-background text-on-background min-h-screen flex items-center justify-center">
-        <span className="material-symbols-outlined text-[36px] text-primary animate-spin">progress_activity</span>
+      <div className="bg-background text-on-surface min-h-screen flex items-center justify-center">
+        <Loader2 size={36} className="text-primary animate-spin" />
       </div>
     )
   }
 
   if (!authUser) return null
 
-  // Calculate statistics
   const totalLists = lists.length
   const totalFilms = lists.reduce((sum, list) => sum + list.item_count, 0)
   const totalWatched = lists.reduce((sum, list) => sum + list.watched_count, 0)
@@ -205,27 +203,24 @@ export default function ProfilePage() {
   const avatarUrl = profile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
 
   return (
-    <div className="bg-background text-on-background min-h-screen">
+    <div className="bg-background text-on-surface min-h-screen">
 
-
-      {/* Main */}
       <main className="flex-1 w-full pb-20 md:pb-0">
-        {/* Profile Header */}
+        {/* Profile header */}
         <div className="relative overflow-hidden">
-          {/* Ambient background */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
           <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-          
+
           <div className="relative max-w-3xl mx-auto px-lg md:px-xl pt-lg md:pt-xl pb-xl">
-            {/* Profile Card */}
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-lg">
+
               {/* Avatar */}
               <div className="relative flex-shrink-0">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/30 shadow-[0_0_20px_rgba(79,219,200,0.15)]">
+                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/30 shadow-[0_0_20px_rgba(235,156,62,0.15)]">
                   <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
                 </div>
                 <div className="absolute bottom-0 right-0 w-6 h-6 bg-secondary rounded-full border-2 border-background flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[12px] text-on-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                  <CheckCircle2 size={12} strokeWidth={2.5} className="text-on-secondary" />
                 </div>
               </div>
 
@@ -238,8 +233,8 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <p className="font-mono text-mono text-primary mb-xs">@{username}</p>
-                
-                {/* Bio / Profile Edit Form */}
+
+                {/* Bio / Edit form */}
                 {isEditingBio ? (
                   <div className="flex flex-col gap-md mt-sm bg-surface-container/30 border border-outline-variant/30 rounded-xl p-md w-full max-w-md">
                     <div className="flex flex-col gap-xs">
@@ -254,9 +249,7 @@ export default function ProfilePage() {
                           className="bg-transparent border-0 font-mono text-mono text-on-surface focus:outline-none w-full py-xs px-xs"
                         />
                       </div>
-                      {statusText !== '' && (
-                        <p className={statusColor}>{statusText}</p>
-                      )}
+                      {statusText && <p className={statusColor}>{statusText}</p>}
                     </div>
 
                     <div className="flex flex-col gap-xs">
@@ -274,7 +267,7 @@ export default function ProfilePage() {
                       <button
                         onClick={handleSaveBio}
                         disabled={isSaveDisabled}
-                        className="bg-primary text-on-primary px-sm py-1 rounded text-body-sm font-semibold hover:bg-primary-fixed transition-colors text-xs disabled:opacity-50"
+                        className="bg-primary text-on-primary px-sm py-1 rounded text-body-sm font-semibold hover:opacity-90 transition-opacity text-xs disabled:opacity-50"
                       >
                         {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
                       </button>
@@ -293,13 +286,10 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setIsEditingBio(true)}
-                    className="group text-left mt-xs"
-                  >
-                    <p className="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface transition-colors">
+                  <button onClick={() => setIsEditingBio(true)} className="group text-left mt-xs">
+                    <p className="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface transition-colors inline-flex items-center gap-1">
                       {bioText || <span className="italic opacity-50">Add a bio...</span>}
-                      <span className="material-symbols-outlined text-[14px] ml-1 opacity-0 group-hover:opacity-60 transition-opacity align-middle">edit</span>
+                      <Pencil size={12} className="opacity-0 group-hover:opacity-60 transition-opacity" />
                     </p>
                   </button>
                 )}
@@ -327,7 +317,7 @@ export default function ProfilePage() {
                   onClick={handleShare}
                   className="flex items-center gap-xs border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container px-sm py-xs rounded-lg font-body-sm text-body-sm transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px]">ios_share</span>
+                  <Share2 size={16} strokeWidth={1.75} />
                   Share
                 </button>
               </div>
@@ -354,22 +344,21 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab content */}
         <div className="max-w-3xl mx-auto px-lg md:px-xl py-xl">
-          
           {activeTab === 'films' ? (
             <div>
               <div className="flex items-center justify-between mb-md">
                 <h2 className="font-caption text-caption text-on-surface-variant uppercase tracking-[0.1em]">My Films</h2>
-                <Link href="/search" className="font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors">
+                <Link href="/search" className="font-body-sm text-body-sm text-primary hover:opacity-80 transition-opacity">
                   Browse & Add films →
                 </Link>
               </div>
-              
+
               {lists.length === 0 || totalFilms === 0 ? (
                 <div className="text-center py-12 border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-                  <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">movie</span>
-                  <p className="font-body-sm text-zinc-500">You don&apos;t have any films in your lists yet.</p>
+                  <Film size={48} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">You don&apos;t have any films in your lists yet.</p>
                 </div>
               ) : (
                 <div className="space-y-lg">
@@ -383,15 +372,15 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center justify-between mb-md">
                 <h2 className="font-caption text-caption text-on-surface-variant uppercase tracking-[0.1em]">My Lists</h2>
-                <Link href="/lists/new" className="font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors flex items-center gap-xs">
-                  <span className="material-symbols-outlined text-[16px]">add</span>New list
+                <Link href="/lists/new" className="font-body-sm text-body-sm text-primary hover:opacity-80 transition-opacity flex items-center gap-xs">
+                  <Plus size={16} strokeWidth={2} />New list
                 </Link>
               </div>
-              
+
               {lists.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-                  <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">playlist_add</span>
-                  <p className="font-body-sm text-zinc-500">You haven&apos;t created any lists yet.</p>
+                  <List size={48} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">You haven&apos;t created any lists yet.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-sm">
@@ -402,13 +391,13 @@ export default function ProfilePage() {
                       className="group flex items-center justify-between bg-surface-container-low border border-outline-variant rounded-xl px-md py-sm hover:bg-surface-container hover:border-outline-variant/80 transition-all"
                     >
                       <div className="flex items-center gap-md">
-                        <span className="material-symbols-outlined text-on-surface-variant">format_list_bulleted</span>
+                        <List size={18} className="text-on-surface-variant" strokeWidth={1.75} />
                         <div>
                           <h3 className="font-heading text-heading text-on-surface group-hover:text-primary transition-colors">{list.title}</h3>
                           <p className="font-mono text-mono text-on-surface-variant">{list.item_count} films · {list.is_public ? 'Public' : 'Private'}</p>
                         </div>
                       </div>
-                      <span className="material-symbols-outlined text-on-surface-variant text-[18px] opacity-0 group-hover:opacity-100 transition-opacity text-primary">arrow_forward</span>
+                      <ChevronRight size={18} className="text-on-surface-variant opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all" />
                     </Link>
                   ))}
                 </div>
@@ -418,11 +407,10 @@ export default function ProfilePage() {
         </div>
       </main>
 
-
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-lg right-lg bg-surface-container border border-outline-variant text-on-background px-md py-sm rounded-xl shadow-modal z-50 flex items-center gap-xs animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
+        <div className="fixed bottom-lg right-lg bg-surface-container border border-outline-variant text-on-surface px-md py-sm rounded-xl shadow-modal z-50 flex items-center gap-xs animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <Info size={18} className="text-primary flex-shrink-0" />
           <span className="font-body-sm text-body-sm">{toastMessage}</span>
         </div>
       )}

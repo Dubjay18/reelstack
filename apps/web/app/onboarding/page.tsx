@@ -3,8 +3,8 @@
 
 export default function Page() {
   return (
-    <div className="min-h-dvh bg-zinc-950 flex items-center justify-center">
-      <p className="text-zinc-500 font-mono text-sm">TASK-044: Onboarding flow</p>
+    <div className="min-h-dvh bg-background flex items-center justify-center">
+      <p className="text-on-surface-variant font-mono text-sm">TASK-044: Onboarding flow</p>
     </div>
   )
 }

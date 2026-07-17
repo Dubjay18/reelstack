@@ -16,6 +16,7 @@ import {
 } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import { SaveButton } from '@/components/save-button'
+import { Loader2, CheckCircle2, GripVertical, X, Info, Pencil, Globe, Lock, ArrowLeftRight, Share2, Trash2, Plus, Film, Search, Eye, EyeOff } from 'lucide-react'
 import type { List, ListItem } from '@/types'
 
 const SUGGESTED_ADDITIONS = [
@@ -57,7 +58,7 @@ function FilmItemCard({
   if (isLoading) {
     return (
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface-container-low animate-pulse border border-outline-variant/30 flex items-center justify-center">
-        <span className="material-symbols-outlined text-[24px] text-zinc-600 animate-spin">progress_activity</span>
+        <Loader2 size={24} className="text-on-surface-variant animate-spin" />
       </div>
     )
   }
@@ -74,7 +75,7 @@ function FilmItemCard({
       {/* Checkmark Badge */}
       {item.watched && (
         <div className="absolute top-sm right-sm z-30 bg-secondary text-on-secondary rounded-full w-[24px] h-[24px] flex items-center justify-center shadow-lg border border-secondary-fixed">
-          <span className="material-symbols-outlined text-[14px] font-bold">check</span>
+          <CheckCircle2 size={14} strokeWidth={2.5} />
         </div>
       )}
       <img
@@ -92,8 +93,8 @@ function FilmItemCard({
       {/* Removing Overlay */}
       {isRemoving && (
         <div className="absolute inset-0 bg-black/75 z-40 flex flex-col items-center justify-center gap-xs">
-          <span className="material-symbols-outlined text-[24px] text-error animate-spin">progress_activity</span>
-          <span className="text-[10px] text-zinc-400 font-mono">Removing...</span>
+          <Loader2 size={24} className="text-error animate-spin" />
+          <span className="text-[10px] text-on-surface-variant/60 font-mono">Removing...</span>
         </div>
       )}
 
@@ -103,14 +104,14 @@ function FilmItemCard({
           {isOwner ? (
             <>
               <button className="text-white hover:text-primary cursor-grab active:cursor-grabbing transition-colors" title="Drag to reorder">
-                <span className="material-symbols-outlined drop-shadow-md">drag_indicator</span>
+                <GripVertical size={20} className="drop-shadow-md" strokeWidth={1.75} />
               </button>
               <button
                 onClick={() => onRemove(item.id)}
                 className="text-white hover:text-error bg-black/40 rounded-full w-6 h-6 flex items-center justify-center backdrop-blur-sm transition-colors border border-white/10"
                 title="Remove from list"
               >
-                <span className="material-symbols-outlined text-[14px]">close</span>
+                <X size={14} />
               </button>
             </>
           ) : (
@@ -122,7 +123,7 @@ function FilmItemCard({
             href={`/movie/${item.tmdb_id}?type=${item.media_type}`}
             className="bg-surface/80 backdrop-blur-md text-on-surface hover:text-primary px-sm py-xs rounded-md font-body-sm text-body-sm flex items-center gap-xs border border-outline-variant transition-all hover:border-primary/50"
           >
-            <span className="material-symbols-outlined text-[16px]">info</span>
+            <Info size={16} strokeWidth={1.75} />
             View details
           </Link>
           {isOwner && (
@@ -130,9 +131,7 @@ function FilmItemCard({
               onClick={() => onToggleWatched(item.id, !item.watched)}
               className="bg-surface/80 backdrop-blur-md text-on-surface hover:text-primary px-sm py-xs rounded-md font-body-sm text-body-sm flex items-center gap-xs border border-outline-variant transition-all hover:border-primary/50"
             >
-              <span className="material-symbols-outlined text-[16px]">
-                {item.watched ? 'visibility_off' : 'visibility'}
-              </span>
+              {item.watched ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
               {item.watched ? 'Unmark' : 'Mark watched'}
             </button>
           )}
@@ -337,7 +336,7 @@ export default function Page() {
   if (listLoading) {
     return (
       <div className="bg-background text-on-background min-h-screen flex items-center justify-center">
-        <span className="material-symbols-outlined text-[36px] text-primary animate-spin">progress_activity</span>
+        <Loader2 size={36} className="text-primary animate-spin" />
       </div>
     )
   }
@@ -358,7 +357,7 @@ export default function Page() {
   return (
     <div className={`bg-background text-on-background min-h-screen overflow-x-hidden ${!user ? 'pt-16' : ''}`}>
       {!user && (
-        <header className="bg-[#131315]/85 backdrop-blur-md fixed top-0 left-0 w-full z-[45] border-b border-zinc-800/80 flex justify-between items-center px-6 h-16">
+        <header className="bg-background/85 backdrop-blur-md fixed top-0 left-0 w-full z-[45] border-b border-outline-variant flex justify-between items-center px-6 h-16">
           <Link href="/" className="font-display-lg text-[22px] tracking-tighter text-primary font-extrabold hover:opacity-90 transition-opacity">
             Reelstack
           </Link>
@@ -366,7 +365,7 @@ export default function Page() {
             <Link href="/register" className="px-4 py-1.5 bg-primary text-background rounded-lg text-xs font-bold hover:bg-primary-fixed transition-all active:scale-[0.98]">
               Sign up
             </Link>
-            <Link href="/login" className="px-4 py-1.5 border border-zinc-800 rounded-lg text-xs font-bold text-zinc-300 hover:bg-zinc-900 transition-colors">
+            <Link href="/login" className="px-4 py-1.5 border border-outline-variant rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container transition-colors">
               Log in
             </Link>
           </div>
@@ -394,7 +393,7 @@ export default function Page() {
                 >
                   {updateListMutation.isPending ? (
                     <>
-                      <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                      <Loader2 size={14} className="animate-spin" />
                       Saving...
                     </>
                   ) : (
@@ -420,7 +419,7 @@ export default function Page() {
                     className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-primary transition-opacity"
                     title="Edit title"
                   >
-                    <span className="material-symbols-outlined text-[20px]">edit</span>
+                    <Pencil size={20} strokeWidth={1.75} />
                   </button>
                 )}
               </div>
@@ -444,7 +443,7 @@ export default function Page() {
                     >
                       {updateListMutation.isPending ? (
                         <>
-                          <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                          <Loader2 size={14} className="animate-spin" />
                           Saving...
                         </>
                       ) : (
@@ -477,7 +476,7 @@ export default function Page() {
                       className="opacity-0 group-hover:opacity-100 text-on-surface-variant hover:text-primary transition-opacity shrink-0"
                       title="Edit description"
                     >
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                      <Pencil size={16} strokeWidth={1.75} />
                     </button>
                   )}
                 </div>
@@ -498,27 +497,27 @@ export default function Page() {
                   >
                     {list.is_public ? (
                       <span className="text-primary bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded-sm flex items-center gap-1 cursor-pointer">
-                        <span className="material-symbols-outlined text-[12px]">public</span>
+                        <Globe size={12} />
                         Public
-                        <span className="material-symbols-outlined text-[12px] opacity-0 group-hover:opacity-100 transition-opacity">swap_horiz</span>
+                        <ArrowLeftRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                       </span>
                     ) : (
-                      <span className="text-zinc-400 bg-zinc-800/80 hover:bg-zinc-800 px-2 py-0.5 rounded-sm flex items-center gap-1 cursor-pointer border border-zinc-700/50">
-                        <span className="material-symbols-outlined text-[12px]">lock</span>
+                      <span className="text-on-surface-variant bg-surface-container hover:bg-surface-container-high px-2 py-0.5 rounded-sm flex items-center gap-1 cursor-pointer border border-outline-variant/50">
+                        <Lock size={12} />
                         Private
-                        <span className="material-symbols-outlined text-[12px] opacity-0 group-hover:opacity-100 transition-opacity">swap_horiz</span>
+                        <ArrowLeftRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                       </span>
                     )}
                   </button>
                 ) : (
                   list.is_public ? (
                     <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-sm flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px]">public</span>
+                      <Globe size={12} />
                       Public
                     </span>
                   ) : (
-                    <span className="text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-sm flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px]">lock</span>
+                    <span className="text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-sm flex items-center gap-1">
+                      <Lock size={12} />
                       Private
                     </span>
                   )
@@ -533,7 +532,7 @@ export default function Page() {
                   onClick={handleShare}
                   className="flex items-center gap-xs text-on-background hover:text-primary px-sm py-xs rounded transition-colors font-body-sm text-body-sm bg-transparent border border-outline-variant hover:border-primary/50"
                 >
-                  <span className="material-symbols-outlined text-[16px]">ios_share</span>
+                  <Share2 size={16} strokeWidth={1.75} />
                   Share
                 </button>
                 {!isOwner && (
@@ -546,9 +545,7 @@ export default function Page() {
                       disabled={updateListMutation.isPending}
                       className="flex items-center gap-xs text-on-background hover:text-primary px-sm py-xs rounded transition-colors font-body-sm text-body-sm bg-transparent border border-outline-variant hover:border-primary/50 disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[16px]">
-                        {list.is_public ? 'lock' : 'public'}
-                      </span>
+                      {list.is_public ? <Lock size={16} strokeWidth={1.75} /> : <Globe size={16} strokeWidth={1.75} />}
                       Make {list.is_public ? 'Private' : 'Public'}
                     </button>
                     <div className="w-[1px] h-5 bg-outline-variant/30" />
@@ -557,7 +554,7 @@ export default function Page() {
                       disabled={deleteListMutation.isPending}
                       className="flex items-center gap-xs text-error hover:text-red-300 px-sm py-xs rounded transition-colors font-body-sm text-body-sm bg-transparent border border-error/40 hover:border-error disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      <Globe size={16} />
                       Delete
                     </button>
                   </>
@@ -568,7 +565,7 @@ export default function Page() {
                   onClick={() => setShowAddModal(true)}
                   className="bg-primary text-background px-md py-sm rounded-md font-body-sm text-body-sm font-semibold flex items-center gap-xs hover:bg-primary-fixed transition-colors shadow-[0_0_15px_rgba(79,219,200,0.1)]"
                 >
-                  <span className="material-symbols-outlined text-[18px]">add</span>
+                  <Plus size={18} strokeWidth={2.5} />
                   Add film
                 </button>
               )}
@@ -584,16 +581,14 @@ export default function Page() {
             </div>
           ) : items?.length === 0 ? (
             <div className="text-center py-20 border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-              <span className="material-symbols-outlined text-[48px] text-on-surface-variant opacity-50 mb-md">
-                movie_filter
-              </span>
+              <Film size={48} className="text-on-surface-variant/50 mx-auto mb-md" strokeWidth={1.25} />
               <p className="text-on-surface-variant font-medium">This list has no films yet.</p>
               {isOwner && (
                 <button 
                   onClick={() => setShowAddModal(true)}
                   className="mt-sm text-primary hover:text-primary-fixed font-semibold text-body-sm inline-flex items-center gap-xs"
                 >
-                  <span className="material-symbols-outlined text-[16px]">add</span> Add your first film
+                  <Globe size={16} /> Add your first film
                 </button>
               )}
             </div>
@@ -624,15 +619,13 @@ export default function Page() {
                 onClick={() => setShowAddModal(false)}
                 className="text-on-surface-variant hover:text-on-background transition-colors"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X size={20} />
               </button>
             </div>
             
             <div className="p-lg">
               <div className="relative mb-lg">
-                <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">
-                  search
-                </span>
+                <Search size={18} className="absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant" />
                 <input
                   type="text"
                   placeholder="Search by title..."
@@ -665,7 +658,7 @@ export default function Page() {
                       >
                         {addListItemMutation.isPending && addListItemMutation.variables?.tmdb_id === item.id ? (
                           <>
-                            <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                            <Loader2 size={14} className="animate-spin" />
                             Adding...
                           </>
                         ) : (
@@ -687,8 +680,8 @@ export default function Page() {
                           {item.poster_path ? (
                             <img src={`https://image.tmdb.org/t/p/w200${item.poster_path}`} alt={item.title} className="object-cover w-full h-full" />
                           ) : (
-                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-zinc-600 text-[18px]">movie</span>
+                            <div className="w-full h-full bg-surface-container-high flex items-center justify-center">
+                              <Film size={18} className="text-on-surface-variant/40" />
                             </div>
                           )}
                         </div>
@@ -696,7 +689,7 @@ export default function Page() {
                           <span className="font-body-sm text-body-sm text-on-background font-medium truncate">
                             {item.title}
                           </span>
-                          <span className="text-[10px] text-zinc-500 font-mono">
+                          <span className="text-[10px] text-on-surface-variant/60 font-mono">
                             {item.year || 'Unknown'} · {item.media_type === 'movie' ? 'Movie' : 'TV'}
                           </span>
                         </div>
@@ -708,7 +701,7 @@ export default function Page() {
                       >
                         {addListItemMutation.isPending && addListItemMutation.variables?.tmdb_id === item.id ? (
                           <>
-                            <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                            <Loader2 size={14} className="animate-spin" />
                             Adding...
                           </>
                         ) : (
@@ -730,7 +723,7 @@ export default function Page() {
           <div className="bg-surface-container-high border border-outline-variant rounded-2xl max-w-sm w-full shadow-modal overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-lg border-b border-outline-variant/30">
               <div className="flex items-center gap-sm">
-                <span className="material-symbols-outlined text-error text-[22px]">delete</span>
+                <Trash2 size={22} className="text-error" strokeWidth={1.75} />
                 <h2 className="font-heading text-heading text-on-background">Delete list?</h2>
               </div>
             </div>
@@ -754,12 +747,12 @@ export default function Page() {
                 >
                   {deleteListMutation.isPending ? (
                     <>
-                      <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+                      <Loader2 size={14} className="animate-spin" />
                       Deleting...
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      <Globe size={16} />
                       Delete
                     </>
                   )}
@@ -773,7 +766,7 @@ export default function Page() {
       {/* Floating Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-lg right-lg bg-surface-container border border-outline-variant text-on-background px-md py-sm rounded-xl shadow-modal z-50 flex items-center gap-xs animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
+          <Info size={18} className="text-primary flex-shrink-0" />
           <span className="font-body-sm text-body-sm">{toastMessage}</span>
         </div>
       )}

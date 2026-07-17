@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useCreateList, useSearchContent, useTrendingContent } from '@/lib/hooks/api'
 import { api } from '@/lib/api'
 import type { SearchResult } from '@/types'
+import { ArrowLeft, AlertCircle, Globe, Lock, CheckCircle2, Search, X, Film, Loader2, Plus } from 'lucide-react'
 
 const PRIVACY_OPTIONS = [
   {
@@ -133,7 +134,7 @@ export default function NewListPage() {
           
           {/* Breadcrumb */}
           <Link href="/lists" className="inline-flex items-center gap-xs text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm mb-lg">
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            <ArrowLeft size={18} strokeWidth={1.75} />
             Back to My Lists
           </Link>
 
@@ -159,7 +160,7 @@ export default function NewListPage() {
               />
               {error && (
                 <p className="mt-xs text-error font-body-sm text-body-sm flex items-center gap-xs">
-                  <span className="material-symbols-outlined text-[14px]">error</span>
+                  <AlertCircle size={14} strokeWidth={1.75} />
                   {error}
                 </p>
               )}
@@ -199,15 +200,13 @@ export default function NewListPage() {
                         : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:border-outline-variant/80 hover:text-on-surface'
                     }`}
                   >
-                    <span className={`material-symbols-outlined ${privacy === opt.value ? 'text-primary' : ''}`}>
-                      {opt.icon}
-                    </span>
+                    {opt.value === 'public' ? <Globe size={20} strokeWidth={1.75} /> : <Lock size={20} strokeWidth={1.75} />}
                     <div className="text-left">
                       <div className="font-body-sm text-body-sm font-semibold">{opt.label}</div>
                       <div className="font-mono text-[11px] opacity-70">{opt.description}</div>
                     </div>
                     {privacy === opt.value && (
-                      <span className="material-symbols-outlined text-[18px] ml-auto" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      <CheckCircle2 size={18} className="ml-auto" strokeWidth={2} fill="currentColor" />
                     )}
                   </button>
                 ))}
@@ -222,7 +221,7 @@ export default function NewListPage() {
               
               {/* Film search */}
               <div className="relative mb-sm">
-                <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <Search size={18} className="absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant" />
                 <input
                   type="text"
                   value={filmSearch}
@@ -236,7 +235,7 @@ export default function NewListPage() {
                     onClick={() => setFilmSearch('')}
                     className="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
+                    <X size={18} strokeWidth={1.75} />
                   </button>
                 )}
               </div>
@@ -274,13 +273,13 @@ export default function NewListPage() {
                           <img src={film.poster} alt={film.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-surface-variant">
-                            <span className="material-symbols-outlined text-on-surface-variant text-[24px]">movie</span>
+                            <Film size={24} className="text-on-surface-variant" strokeWidth={1.75} />
                           </div>
                         )}
                         <div className={`absolute inset-0 transition-opacity ${selected ? 'bg-primary/20' : 'bg-black/0 group-hover:bg-black/20'}`} />
                         {selected && (
                           <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                            <span className="material-symbols-outlined text-on-primary text-[12px] font-bold">check</span>
+                            <CheckCircle2 size={12} className="text-on-primary" strokeWidth={2.5} />
                           </div>
                         )}
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-xs">
@@ -309,12 +308,12 @@ export default function NewListPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                    <Loader2 size={18} className="animate-spin" />
                     Creating...
                   </>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    <Plus size={18} strokeWidth={2.5} />
                     Create list
                   </>
                 )}

@@ -47,8 +47,8 @@ export function FollowButton({ targetUserId, targetUsername }: FollowButtonProps
       disabled={isLoading || isPending}
       className={`px-5 py-1.5 rounded-full font-heading text-body-sm font-semibold transition-all duration-300 ease-out flex items-center justify-center min-w-[100px] border active:scale-95 shadow-md ${
         isFollowing
-          ? 'bg-zinc-900 border-zinc-700 hover:border-red-500 hover:text-red-400 hover:bg-zinc-800 text-zinc-300'
-          : 'bg-primary border-primary text-background hover:bg-primary/90'
+          ? 'bg-surface-container border-outline-variant hover:border-error hover:text-error hover:bg-surface-container-high text-on-surface-variant'
+          : 'bg-primary border-primary text-on-primary hover:bg-primary/90'
       } disabled:opacity-50`}
     >
       {isPending ? (

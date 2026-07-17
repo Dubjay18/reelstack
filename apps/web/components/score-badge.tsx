@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { Crown, Trophy, Star, TrendingUp, User } from 'lucide-react'
 
 interface ScoreBadgeProps {
   score: number
@@ -10,20 +11,43 @@ interface ScoreBadgeProps {
   className?: string
 }
 
+// Tier colors aligned with the design doc's leaderboard tier mapping
 function getScoreTier(score: number) {
-  if (score >= 800) return { label: 'Master Curator', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'workspace_premium' }
-  if (score >= 600) return { label: 'Expert Curator', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'emoji_events' }
-  if (score >= 400) return { label: 'Curator', color: 'bg-primary/20 text-primary border-primary/30', icon: 'star' }
-  if (score >= 200) return { label: 'Rising Curator', color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', icon: 'trending_up' }
-  return { label: 'Newcomer', color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', icon: 'person' }
+  if (score >= 800) return {
+    label: 'Master Curator',
+    color: 'bg-[#d4af37]/15 text-[#d4af37] border-[#d4af37]/30',
+    Icon: Crown,
+  }
+  if (score >= 600) return {
+    label: 'Expert Curator',
+    color: 'bg-[#d9552b]/15 text-[#d9552b] border-[#d9552b]/30',
+    Icon: Trophy,
+  }
+  if (score >= 400) return {
+    label: 'Curator',
+    color: 'bg-primary/15 text-primary border-primary/30',
+    Icon: Star,
+  }
+  if (score >= 200) return {
+    label: 'Rising Curator',
+    color: 'bg-[#6b8cae]/15 text-[#6b8cae] border-[#6b8cae]/30',
+    Icon: TrendingUp,
+  }
+  return {
+    label: 'Newcomer',
+    color: 'bg-on-surface-variant/10 text-on-surface-variant border-on-surface-variant/20',
+    Icon: User,
+  }
 }
 
 export function ScoreBadge({ score, rank, showLabel = true, size = 'sm', className }: ScoreBadgeProps) {
   if (!score && score !== 0) return null
 
   const tier = getScoreTier(score)
+  const { Icon } = tier
   const isCompact = size === 'sm'
   const isLarge = size === 'lg'
+  const iconSize = isCompact ? 12 : isLarge ? 18 : 14
 
   return (
     <div
@@ -34,17 +58,15 @@ export function ScoreBadge({ score, rank, showLabel = true, size = 'sm', classNa
         className
       )}
     >
-      <span className="material-symbols-outlined" style={{ fontSize: isCompact ? '12px' : isLarge ? '18px' : '14px' }}>
-        {tier.icon}
-      </span>
+      <Icon size={iconSize} strokeWidth={2} />
       <span className="font-semibold">{score}</span>
       {showLabel && !isCompact && <span className="opacity-70">{tier.label}</span>}
       {rank && rank <= 10 && (
         <span className={cn(
           'ml-0.5 rounded-full px-1 py-[1px] text-[9px] font-bold',
-          rank === 1 ? 'bg-amber-500/30 text-amber-300' :
-          rank <= 3 ? 'bg-zinc-400/20 text-zinc-300' :
-          'bg-zinc-500/10 text-zinc-400'
+          rank === 1 ? 'bg-[#d4af37]/30 text-[#d4af37]' :
+          rank <= 3 ? 'bg-[#d9552b]/20 text-[#d9552b]' :
+          'bg-on-surface-variant/10 text-on-surface-variant'
         )}>
           #{rank}
         </span>

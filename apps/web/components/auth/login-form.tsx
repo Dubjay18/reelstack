@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLogin } from '@/lib/hooks/api'
 import { GoogleButton } from '@/components/auth/google-button'
+import { LogoMark } from '@/components/ui/logo'
 
 export function LoginForm() {
   const router = useRouter()
@@ -32,9 +33,10 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-[420px] mx-auto">
-      {/* Logo */}
-      <div className="text-center mb-xl">
-        <h1 className="font-display-md text-display-md text-primary tracking-tight">Reelstack</h1>
+      {/* Logo mark */}
+      <div className="flex items-center gap-2.5 mb-10">
+        <LogoMark size={28} />
+        <span className="font-bold text-[18px] text-on-surface" style={{ letterSpacing: '-0.02em' }}>Reelstack</span>
       </div>
 
       {/* Card */}

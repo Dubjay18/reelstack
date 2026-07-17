@@ -9,6 +9,9 @@ export interface User {
   bio: string | null
   created_at: string
   updated_at: string
+  score?: number
+  rank?: number | null
+  films_logged?: number
 }
 
 export interface List {

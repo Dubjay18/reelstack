@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { usePublicProfile, useFollowing } from '@/lib/hooks/api'
 import { FollowButton } from '@/components/follow-button'
+import { ArrowLeft, CloudOff, RefreshCw, User, Users } from 'lucide-react'
 
 export default function FollowingPage() {
   const params = useParams()
@@ -47,7 +48,7 @@ export default function FollowingPage() {
             href={`/${username}`}
             className="text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            <ArrowLeft size={20} strokeWidth={1.75} />
           </Link>
           <h1 className="font-display-md text-display-md text-on-surface font-bold tracking-tight">
             Following
@@ -62,7 +63,7 @@ export default function FollowingPage() {
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-            <span className="material-symbols-outlined text-[48px] text-error/60 mb-md">cloud_off</span>
+            <CloudOff size={48} className="text-error/60 mx-auto mb-md" strokeWidth={1.5} />
             <h3 className="font-heading text-heading text-on-surface mb-xs">Couldn&apos;t load following</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-md max-w-xs">
               Something went wrong fetching the following list.
@@ -71,13 +72,13 @@ export default function FollowingPage() {
               onClick={() => refetch()}
               className="flex items-center gap-sm px-lg py-sm bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-full font-heading text-heading transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">refresh</span>
+              <RefreshCw size={16} strokeWidth={1.75} />
               Retry
             </button>
           </div>
         ) : list.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-            <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">group_add</span>
+            <Users size={48} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
             <h3 className="font-heading text-heading text-on-surface mb-xs">Not following anyone yet</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-md max-w-xs">
               When @{username} follows other curators, they&apos;ll show up here.
@@ -103,7 +104,7 @@ export default function FollowingPage() {
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center">
-                      <span className="material-symbols-outlined text-[20px] text-on-surface-variant">person</span>
+                      <User size={20} className="text-on-surface-variant" />
                     </div>
                   )}
                 </div>

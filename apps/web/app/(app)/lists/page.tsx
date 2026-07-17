@@ -6,6 +6,7 @@ import { useUserLists } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import type { List } from '@/types'
 import { NotificationBell } from '@/components/notification-bell'
+import { Film, ChevronRight, Plus, ListPlus } from 'lucide-react'
 
 function ProgressBar({ value, total }: { value: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((value / total) * 100)
@@ -38,7 +39,7 @@ function ListCard({ list }: { list: List }) {
             className="relative w-[60px] aspect-[2/3] rounded-md overflow-hidden border shadow-md flex items-center justify-center flex-shrink-0 bg-surface-variant border-surface-container-low"
             style={{ zIndex: 30 - i * 10, opacity: 1 - i * 0.3, transform: `scale(${1 - i * 0.05})` }}
           >
-            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">movie</span>
+            <Film size={20} className="text-on-surface-variant" strokeWidth={1.75} />
           </div>
         ))}
       </div>
@@ -54,7 +55,7 @@ function ListCard({ list }: { list: List }) {
               Public
             </span>
           ) : (
-            <span className="flex-shrink-0 font-mono text-[10px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded uppercase tracking-wider">
+            <span className="flex-shrink-0 font-mono text-[10px] text-on-surface-variant bg-surface-container-high px-1.5 py-0.5 rounded uppercase tracking-wider">
               Private
             </span>
           )}
@@ -72,7 +73,7 @@ function ListCard({ list }: { list: List }) {
 
       {/* Arrow */}
       <div className="flex items-center pr-md opacity-0 group-hover:opacity-100 transition-opacity text-primary">
-        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+        <ChevronRight size={18} />
       </div>
     </Link>
   )
@@ -133,7 +134,7 @@ export default function ListsPage() {
               href="/lists/new"
               className="bg-primary text-on-primary px-md py-sm rounded-md font-body-sm text-body-sm font-semibold flex items-center gap-xs hover:bg-primary-fixed transition-colors shadow-[0_0_15px_rgba(79,219,200,0.1)] flex-shrink-0"
             >
-              <span className="material-symbols-outlined text-[18px]">add</span>
+              <Plus size={18} strokeWidth={2.5} />
               New list
             </Link>
           </div>
@@ -163,7 +164,7 @@ export default function ListsPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-              <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">playlist_add</span>
+              <ListPlus size={48} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
               <h3 className="font-heading text-heading text-on-surface mb-xs">No lists here</h3>
               <p className="font-body-sm text-body-sm text-on-surface-variant mb-md max-w-xs">
                 {activeTab === 'private' ? "You don't have any private lists." : "Create your first list to get started."}
@@ -172,7 +173,7 @@ export default function ListsPage() {
                 href="/lists/new"
                 className="text-primary font-semibold font-body-sm text-body-sm hover:text-primary-fixed transition-colors inline-flex items-center gap-xs"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
+                <Plus size={16} strokeWidth={2.5} />
                 Create a list
               </Link>
             </div>

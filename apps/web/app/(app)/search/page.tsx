@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchContent, useSearchPeople, useSearchCurators, useTrendingContent } from '@/lib/hooks/api'
 import { ScoreBadge } from '@/components/score-badge'
+import { Search, X, ChevronDown, ChevronRight, User, Users, ExternalLink, Film, Star, UserRound } from 'lucide-react'
 
 interface FilmResult {
   id: string
@@ -127,7 +128,7 @@ export default function SearchPage() {
 
           {/* Search Input */}
           <div className="relative mb-lg">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[22px]">search</span>
+            <Search size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
             <input
               ref={inputRef}
               type="text"
@@ -147,7 +148,7 @@ export default function SearchPage() {
                 onClick={() => setQuery('')}
                 className="absolute right-14 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <X size={20} />
               </button>
             )}
             <div className="absolute right-4 top-1/2 -translate-y-1/2 gap-1 hidden md:flex">
@@ -187,7 +188,7 @@ export default function SearchPage() {
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
-                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant pointer-events-none">expand_more</span>
+                <ChevronDown size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
               </div>
             )}
           </div>
@@ -232,7 +233,7 @@ export default function SearchPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[28px]">person</span>
+                          <User size={28} />
                         </div>
                       )}
                     </div>
@@ -254,13 +255,13 @@ export default function SearchPage() {
                         {curator.followers_count} follower{curator.followers_count !== 1 ? 's' : ''}
                       </p>
                     </div>
-                    <span className="material-symbols-outlined text-on-surface-variant/40 group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+                    <ChevronRight size={20} className="text-on-surface-variant/40 group-hover:text-primary transition-colors" />
                   </Link>
                 ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center">
-                <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">group</span>
+                <Users size={56} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
                 <h3 className="font-heading text-heading text-on-surface mb-xs">No curators found</h3>
                 <p className="font-body-sm text-body-sm text-on-surface-variant max-w-xs">
                   Try a different username.
@@ -287,7 +288,7 @@ export default function SearchPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[28px]">person</span>
+                          <User size={28} />
                         </div>
                       )}
                     </div>
@@ -304,13 +305,13 @@ export default function SearchPage() {
                         </p>
                       )}
                     </div>
-                    <span className="material-symbols-outlined text-on-surface-variant/40 group-hover:text-primary transition-colors text-[20px]">open_in_new</span>
+                    <ExternalLink size={20} className="text-on-surface-variant/40 group-hover:text-primary transition-colors" />
                   </a>
                 ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center">
-                <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">person_search</span>
+                <UserRound size={56} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
                 <h3 className="font-heading text-heading text-on-surface mb-xs">No people found</h3>
                 <p className="font-body-sm text-body-sm text-on-surface-variant max-w-xs">
                   Try a different search term.
@@ -319,7 +320,7 @@ export default function SearchPage() {
             )
           ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <span className="material-symbols-outlined text-[56px] text-on-surface-variant/30 mb-md">movie_filter</span>
+              <Film size={56} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
               <h3 className="font-heading text-heading text-on-surface mb-xs">No films found</h3>
               <p className="font-body-sm text-body-sm text-on-surface-variant max-w-xs">
                 Try a different search term or explore a different genre.
@@ -347,7 +348,7 @@ export default function SearchPage() {
                   {/* Rating badge */}
                   <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-1.5 py-0.5 rounded-md">
                     <span className="font-mono text-[10px] text-primary flex items-center gap-0.5">
-                      <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                      <Star size={10} className="text-primary" fill="currentColor" />
                       {film.rating}
                     </span>
                   </div>

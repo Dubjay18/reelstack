@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { api, APIError } from '@/lib/api'
 import { useRegister } from '@/lib/hooks/api'
 import { GoogleButton } from '@/components/auth/google-button'
+import { LogoMark } from '@/components/ui/logo'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
@@ -21,10 +23,8 @@ function UsernameHint({ status }: { status: UsernameStatus }) {
   }
   if (status === 'available') {
     return (
-      <p className="mt-base flex items-center gap-xs font-caption text-caption text-secondary">
-        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-          check_circle
-        </span>
+      <p className="mt-base flex items-center gap-xs font-caption text-caption text-primary">
+        <CheckCircle2 size={14} strokeWidth={2.5} />
         Available
       </p>
     )
@@ -32,9 +32,7 @@ function UsernameHint({ status }: { status: UsernameStatus }) {
   if (status === 'taken') {
     return (
       <p className="mt-base flex items-center gap-xs font-caption text-caption text-error">
-        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-          cancel
-        </span>
+        <XCircle size={14} strokeWidth={2.5} />
         Already taken
       </p>
     )
@@ -129,9 +127,10 @@ export function RegisterForm() {
 
   return (
     <div className="w-full max-w-[420px] mx-auto">
-      {/* Logo */}
-      <div className="flex justify-center mb-xl">
-        <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
+      {/* Logo mark */}
+      <div className="flex items-center gap-2.5 mb-10">
+        <LogoMark size={28} />
+        <span className="font-bold text-[18px] text-on-surface" style={{ letterSpacing: '-0.02em' }}>Reelstack</span>
       </div>
 
       {/* Card */}
@@ -250,11 +249,7 @@ export function RegisterForm() {
                 className="absolute inset-y-0 right-0 pr-sm flex items-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                <span
-                  className="material-symbols-outlined text-[20px]"
-                >
-                  {showPassword ? 'visibility_off' : 'visibility'}
-                </span>
+                {showPassword ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
               </button>
             </div>
           </div>

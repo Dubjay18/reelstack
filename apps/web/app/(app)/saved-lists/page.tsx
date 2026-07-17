@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useSavedLists } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import { NotificationBell } from '@/components/notification-bell'
+import { Bookmark, User, ChevronRight, CloudOff, RefreshCw } from 'lucide-react'
 
 export default function SavedListsPage() {
   const { user } = useAuth()
@@ -13,9 +14,9 @@ export default function SavedListsPage() {
   const totalFilms = savedLists.reduce((a, b) => a + b.item_count, 0)
 
   return (
-    <div className="bg-background text-on-background min-h-screen">
+    <div className="bg-background text-on-surface min-h-screen">
       <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
-        <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
+        <h1 className="font-bold text-[17px] text-primary" style={{ letterSpacing: '-0.02em' }}>Reelstack</h1>
         <div className="flex items-center gap-sm">
           {user && <NotificationBell />}
         </div>
@@ -45,7 +46,7 @@ export default function SavedListsPage() {
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-              <span className="material-symbols-outlined text-[48px] text-error/60 mb-md">cloud_off</span>
+              <CloudOff size={48} className="text-error/60 mb-md" strokeWidth={1.5} />
               <h3 className="font-heading text-heading text-on-surface mb-xs">Couldn&apos;t load saved lists</h3>
               <p className="font-body-sm text-body-sm text-on-surface-variant mb-md max-w-xs">
                 Something went wrong fetching your saved lists. Check your connection and try again.
@@ -54,13 +55,13 @@ export default function SavedListsPage() {
                 onClick={() => refetch()}
                 className="flex items-center gap-sm px-lg py-sm bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-full font-heading text-heading transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">refresh</span>
+                <RefreshCw size={16} strokeWidth={1.75} />
                 Retry
               </button>
             </div>
           ) : savedLists.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-              <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">bookmark</span>
+              <Bookmark size={48} className="text-on-surface-variant/30 mb-md" strokeWidth={1.25} />
               <h3 className="font-heading text-heading text-on-surface mb-xs">No saved lists</h3>
               <p className="font-body-sm text-body-sm text-on-surface-variant mb-md max-w-xs">
                 Save public lists from other curators to access them quickly here.
@@ -93,8 +94,8 @@ export default function SavedListsPage() {
                           className="w-5 h-5 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-5 h-5 rounded-full bg-surface-variant flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[12px] text-on-surface-variant">person</span>
+                        <div className="w-5 h-5 rounded-full bg-surface-container-high flex items-center justify-center">
+                          <User size={12} className="text-on-surface-variant" />
                         </div>
                       )}
                       <span className="font-mono text-[11px] text-on-surface-variant/60">
@@ -103,7 +104,7 @@ export default function SavedListsPage() {
                     </div>
                   </div>
                   <div className="flex items-center pr-md opacity-0 group-hover:opacity-100 transition-opacity text-primary">
-                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    <ChevronRight size={18} />
                   </div>
                 </Link>
               ))}

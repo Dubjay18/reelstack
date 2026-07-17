@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { Bell } from 'lucide-react'
 import Link from 'next/link'
 import {
   useNotifications,
@@ -51,7 +52,7 @@ export function NotificationBell() {
         className="relative flex items-center justify-center p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors focus:outline-none"
         aria-label="View notifications"
       >
-        <span className="material-symbols-outlined text-[24px]">notifications</span>
+        <Bell size={22} strokeWidth={1.75} />
         {unreadCount > 0 && (
           <span className="absolute top-1.5 right-1.5 flex h-[16px] min-w-[16px] px-1 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-background animate-pulse">
             {unreadCount}
@@ -107,11 +108,11 @@ export function NotificationBell() {
                       <img
                         src={avatarUrl}
                         alt={n.actor_username || 'avatar'}
-                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-primary/20 bg-zinc-900"
+                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-primary/20 bg-surface-container-high"
                       />
                       <div className="flex-1 min-w-0 space-y-1">
                         <p className="leading-snug break-words">{text}</p>
-                        <p className="text-[10px] font-mono text-zinc-500">
+                        <p className="text-[10px] font-mono text-on-surface-variant">
                           {new Date(n.created_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',

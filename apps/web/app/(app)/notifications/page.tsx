@@ -66,11 +66,11 @@ function NotificationsPage() {
                       <img
                         src={avatarUrl}
                         alt={n.actor_username || 'avatar'}
-                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-primary/20 bg-zinc-900"
+                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-primary/20 bg-surface-container"
                       />
                       <div className="flex-1 min-w-0 space-y-1">
                         <p className="leading-snug break-words text-lg">{text}</p>
-                        <p className="text-[10px] font-mono text-zinc-500">
+                        <p className="text-[10px] font-mono text-on-surface-variant/60">
                           {new Date(n.created_at).toLocaleDateString(undefined, {
                             month: 'short',
                             day: 'numeric',

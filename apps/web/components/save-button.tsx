@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useSaveList, useUnsaveList, useSaveStatus } from '@/lib/hooks/api'
+import { Bookmark } from 'lucide-react'
 
 interface SaveButtonProps {
   listId: string
@@ -47,19 +48,17 @@ export function SaveButton({ listId, listOwnerId }: SaveButtonProps) {
       className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-sm self-start ${
         isSaved
           ? 'text-primary bg-primary/10 border border-primary/30 hover:bg-primary/20'
-          : 'text-zinc-300 border border-zinc-800 hover:border-primary/50 hover:text-primary'
+          : 'text-on-surface-variant border border-outline-variant hover:border-primary/50 hover:text-primary'
       } disabled:opacity-50`}
     >
       {isPending ? (
         <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : (
-        <span className="material-symbols-outlined text-[16px]">
-          {isSaved ? 'bookmark' : 'bookmark_border'}
-        </span>
+        <Bookmark size={16} strokeWidth={isSaved ? 2.5 : 1.75} fill={isSaved ? 'currentColor' : 'none'} />
       )}
       <span>{isSaved ? 'Saved' : 'Save'}</span>
       {saveCount > 0 && (
-        <span className="text-xs text-zinc-500 ml-1">({saveCount})</span>
+        <span className="text-xs text-on-surface-variant/60 ml-1">({saveCount})</span>
       )}
     </button>
   )

@@ -1,23 +1,42 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { useUserLists, useTrendingContent } from '@/lib/hooks/api'
+import { useUserLists, useTrendingContent, usePublicProfile } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
 import { NotificationBell } from '@/components/notification-bell'
+import { ListCard } from '@/components/list-card'
+import { MovieCard } from '@/components/movie-card'
+import { ScoreBadge } from '@/components/score-badge'
+import { Trophy, Search, Film } from 'lucide-react'
+import type { User } from '@/types'
 
 export default function Page() {
-  const { user, logout } = useAuth()
+  const { user: authUser } = useAuth()
+  const user = authUser as (User | null)
   const { data: rawLists, isLoading } = useUserLists()
   const lists = rawLists ?? []
   const { data: rawTrendingMovies, isLoading: trendingLoading } = useTrendingContent()
   const trendingMovies = rawTrendingMovies ?? []
-  return (
-    <div className="bg-background text-on-background flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
+  const { data: profile } = usePublicProfile(user?.username ?? '')
 
-      {/* TopAppBar (Mobile) */}
+  const greeting = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 17) return 'Good afternoon'
+    return 'Good evening'
+  })()
+
+  return (
+    <div className="bg-background text-on-surface flex h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
+
+      {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 w-full z-40 bg-background/80 backdrop-blur-md flex justify-between items-center px-lg h-16">
-        <h1 className="font-display-md text-display-md font-bold text-primary tracking-tight">Reelstack</h1>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-[6px] bg-primary flex items-center justify-center">
+            <span className="text-on-primary font-bold text-[13px] leading-none">R</span>
+          </div>
+          <h1 className="font-bold text-[16px] text-on-surface" style={{ letterSpacing: '-0.02em' }}>Reelstack</h1>
+        </div>
         <div className="flex items-center gap-sm">
           {user ? (
             <NotificationBell />
@@ -30,139 +49,120 @@ export default function Page() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="flex-1 w-full pt-16 md:pt-0 pb-16 md:pb-0 h-screen overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-lg md:px-xl py-lg md:py-xl space-y-xl md:space-y-[48px]">
-          
-          {/* TRENDING Section */}
+        <div className="max-w-[980px] mx-auto px-10 py-10 pb-20 space-y-10">
+
+          {/* Header row */}
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="font-bold text-[30px] text-on-surface mb-1" style={{ letterSpacing: '-0.02em' }}>
+                {greeting}{user?.username ? `, ${user.username}` : ''}
+              </h1>
+              <p className="text-on-surface-variant text-[14px]">Here&apos;s what&apos;s moving in your stack.</p>
+            </div>
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 bg-surface border border-outline-variant rounded-full px-3.5 py-2 hover:bg-surface-container transition-colors"
+            >
+              <Trophy size={16} className="text-primary" strokeWidth={2} />
+              {profile?.score != null && (
+                <span className="font-mono text-[12px] text-on-surface font-semibold">{profile.score}</span>
+              )}
+            </Link>
+          </div>
+
+          {/* Stat row */}
+          {user && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+              {[
+                { value: profile?.item_count ?? '—', label: 'Films logged' },
+                { value: lists.length || '—', label: 'Lists curated' },
+                { value: profile?.score ?? '—', label: 'Curator score' },
+                { value: profile?.rank ? `#${profile.rank}` : '—', label: 'Global rank' },
+              ].map((s) => (
+                <div key={s.label} className="bg-surface border border-outline-variant rounded-2xl px-[18px] py-5">
+                  <div className="font-bold text-[32px] text-primary" style={{ letterSpacing: '-0.02em' }}>{s.value}</div>
+                  <div className="text-[12px] text-on-surface-variant mt-1.5">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Trending rail */}
           <section>
-            <h2 className="font-caption text-caption text-on-surface-variant tracking-[0.1em] mb-md uppercase">Trending</h2>
-            <div className="relative group">
-              <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
-              <div className="flex gap-md overflow-x-auto hide-scrollbar snap-x snap-mandatory pb-sm">
-                {trendingLoading ? (
-                  // Loading skeletons
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl bg-surface-container border border-outline-variant/30 animate-pulse"
-                    />
-                  ))
-                ) : trendingMovies && trendingMovies.length > 0 ? (
-                  trendingMovies.slice(0, 10).map((movie) => (
-                    <Link
-                      key={movie.id}
-                      href={`/movie/${movie.id}?type=movie`}
-                      className="relative w-[120px] md:w-[160px] aspect-[2/3] flex-shrink-0 snap-start rounded-xl overflow-hidden bg-surface-container border border-outline-variant/30 group/poster cursor-pointer hover:border-outline-variant transition-colors"
-                    >
-                      {movie.poster_path ? (
-                        <Image
-                          className="w-full h-full object-cover"
-                          alt={`${movie.title} poster`}
-                          src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                          fill
-                          sizes="(max-width: 768px) 120px, 160px"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-surface-variant">
-                          <span className="material-symbols-outlined text-on-surface-variant text-[32px]">movie</span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent"></div>
-                      <div className="absolute bottom-3 left-3 right-3 text-on-surface font-body-sm text-body-sm font-semibold leading-tight line-clamp-2">{movie.title}</div>
-                      {movie.vote_average > 0 && (
-                        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded-md">
-                          <span className="font-mono text-[10px] text-primary flex items-center gap-0.5">
-                            <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                            {movie.vote_average.toFixed(1)}
-                          </span>
-                        </div>
-                      )}
-                    </Link>
-                  ))
-                ) : (
-                  <p className="text-on-surface-variant font-body-sm text-body-sm py-md">No trending movies available right now.</p>
-                )}
-              </div>
+            <h2 className="font-mono text-[12px] uppercase tracking-[0.1em] text-on-surface-variant mb-4">Trending</h2>
+            <div className="flex gap-3.5 overflow-x-auto hide-scrollbar pb-2">
+              {trendingLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="w-[140px] h-[210px] flex-shrink-0 rounded-xl bg-surface-container border border-outline-variant animate-pulse" />
+                ))
+              ) : trendingMovies.length > 0 ? (
+                trendingMovies.slice(0, 10).map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    id={movie.id}
+                    title={movie.title}
+                    posterPath={movie.poster_path}
+                    rating={movie.vote_average}
+                    type="movie"
+                  />
+                ))
+              ) : (
+                <p className="text-on-surface-variant text-[14px] py-4">No trending movies right now.</p>
+              )}
             </div>
           </section>
 
-          {/* Your Lists Section */}
+          {/* Your lists grid */}
           <section>
-            <div className="flex justify-between items-end mb-md">
-              <h2 className="font-heading text-heading text-on-surface">Your lists</h2>
-              <Link className="font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors" href="/lists">See all</Link>
+            <div className="flex justify-between items-baseline mb-4">
+              <h2 className="font-semibold text-[18px] text-on-surface" style={{ letterSpacing: '-0.01em' }}>Your lists</h2>
+              <Link className="text-[13px] text-primary hover:opacity-80 transition-opacity" href="/lists">See all</Link>
             </div>
-            
+
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-                <div className="h-28 bg-surface-container-low border border-outline-variant/30 rounded-xl animate-pulse" />
-                <div className="h-28 bg-surface-container-low border border-outline-variant/30 rounded-xl animate-pulse" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="h-[104px] bg-surface-container border border-outline-variant rounded-2xl animate-pulse" />
+                ))}
               </div>
-            ) : !lists || lists.length === 0 ? (
-              <div className="bg-surface-container-low border border-outline-variant rounded-xl p-lg text-center space-y-md">
-                <p className="text-on-surface-variant font-body-sm">You haven&apos;t created any lists yet.</p>
-                <Link href="/lists/new" className="inline-block py-2 px-4 bg-primary text-background font-body-sm font-semibold rounded-md shadow-md hover:bg-primary-fixed transition-colors">
+            ) : lists.length === 0 ? (
+              <div className="bg-surface border border-outline-variant rounded-2xl p-6 text-center space-y-4">
+                <Film size={32} className="text-on-surface-variant mx-auto" strokeWidth={1.5} />
+                <p className="text-on-surface-variant text-[14px]">You haven&apos;t created any lists yet.</p>
+                <Link
+                  href="/lists/new"
+                  className="inline-block py-2 px-5 bg-primary text-on-primary text-[14px] font-semibold rounded-full hover:opacity-90 transition-opacity"
+                >
                   Create my first list
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {lists.slice(0, 4).map((list) => (
-                  <Link key={list.id} href={`/lists/${list.id}`} className="group flex bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden p-3 gap-md hover:bg-surface-container transition-colors cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.4),_0_1px_2px_rgba(0,0,0,0.3)]">
-                    <div className="flex -space-x-[20%] w-[100px] flex-shrink-0">
-                      <div className="relative z-30 w-[60px] aspect-[2/3] rounded-md overflow-hidden border border-surface-container-low shadow-md bg-surface-variant flex items-center justify-center">
-                        <span className="material-symbols-outlined text-on-surface-variant text-[20px]">movie</span>
-                      </div>
-                      <div className="relative z-20 w-[60px] aspect-[2/3] rounded-md overflow-hidden border border-surface-container-low shadow-md opacity-80 scale-95 origin-left bg-surface-variant flex items-center justify-center">
-                        <span className="material-symbols-outlined text-on-surface-variant text-[20px]">movie</span>
-                      </div>
-                      <div className="relative z-10 w-[60px] aspect-[2/3] rounded-md overflow-hidden border border-surface-container-low shadow-md opacity-60 scale-90 origin-left bg-surface-variant flex items-center justify-center">
-                        <span className="material-symbols-outlined text-on-surface-variant text-[20px]">movie</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col justify-center flex-1 py-1">
-                      <h3 className="font-heading text-heading text-on-surface group-hover:text-primary transition-colors line-clamp-1">{list.title}</h3>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="font-mono text-mono text-primary bg-primary/10 px-2 py-0.5 rounded-sm">
-                          {list.item_count} items
-                        </span>
-                        {list.is_public ? (
-                          <span className="text-[10px] text-zinc-400 font-mono">Public</span>
-                        ) : (
-                          <span className="text-[10px] text-zinc-500 font-mono">Private</span>
-                        )}
-                      </div>
-                      <p className="font-mono text-[11px] text-on-surface-variant mt-2 tracking-wide uppercase">
-                        {list.watched_count} Watched
-                      </p>
-                    </div>
-                  </Link>
+                  <ListCard key={list.id} list={list} username={user?.username ?? ''} />
                 ))}
               </div>
             )}
           </section>
 
-          {/* Search Section */}
-          <section className="pb-xl md:pb-0">
+          {/* Search bar shortcut */}
+          <section className="pb-6 md:pb-0">
             <Link href="/search" className="block relative group">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-hover:text-primary transition-colors">search</span>
-              <div 
-                className="w-full bg-surface-container-low border border-outline-variant rounded-xl py-4 pl-12 pr-4 font-body-lg text-body-lg text-on-surface-variant/60 cursor-text group-hover:border-primary group-hover:shadow-[0_0_10px_rgba(79,219,200,0.1)] transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
-              >
-                Search any film or show...
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-hover:text-primary transition-colors" strokeWidth={1.75} />
+              <div className="w-full bg-surface border border-outline-variant rounded-xl py-4 pl-11 pr-4 text-[15px] text-on-surface-variant/60 cursor-text group-hover:border-primary group-hover:shadow-[0_0_10px_rgba(235,156,62,0.1)] transition-all">
+                Search any film or show…
               </div>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 gap-1 hidden md:flex">
-                <kbd className="font-mono text-[10px] bg-surface-variant text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant/50">⌘</kbd>
-                <kbd className="font-mono text-[10px] bg-surface-variant text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant/50">K</kbd>
+                <kbd className="font-mono text-[10px] bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant/50">⌘</kbd>
+                <kbd className="font-mono text-[10px] bg-surface-container text-on-surface-variant px-1.5 py-0.5 rounded border border-outline-variant/50">K</kbd>
               </div>
             </Link>
           </section>
 
         </div>
       </main>
-  
     </div>
   )
 }

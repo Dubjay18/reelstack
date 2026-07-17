@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Share2 } from 'lucide-react'
 
 interface ShareButtonProps {
   url?: string
@@ -25,12 +26,12 @@ export function ShareButton({ url }: ShareButtonProps) {
       <button
         onClick={handleShare}
         aria-label="Share"
-        className="p-xs bg-surface-container-low border border-outline-variant rounded-md text-on-surface hover:bg-surface-container transition-colors relative active:scale-95 duration-150 flex items-center justify-center"
+        className="p-xs bg-surface-container border border-outline-variant rounded-md text-on-surface hover:bg-surface-container-high transition-colors relative active:scale-95 duration-150 flex items-center justify-center"
       >
-        <span className="material-symbols-outlined text-[20px]">share</span>
+        <Share2 size={18} strokeWidth={1.75} />
       </button>
       {copied && (
-        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-zinc-100 text-[10px] rounded shadow-lg whitespace-nowrap animate-pulse">
+        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface-container-highest text-on-surface text-[10px] rounded shadow-lg whitespace-nowrap animate-pulse">
           Copied!
         </span>
       )}

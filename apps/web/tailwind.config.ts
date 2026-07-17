@@ -21,66 +21,73 @@ const config: Config = {
         "caption": ["Satoshi", "sans-serif"],
       },
       colors: {
-        // Unifying to premium dark slate/zinc base + emerald accent
+        // "Amber Reel" — warm cinematic dark (amber/terracotta on near-black brown)
         brand: {
-          DEFAULT: '#10b981', // emerald-500
-          light:   '#34d399', // emerald-400
-          pale:    '#6ee7b7', // emerald-300
-          dark:    '#064e3b', // emerald-900
+          DEFAULT: '#eb9c3e', // accent (amber)
+          light:   '#f0b168', // lighter amber
+          pale:    '#f5c98e', // pale amber
+          dark:    '#7c4a1a', // deep amber/brown
         },
-        watched: '#10b981',
+        watched: '#eb9c3e',
 
-        // Landing page specific tokens mapped to emerald + dark grays
-        "on-secondary-container": "#064e3b",
+        // Convenience aliases matching the design doc's token names directly
+        accent: '#eb9c3e',
+        accent2: '#d9552b',
+        "on-accent": '#1c1207',
+
+        // Landing page / M3-style role tokens, remapped to Amber Reel hexes
+        "on-secondary-container": "#1c1207",
         "error": "#f87171",
-        "inverse-primary": "#047857",
+        "inverse-primary": "#b97328",
         "on-error-container": "#fef2f2",
-        "on-primary": "#022c22",
-        "on-tertiary-fixed-variant": "#7c2d11",
+        "on-primary": "#1c1207",
+        "on-tertiary-fixed-variant": "#1c1207",
         "on-error": "#7f1d1d",
-        "outline-variant": "#27272a",
-        "primary-fixed-dim": "#34d399",
-        "surface-variant": "#18181b",
-        "surface-container-lowest": "#09090b",
-        "secondary-fixed-dim": "#34d399",
-        "primary-container": "#10b981",
-        "tertiary-fixed": "#ffdbd0",
-        "surface-container-highest": "#27272a",
-        "on-secondary-fixed-variant": "#064e3b",
-        "inverse-surface": "#f4f4f5",
-        "tertiary-fixed-dim": "#ffb59e",
-        "on-surface": "#f4f4f5",
-        "secondary-fixed": "#6ee7b7",
-        "surface-bright": "#27272a",
-        "primary": "#10b981", // Emerald-500
-        "inverse-on-surface": "#18181b",
-        "surface-tint": "#10b981",
-        "on-tertiary-fixed": "#3a0b00",
+        "outline-variant": "rgba(255,214,170,0.14)",
+        "primary-fixed-dim": "#eb9c3e",
+        "surface-variant": "#241c15",
+        "surface-container-lowest": "#17120e",
+        "secondary-fixed-dim": "#d9552b",
+        "primary-container": "#eb9c3e",
+        "tertiary-fixed": "#e8926f",
+        "surface-container-highest": "#31261a",
+        "on-secondary-fixed-variant": "#1c1207",
+        "inverse-surface": "#f7ecdf",
+        "tertiary-fixed-dim": "#d9552b",
+        "on-surface": "#f7ecdf",
+        "secondary-fixed": "#e8926f",
+        "surface-bright": "#31261a",
+        "primary": "#eb9c3e", // accent
+        "inverse-on-surface": "#1e1712",
+        "surface-tint": "#eb9c3e",
+        "on-tertiary-fixed": "#1c1207",
         "error-container": "#7f1d1d",
-        "background": "#09090b", // zinc-950
-        "surface-container": "#18181b", // zinc-900
-        "on-primary-container": "#022c22",
-        "tertiary-container": "#f97316",
-        "on-secondary": "#022c22",
-        "surface-dim": "#09090b",
-        "on-background": "#f4f4f5",
-        "surface": "#09090b",
-        "on-tertiary": "#7c2d11",
-        "primary-fixed": "#6ee7b7",
-        "on-surface-variant": "#a1a1aa",
-        "on-primary-fixed": "#022c22",
-        "on-secondary-fixed": "#022c22",
-        "surface-container-low": "#18181b",
-        "secondary-container": "#10b981",
-        "surface-container-high": "#27272a",
-        "on-primary-fixed-variant": "#047857",
-        "outline": "#52525b",
-        "tertiary": "#f97316",
-        "on-tertiary-container": "#7c2d11",
-        "secondary": "#34d399"
+        "background": "#17120e", // bg
+        "surface-container": "#1e1712", // bg2
+        "on-primary-container": "#1c1207",
+        "tertiary-container": "#d9552b",
+        "on-secondary": "#1c1207",
+        "surface-dim": "#17120e",
+        "on-background": "#f7ecdf",
+        "surface": "#241c15",
+        "on-tertiary": "#1c1207",
+        "primary-fixed": "#f0b168",
+        "on-surface-variant": "#b9a58e",
+        "on-primary-fixed": "#1c1207",
+        "on-secondary-fixed": "#1c1207",
+        "surface-container-low": "#1e1712",
+        "secondary-container": "#d9552b",
+        "surface-container-high": "#31261a",
+        "on-primary-fixed-variant": "#1c1207",
+        "outline": "#6b5847",
+        "tertiary": "#d9552b",
+        "on-tertiary-container": "#1c1207",
+        "secondary": "#d9552b"
       },
       borderRadius: {
         DEFAULT: '8px',
+        sm: '6px',
+        md: '14px',
         lg: '12px',
         xl: '16px',
         '2xl': '20px',
@@ -110,7 +117,7 @@ const config: Config = {
         card:     '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
         elevated: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3)',
         modal:    '0 20px 60px rgba(0,0,0,0.7), 0 8px 24px rgba(0,0,0,0.4)',
-        teal:     '0 0 0 2px rgba(20,184,166,0.4)',
+        teal:     '0 0 0 2px rgba(235,156,62,0.4)',
       },
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.16, 1, 0.3, 1)',

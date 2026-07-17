@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import Sidebar from "@/components/sidebar"
+import { Loader2 } from 'lucide-react'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -23,9 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <span className="material-symbols-outlined text-[36px] text-primary animate-spin">
-          progress_activity
-        </span>
+        <Loader2 size={36} className="text-primary animate-spin" />
       </div>
     )
   }

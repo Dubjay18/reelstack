@@ -16,14 +16,14 @@ export function AmbientBackground() {
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
       {/* 1. Grain Texture Overlay (fixed z-50 to texturize entire screen contents) */}
       <div 
-        className="fixed inset-0 pointer-events-none z-50 opacity-[0.015] noise-grain-texture" 
+        className="fixed inset-0 pointer-events-none z-50 opacity-[0.05] noise-grain-texture"
         style={{ mixBlendMode: 'overlay' }}
       />
 
       {/* 2. Soft Cinematic Bokeh Glows */}
-      {/* Glow 1: Emerald (Brand Accent) - Bottom Left */}
+      {/* Glow 1: Amber (Brand Accent) - Bottom Left */}
       <motion.div
-        className="absolute -bottom-20 -left-20 w-[45vw] h-[45vw] min-w-[350px] min-h-[350px] bg-emerald-500/5 rounded-full blur-[100px]"
+        className="absolute -bottom-20 -left-20 w-[45vw] h-[45vw] min-w-[350px] min-h-[350px] bg-[#eb9c3e]/5 rounded-full blur-[100px]"
         animate={{
           x: [0, 40, -20, 0],
           y: [0, -40, 20, 0],
@@ -36,9 +36,9 @@ export function AmbientBackground() {
         }}
       />
 
-      {/* Glow 2: Teal - Upper Right */}
+      {/* Glow 2: Terracotta - Upper Right */}
       <motion.div
-        className="absolute -top-40 -right-40 w-[50vw] h-[50vw] min-w-[400px] min-h-[400px] bg-teal-500/4 rounded-full blur-[120px]"
+        className="absolute -top-40 -right-40 w-[50vw] h-[50vw] min-w-[400px] min-h-[400px] bg-[#d9552b]/4 rounded-full blur-[120px]"
         animate={{
           x: [0, -30, 40, 0],
           y: [0, 50, -30, 0],
@@ -51,9 +51,9 @@ export function AmbientBackground() {
         }}
       />
 
-      {/* Glow 3: Zinc/Slate - Middle Left */}
+      {/* Glow 3: Warm Brown - Middle Left */}
       <motion.div
-        className="absolute top-[30vh] left-[15vw] w-[35vw] h-[35vw] min-w-[300px] min-h-[300px] bg-zinc-800/20 rounded-full blur-[90px]"
+        className="absolute top-[30vh] left-[15vw] w-[35vw] h-[35vw] min-w-[300px] min-h-[300px] bg-[#31261a]/20 rounded-full blur-[90px]"
         animate={{
           x: [0, 50, -30, 0],
           y: [0, 30, -50, 0],
@@ -70,7 +70,7 @@ export function AmbientBackground() {
       <div className="hidden md:block absolute inset-0 w-full h-full">
         {/* Floating Asset 1: Film Sprocket Segment */}
         <motion.div
-          className="absolute top-[15%] left-[8%] opacity-[0.06] text-zinc-500"
+          className="absolute top-[15%] left-[8%] opacity-[0.06] text-[#6b5847]"
           animate={{
             y: [0, -15, 15, 0],
             x: [0, 10, -10, 0],
@@ -97,7 +97,7 @@ export function AmbientBackground() {
 
         {/* Floating Asset 2: Camera Viewfinder Focus Target */}
         <motion.div
-          className="absolute top-[45%] right-[10%] opacity-[0.08] text-zinc-400"
+          className="absolute top-[45%] right-[10%] opacity-[0.08] text-[#b9a58e]"
           animate={{
             y: [0, 20, -15, 0],
             x: [0, -15, 10, 0],
@@ -120,7 +120,7 @@ export function AmbientBackground() {
 
         {/* Floating Asset 3: Camera Lens Aperture Ring */}
         <motion.div
-          className="absolute bottom-[20%] left-[25%] opacity-[0.05] text-zinc-500"
+          className="absolute bottom-[20%] left-[25%] opacity-[0.05] text-[#6b5847]"
           animate={{
             y: [0, -25, 20, 0],
             x: [0, 20, -15, 0],

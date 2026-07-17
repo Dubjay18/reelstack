@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { List } from '../types'
 
 interface ListCardProps {
@@ -6,59 +7,36 @@ interface ListCardProps {
   username: string
 }
 
-export function ListCard({ list, username }: ListCardProps) {
-  // Generate consistent premium gradients based on list ID / title
-  const getGradientClass = (index: number) => {
-    const hash = (list.id.charCodeAt(0) + list.title.charCodeAt(index % list.title.length)) % 5
-    const gradients = [
-      'from-teal-900/60 to-zinc-900 border-teal-500/20',
-      'from-rose-950/60 to-zinc-900 border-rose-500/20',
-      'from-amber-950/60 to-zinc-900 border-amber-500/20',
-      'from-violet-950/60 to-zinc-900 border-violet-500/20',
-      'from-emerald-950/60 to-zinc-900 border-emerald-500/20',
-    ]
-    return gradients[hash] || gradients[0]
-  }
+// Diagonal-stripe placeholder matching the design doc's surfaceHi/surface pattern
+const posterStripe = {
+  background: 'repeating-linear-gradient(135deg, #31261a 0px, #31261a 7px, #241c15 7px, #241c15 14px)',
+}
 
+export function ListCard({ list, username }: ListCardProps) {
   return (
     <Link href={`/${username}/${list.slug}`}>
-      <div className="bg-surface-container-low rounded-xl border border-outline-variant/50 p-md flex flex-col hover:border-primary-container/30 transition-colors cursor-pointer group h-full justify-between">
-        <div>
-          <div className="flex h-[120px] mb-md relative">
-            {/* Poster Stack 1 (Foreground) */}
-            <div className={`w-[80px] h-full rounded-md shadow-lg z-30 transform group-hover:-translate-y-1 transition-transform border bg-gradient-to-t ${getGradientClass(1)} flex items-center justify-center p-2 text-center`}>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest leading-tight line-clamp-3">
-                {list.title.split(' ')[0] || 'REEL'}
-              </span>
-            </div>
-
-            {/* Poster Stack 2 (Midground) */}
-            <div className={`w-[80px] h-full rounded-md shadow-lg z-20 -ml-[40px] opacity-90 transform group-hover:-translate-y-1 group-hover:translate-x-2 transition-transform delay-75 border bg-gradient-to-t ${getGradientClass(2)} flex items-center justify-center p-2 text-center`}>
-              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest leading-tight">
-                •••
-              </span>
-            </div>
-
-            {/* Poster Stack 3 (Background) */}
-            <div className={`w-[80px] h-full rounded-md shadow-lg z-10 -ml-[40px] opacity-80 transform group-hover:-translate-y-1 group-hover:translate-x-4 transition-transform delay-150 border bg-gradient-to-t ${getGradientClass(3)} flex items-center justify-center p-2 text-center`}>
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest leading-tight">
-                ★
-              </span>
-            </div>
-            
-            {/* Action add icon indicator overlay */}
-            <div className="w-[80px] h-full bg-surface-container border border-outline-variant/30 rounded-md shadow-lg z-0 -ml-[40px] flex items-center justify-center transform group-hover:-translate-y-1 group-hover:translate-x-6 transition-transform delay-200">
-              <span className="material-symbols-outlined text-on-surface-variant font-light">add</span>
-            </div>
+      <div className="bg-surface border border-outline-variant rounded-2xl p-md flex gap-md hover:border-primary/30 transition-colors cursor-pointer group h-full items-center">
+        {/* Fanned poster stack */}
+        <div className="flex flex-shrink-0">
+          <div className="w-[52px] h-[76px] rounded-md border border-outline-variant z-[3] group-hover:-translate-y-1 transition-transform" style={posterStripe} />
+          <div className="w-[52px] h-[76px] rounded-md border border-outline-variant -ml-[26px] opacity-85 z-[2] group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform delay-75" style={posterStripe} />
+          <div className="w-[52px] h-[76px] rounded-md border border-outline-variant -ml-[26px] opacity-65 z-[1] group-hover:-translate-y-1 group-hover:translate-x-2 transition-transform delay-150" style={posterStripe} />
+          <div className="w-[52px] h-[76px] bg-surface-container border border-outline-variant/30 rounded-md -ml-[26px] flex items-center justify-center group-hover:-translate-y-1 group-hover:translate-x-3 transition-transform delay-200 z-0">
+            <Plus size={16} className="text-on-surface-variant" strokeWidth={1.5} />
           </div>
+        </div>
 
-          <h3 className="font-heading text-heading text-on-surface line-clamp-1 mb-xs group-hover:text-primary-container transition-colors">
+        <div className="flex flex-col justify-center min-w-0">
+          <h3 className="font-semibold text-[15px] text-on-surface line-clamp-1 group-hover:text-primary transition-colors">
             {list.title}
           </h3>
+          <div
+            className="font-mono text-[11px] text-primary mt-1.5 inline-block px-2 py-0.5 rounded-[5px]"
+            style={{ background: 'color-mix(in srgb, #eb9c3e 14%, transparent)' }}
+          >
+            {list.item_count} items
+          </div>
         </div>
-        <p className="font-mono text-mono text-on-surface-variant/70 mt-2">
-          {list.item_count} films · Curated by @{username}
-        </p>
       </div>
     </Link>
   )

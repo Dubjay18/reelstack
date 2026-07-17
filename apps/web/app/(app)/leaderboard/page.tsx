@@ -3,16 +3,24 @@
 import Link from 'next/link'
 import { useLeaderboard } from '@/lib/hooks/api'
 import { ScoreBadge } from '@/components/score-badge'
+import { Trophy, Crown, Star, AlertCircle, ChevronRight } from 'lucide-react'
 
 function getScoreBarWidth(score: number): string {
   return `${Math.min(100, (score / 1000) * 100)}%`
 }
 
 function getRankStyle(rank: number) {
-  if (rank === 1) return 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-  if (rank === 2) return 'bg-zinc-400/15 border-zinc-400/30 text-zinc-300'
-  if (rank === 3) return 'bg-orange-500/15 border-orange-500/30 text-orange-300'
-  return 'bg-surface-container-low border-outline-variant/30 text-on-surface-variant'
+  if (rank === 1) return 'bg-[#d4af37]/10 border-[#d4af37]/30 text-[#d4af37]'
+  if (rank === 2) return 'bg-on-surface-variant/10 border-on-surface-variant/25 text-on-surface-variant'
+  if (rank === 3) return 'bg-[#d9552b]/10 border-[#d9552b]/25 text-[#d9552b]'
+  return 'bg-surface border-outline-variant text-on-surface-variant'
+}
+
+function RankIcon({ rank }: { rank: number }) {
+  if (rank === 1) return <Crown size={16} className="text-[#d4af37]" fill="currentColor" />
+  if (rank === 2) return <Trophy size={16} className="text-on-surface-variant" strokeWidth={2} />
+  if (rank === 3) return <Star size={16} className="text-[#d9552b]" fill="currentColor" />
+  return <span className="font-mono text-[12px]">{rank}</span>
 }
 
 export default function LeaderboardPage() {
@@ -22,10 +30,10 @@ export default function LeaderboardPage() {
 
   if (isLoading) {
     return (
-      <div className="bg-background text-on-background min-h-screen">
+      <div className="bg-background text-on-surface min-h-screen">
         <main className="max-w-3xl mx-auto px-lg py-xl">
           <div className="flex items-center gap-md mb-xl">
-            <span className="material-symbols-outlined text-primary text-[32px]">leaderboard</span>
+            <Trophy size={28} className="text-primary" strokeWidth={1.75} />
             <h1 className="font-display-md text-display-md text-on-surface">Leaderboard</h1>
           </div>
           <div className="space-y-md">
@@ -40,14 +48,14 @@ export default function LeaderboardPage() {
 
   if (error) {
     return (
-      <div className="bg-background text-on-background min-h-screen">
+      <div className="bg-background text-on-surface min-h-screen">
         <main className="max-w-3xl mx-auto px-lg py-xl">
           <div className="flex items-center gap-md mb-xl">
-            <span className="material-symbols-outlined text-primary text-[32px]">leaderboard</span>
+            <Trophy size={28} className="text-primary" strokeWidth={1.75} />
             <h1 className="font-display-md text-display-md text-on-surface">Leaderboard</h1>
           </div>
           <div className="text-center py-xl border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-            <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">error</span>
+            <AlertCircle size={48} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.5} />
             <p className="font-body-sm text-body-sm text-on-surface-variant">Failed to load leaderboard. Please try again later.</p>
           </div>
         </main>
@@ -56,12 +64,12 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="bg-background text-on-background min-h-screen">
+    <div className="bg-background text-on-surface min-h-screen">
       <main className="max-w-3xl mx-auto px-lg py-xl">
         {/* Header */}
         <div className="flex flex-col gap-sm mb-xl">
           <div className="flex items-center gap-md">
-            <span className="material-symbols-outlined text-primary text-[32px]">leaderboard</span>
+            <Trophy size={28} className="text-primary" strokeWidth={1.75} />
             <h1 className="font-display-md text-display-md text-on-surface">Leaderboard</h1>
           </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
@@ -77,7 +85,7 @@ export default function LeaderboardPage() {
         {/* Leaderboard */}
         {curators.length === 0 ? (
           <div className="text-center py-xl border border-dashed border-outline-variant/30 rounded-2xl bg-surface-container/20">
-            <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-md">emoji_events</span>
+            <Trophy size={48} className="text-on-surface-variant/30 mx-auto mb-md" strokeWidth={1.25} />
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-sm">
               No curators on the leaderboard yet.
             </p>
@@ -98,25 +106,14 @@ export default function LeaderboardPage() {
                   href={`/${entry.username}`}
                   className={`group flex items-center gap-md p-md rounded-xl border transition-all hover:scale-[1.005] ${getRankStyle(rankDisplay)}`}
                 >
-                  {/* Rank */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-mono ${
-                    rankDisplay === 1 ? 'bg-amber-500/30 text-amber-200' :
-                    rankDisplay === 2 ? 'bg-zinc-400/20 text-zinc-300' :
-                    rankDisplay === 3 ? 'bg-orange-500/20 text-orange-300' :
-                    'bg-surface-container text-on-surface-variant'
-                  }`}>
-                    {isTop3 ? (
-                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        {rankDisplay === 1 ? 'workspace_premium' : rankDisplay === 2 ? 'emoji_events' : 'star'}
-                      </span>
-                    ) : (
-                      <span>{rankDisplay}</span>
-                    )}
+                  {/* Rank icon/number */}
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-black/20">
+                    <RankIcon rank={rankDisplay} />
                   </div>
 
                   {/* Avatar */}
                   <img
-                    className="w-10 h-10 rounded-full object-cover border border-outline-variant/30"
+                    className="w-10 h-10 rounded-full object-cover border border-outline-variant/30 flex-shrink-0"
                     src={avatarUrl}
                     alt={entry.username}
                   />
@@ -140,7 +137,7 @@ export default function LeaderboardPage() {
                     </div>
                   </div>
 
-                  {/* Score Bar */}
+                  {/* Score bar */}
                   <div className="hidden sm:flex flex-col items-end gap-1 min-w-[100px]">
                     <span className="font-mono text-sm text-on-surface font-semibold">{entry.score}</span>
                     <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
@@ -152,9 +149,7 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* Arrow */}
-                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] opacity-0 group-hover:opacity-100 transition-opacity text-primary">
-                    arrow_forward
-                  </span>
+                  <ChevronRight size={18} className="text-on-surface-variant opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all flex-shrink-0" />
                 </Link>
               )
             })}

@@ -3,6 +3,7 @@ import './globals.css'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { ServerWakeGate } from '@/components/providers/server-wake-gate'
+import { RouteTransitionLoader } from '@/components/providers/route-transition-loader'
 import { AppErrorBoundary } from '@/components/error-boundary/error-boundary'
 import { ToastProvider } from '@/components/providers/toast-provider'
 import { AmbientBackground } from '@/components/ui/ambient-background'
@@ -27,7 +28,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#09090b',
+  themeColor: '#17120e',
 }
 
 export default function RootLayout({
@@ -42,8 +43,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://api.fontshare.com" />
       </head>
-      <body className="min-h-dvh bg-zinc-950 text-zinc-50 antialiased overflow-x-hidden relative">
+      <body className="min-h-dvh bg-background text-on-surface antialiased overflow-x-hidden relative">
         <AmbientBackground />
+        <RouteTransitionLoader />
         <ServerWakeGate>
           <AppErrorBoundary>
             <ToastProvider>

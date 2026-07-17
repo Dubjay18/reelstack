@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { AlertCircle, CheckCircle2, Info } from 'lucide-react'
 
 type ToastType = 'success' | 'error' | 'info'
 
@@ -29,19 +30,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const borderColor =
     toastType === 'error'
-      ? 'border-red-500/50'
+      ? 'border-error/50'
       : toastType === 'success'
-        ? 'border-green-500/50'
+        ? 'border-secondary/50'
         : 'border-outline-variant'
 
-  const icon =
-    toastType === 'error' ? 'error' : toastType === 'success' ? 'check_circle' : 'info'
+  const IconComp =
+    toastType === 'error' ? AlertCircle : toastType === 'success' ? CheckCircle2 : Info
 
   const iconColor =
     toastType === 'error'
-      ? 'text-red-400'
+      ? 'text-error'
       : toastType === 'success'
-        ? 'text-green-400'
+        ? 'text-secondary'
         : 'text-primary'
 
   return (
@@ -49,9 +50,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {visible && (
         <div
-          className={`fixed bottom-lg right-lg bg-surface-container border ${borderColor} text-on-background px-md py-sm rounded-xl shadow-modal z-50 flex items-center gap-xs animate-in fade-in slide-in-from-bottom-4 duration-300`}
+          className={`fixed bottom-lg right-lg bg-surface-container border ${borderColor} text-on-surface px-md py-sm rounded-xl shadow-modal z-50 flex items-center gap-xs animate-in fade-in slide-in-from-bottom-4 duration-300`}
         >
-          <span className={`material-symbols-outlined text-[20px] ${iconColor}`}>{icon}</span>
+          <IconComp size={18} className={`${iconColor} flex-shrink-0`} />
           <span className="font-body-sm text-body-sm">{message}</span>
         </div>
       )}
