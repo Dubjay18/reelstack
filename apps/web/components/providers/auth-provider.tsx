@@ -1,7 +1,7 @@
 // TASK-042 — Auth context + useAuth() hook
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { getCurrentUser, clearToken, storeToken } from '@/lib/auth'
 import type { User } from '@/types'
 
@@ -23,16 +23,16 @@ export function AuthProvider({ children }: { children: any }) {
     setIsLoading(false)
   }, [])
 
-  const login = (newToken: string) => {
+  const login = useCallback((newToken: string) => {
     storeToken(newToken)
     setUser(getCurrentUser())
-  }
+  }, [])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearToken()
     setUser(null)
     window.location.href = '/'
-  }
+  }, [])
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, logout }}>
