@@ -14,7 +14,7 @@ module.exports = {
     android: {
       package: "com.reelstack.app",
       adaptiveIcon: {
-        backgroundColor: "#131315",
+        backgroundColor: "#17120e",
         foregroundImage: "./assets/images/android-icon-foreground.png"
       },
       intentFilters: [
@@ -35,7 +35,7 @@ module.exports = {
       [
         "expo-splash-screen",
         {
-          backgroundColor: "#131315",
+          backgroundColor: "#17120e",
           image: "./assets/images/splash-icon.png",
           imageWidth: 200
         }

@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: 'rgba(79, 219, 200, 0.1)',
+    borderColor: 'rgba(235, 156, 62, 0.1)',
     backgroundColor: Colors.surfaceContainerLow,
   },
   info: {

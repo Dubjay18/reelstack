@@ -149,7 +149,7 @@ export function ServerWakeGate({ children }: { children: React.ReactNode }) {
           pointerEvents="box-none"
         >
           <LinearGradient
-            colors={['#131315', '#0f0f11', '#131315']}
+            colors={['#17120e', '#120d0a', '#17120e']}
             style={StyleSheet.absoluteFill}
           />
 
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: 'rgba(79, 219, 200, 0.04)',
+    backgroundColor: 'rgba(235, 156, 62, 0.04)',
   },
   iconContainer: {
     width: 80,
@@ -307,18 +307,18 @@ const styles = StyleSheet.create({
   ring1: {
     width: 96,
     height: 96,
-    borderColor: 'rgba(79, 219, 200, 0.15)',
+    borderColor: 'rgba(235, 156, 62, 0.15)',
   },
   ring2: {
     width: 64,
     height: 64,
-    borderColor: 'rgba(79, 219, 200, 0.25)',
+    borderColor: 'rgba(235, 156, 62, 0.25)',
   },
   ringDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: 'rgba(79, 219, 200, 0.3)',
+    backgroundColor: 'rgba(235, 156, 62, 0.3)',
   },
   message: {
     ...Typography.bodyLg,
@@ -342,11 +342,11 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 3,
-    backgroundColor: 'rgba(79, 219, 200, 0.4)',
+    backgroundColor: 'rgba(235, 156, 62, 0.4)',
   },
   retryText: {
     ...Typography.caption,
-    color: '#3c3c3e',
+    color: '#4a3f33',
   },
   hintContainer: {
     marginTop: 24,
@@ -364,9 +364,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: 'rgba(79, 219, 200, 0.1)',
+    backgroundColor: 'rgba(235, 156, 62, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(79, 219, 200, 0.2)',
+    borderColor: 'rgba(235, 156, 62, 0.2)',
   },
   retryButtonPressed: {
     opacity: 0.7,

@@ -129,7 +129,7 @@ export const MovieDetailProvider: React.FC<{ children: React.ReactNode }> = ({ c
                       </Text>
 
                       <View style={styles.ratingRow}>
-                        <MaterialIcons name="star" size={16} color="#f59e0b" />
+                        <MaterialIcons name="star" size={16} color="#eb9c3e" />
                         <Text style={[Typography.bodySm, styles.ratingText]}>
                           {movieDetails?.vote_average ? movieDetails.vote_average.toFixed(1) : selectedMedia.vote_average ? selectedMedia.vote_average.toFixed(1) : 'N/A'} / 10
                         </Text>
@@ -522,9 +522,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   genreBadge: {
-    backgroundColor: 'rgba(79, 219, 200, 0.1)',
+    backgroundColor: 'rgba(235, 156, 62, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(79, 219, 200, 0.2)',
+    borderColor: 'rgba(235, 156, 62, 0.2)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: Radius.full,

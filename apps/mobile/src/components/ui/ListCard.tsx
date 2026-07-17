@@ -45,11 +45,11 @@ export const ListCard: React.FC<ListCardProps> = ({ list, username, onPress }) =
     const hash = charCodeSum % 5;
     
     const gradients: [string, string][] = [
-      ['rgba(19, 78, 74, 0.6)', '#131315'], // Teal
-      ['rgba(76, 5, 25, 0.6)', '#131315'],   // Rose
-      ['rgba(69, 26, 3, 0.6)', '#131315'],   // Amber
-      ['rgba(46, 16, 101, 0.6)', '#131315'], // Violet
-      ['rgba(6, 78, 59, 0.6)', '#131315'],   // Emerald
+      ['rgba(19, 78, 74, 0.6)', '#17120e'], // Teal
+      ['rgba(76, 5, 25, 0.6)', '#17120e'],   // Rose
+      ['rgba(69, 26, 3, 0.6)', '#17120e'],   // Amber
+      ['rgba(46, 16, 101, 0.6)', '#17120e'], // Violet
+      ['rgba(6, 78, 59, 0.6)', '#17120e'],   // Emerald
     ];
     
     const borders = [

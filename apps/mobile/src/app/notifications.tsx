@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   unreadRow: {
-    backgroundColor: 'rgba(79, 219, 200, 0.04)',
+    backgroundColor: 'rgba(235, 156, 62, 0.04)',
   },
   avatar: {
     width: 44,
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginRight: Spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(79, 219, 200, 0.1)',
+    borderColor: 'rgba(235, 156, 62, 0.1)',
     backgroundColor: Colors.surfaceContainerLow,
   },
   textContainer: {

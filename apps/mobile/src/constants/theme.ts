@@ -1,29 +1,29 @@
 import { Platform } from 'react-native';
 
 export const Colors = {
-  background:           '#131315',
-  surface:              '#131315',
-  surfaceDim:           '#131315',
-  surfaceContainerLow:  '#1c1b1d',
-  surfaceContainer:     '#201f22',
-  surfaceContainerHigh: '#2a2a2c',
-  surfaceVariant:       '#353437',
-  outlineVariant:       '#3c4947',
-  outline:              '#859490',
+  background:           '#17120e',
+  surface:              '#17120e',
+  surfaceDim:           '#17120e',
+  surfaceContainerLow:  '#1e1712',
+  surfaceContainer:     '#1e1712',
+  surfaceContainerHigh: '#31261a',
+  surfaceVariant:       '#241c15',
+  outlineVariant:       'rgba(255,214,170,0.14)',
+  outline:              '#6b5847',
 
-  primary:        '#4fdbc8',
-  primaryFixed:   '#71f8e4',
-  secondary:      '#4ae176',
-  watched:        '#22c55e',
+  primary:        '#eb9c3e',
+  primaryFixed:   '#f0b168',
+  secondary:      '#d9552b',
+  watched:        '#eb9c3e',
 
-  onBackground:       '#e5e1e4',
-  onSurface:          '#e5e1e4',
-  onSurfaceVariant:   '#bbcac6',
-  onPrimary:          '#003731',
-  onSecondary:        '#003915',
+  onBackground:       '#f7ecdf',
+  onSurface:          '#f7ecdf',
+  onSurfaceVariant:   '#b9a58e',
+  onPrimary:          '#1c1207',
+  onSecondary:        '#1c1207',
 
-  error:          '#ffb4ab',
-  errorContainer: '#93000a',
+  error:          '#f87171',
+  errorContainer: '#7f1d1d',
 } as const;
 
 export const Spacing = {

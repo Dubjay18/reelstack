@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   publicBadge: {
-    backgroundColor: 'rgba(79, 219, 200, 0.1)',
+    backgroundColor: 'rgba(235, 156, 62, 0.1)',
   },
   privateBadge: {
     backgroundColor: Colors.surfaceVariant,

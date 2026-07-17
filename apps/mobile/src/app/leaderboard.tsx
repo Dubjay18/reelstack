@@ -13,7 +13,7 @@ import type { LeaderboardEntry } from '@/types';
 const AnyFlashList = FlashList as any;
 
 function getRankColors(rank: number) {
-  if (rank === 1) return { bg: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b' };
+  if (rank === 1) return { bg: 'rgba(235, 156, 62, 0.3)', color: '#eb9c3e' };
   if (rank === 2) return { bg: 'rgba(161, 161, 170, 0.2)', color: '#d4d4d8' };
   if (rank === 3) return { bg: 'rgba(249, 115, 22, 0.2)', color: '#fb923c' };
   return { bg: Colors.surfaceContainerLow, color: Colors.onSurfaceVariant };
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(79, 219, 200, 0.1)',
+    borderColor: 'rgba(235, 156, 62, 0.1)',
     backgroundColor: Colors.surfaceContainerLow,
   },
   info: {

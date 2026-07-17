@@ -321,9 +321,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   genreBadge: {
-    backgroundColor: 'rgba(79, 219, 200, 0.1)',
+    backgroundColor: 'rgba(235, 156, 62, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(79, 219, 200, 0.2)',
+    borderColor: 'rgba(235, 156, 62, 0.2)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: Radius.full,

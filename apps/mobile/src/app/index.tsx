@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 125,
-    backgroundColor: 'rgba(79, 219, 200, 0.04)',
+    backgroundColor: 'rgba(235, 156, 62, 0.04)',
     filter: [{ blur: 50 }],
   },
   collageContainer: {

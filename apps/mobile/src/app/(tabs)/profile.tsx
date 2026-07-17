@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: 'rgba(79, 219, 200, 0.3)',
+    borderColor: 'rgba(235, 156, 62, 0.3)',
     backgroundColor: Colors.surfaceContainer,
   },
   verifiedBadge: {
