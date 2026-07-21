@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useContentDetails, useStreamingAvailability, useUserLists } from '@/lib/hooks/api'
 import { api } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { CommentSection } from '@/components/comments'
 import { StreamingBadge } from '@/components/streaming-badge'
-import { Share2, Plus, Star, Play, Loader2, ChevronDown } from 'lucide-react'
+import { Share2, Plus, Star, Play, Loader2, ChevronDown, ArrowLeft } from 'lucide-react'
 
 const STRIPE_STYLE = {
   background: 'repeating-linear-gradient(135deg, #31261a 0px, #31261a 10px, #241c15 10px, #241c15 20px)',
@@ -18,10 +18,20 @@ const STRIPE_STYLE = {
 export default function Page() {
   const params = useParams()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const id = params.id as string
   const tmdbId = parseInt(id)
   const queryClient = useQueryClient()
   const mediaType = searchParams.get('type') === 'tv' ? 'tv' : 'movie'
+
+  const handleBack = () => {
+    // Fall back to dashboard when there's no in-app history (e.g. direct link, new tab).
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/dashboard')
+    }
+  }
 
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [showListSelector, setShowListSelector] = useState(false)
@@ -113,6 +123,15 @@ export default function Page() {
         )}
         {/* Bottom gradient fade to page bg */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+
+        {/* Back button */}
+        <button
+          onClick={handleBack}
+          aria-label="Go back"
+          className="absolute top-4 left-4 sm:top-5 sm:left-5 z-20 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-on-surface flex items-center justify-center hover:bg-black/70 transition-colors"
+        >
+          <ArrowLeft size={18} strokeWidth={2} />
+        </button>
 
         {/* Title / meta overlay at bottom */}
         <div className="absolute bottom-5 sm:bottom-7 left-4 right-4 sm:left-10 sm:right-10">
