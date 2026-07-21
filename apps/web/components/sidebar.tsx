@@ -14,6 +14,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -53,6 +54,7 @@ function Sidebar() {
   const isSavedListsPage = pathname.startsWith('/saved-lists')
   const isLeaderboardPage = pathname.startsWith('/leaderboard')
   const isNotificationsPage = pathname.startsWith('/notifications')
+  const isRileyPage = pathname.startsWith('/riley')
   const isDashboardPage = pathname === '/dashboard'
 
   return (
@@ -71,6 +73,7 @@ function Sidebar() {
         <div className="flex-1 flex flex-col gap-xs px-sm">
           <NavItem href="/dashboard" icon={Home} label="Home" active={isDashboardPage} />
           <NavItem href="/search" icon={Search} label="Search" active={isSearchPage} />
+          <NavItem href="/riley" icon={Sparkles} label="Riley" active={isRileyPage} />
           <NavItem href="/lists" icon={List} label="My Lists" active={isListsPage} />
           <NavItem href="/saved-lists" icon={Bookmark} label="Saved Lists" active={isSavedListsPage} />
           <NavItem href="/leaderboard" icon={Trophy} label="Leaderboard" active={isLeaderboardPage} />
@@ -102,6 +105,10 @@ function Sidebar() {
         <Link className={`flex flex-col items-center justify-center active:scale-95 w-16 h-full ${isSearchPage ? 'text-primary' : 'text-on-surface-variant'}`} href="/search">
           <Search size={22} strokeWidth={isSearchPage ? 2.5 : 1.75} className="mb-1" />
           <span className="font-caption text-[10px]">Search</span>
+        </Link>
+        <Link className={`flex flex-col items-center justify-center active:scale-95 w-16 h-full ${isRileyPage ? 'text-primary' : 'text-on-surface-variant'}`} href="/riley">
+          <Sparkles size={22} strokeWidth={isRileyPage ? 2.5 : 1.75} className="mb-1" />
+          <span className="font-caption text-[10px]">Riley</span>
         </Link>
         <Link className={`flex flex-col items-center justify-center active:scale-95 w-16 h-full ${isListsPage ? 'text-primary' : 'text-on-surface-variant'}`} href="/lists">
           <List size={22} strokeWidth={isListsPage ? 2.5 : 1.75} className="mb-1" />

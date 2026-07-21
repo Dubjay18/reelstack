@@ -1,4 +1,4 @@
-.PHONY: dev dev-api dev-web dev-mobile dev-android dev-ios test-api test-web migrate lint docker-up docker-down
+.PHONY: dev dev-api dev-web dev-mobile dev-android dev-ios test-api test-web migrate lint docker-up docker-down release-mobile
 
 # ── Local dev ────────────────────────────────────────────────────────────────
 dev: docker-up
@@ -49,3 +49,9 @@ lint:
 build-api:
 	@cd apps/api && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o server ./cmd/server
 	@echo "▸ Built apps/api/server"
+
+# ── Release ──────────────────────────────────────────────────────────────────
+# Builds a production Android APK via EAS, publishes it as a GitHub Release
+# asset, and updates the web download banner. Usage: make release-mobile [VERSION=1.0.1]
+release-mobile:
+	@./scripts/release-mobile.sh $(VERSION)

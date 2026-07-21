@@ -189,6 +189,50 @@ export interface SavedList extends List {
   owner_avatar: string | null
 }
 
+// Riley AI agent
+export interface RileyStory {
+  headline: string
+  summary: string
+  source: string
+  url: string
+}
+
+export interface RileyDigest {
+  generated_at: string
+  stories: RileyStory[]
+}
+
+export interface RileyTopPick {
+  tmdb_id: number
+  media_type: string
+  title: string
+  poster_path: string | null
+  year: string
+  vote_average: number
+  blurb: string
+}
+
+export interface RileyTopList {
+  generated_at: string
+  picks: RileyTopPick[]
+}
+
+export interface RileyTopResponse {
+  top_movies: RileyTopList | null
+  top_series: RileyTopList | null
+  top_ten: RileyTopList | null
+}
+
+export interface RileyChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface RileyChatResponse {
+  reply: string
+  recommendations: RileyTopPick[]
+}
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 declare global {
   interface Window {

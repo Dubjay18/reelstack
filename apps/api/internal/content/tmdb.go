@@ -499,4 +499,100 @@ func (c *TMDBClient) GetTrending(ctx context.Context) ([]SearchResult, error) {
 	}
 
 	return val.([]SearchResult), nil
-}	
+}
+
+func (c *TMDBClient) GetTrendingTV(ctx context.Context) ([]SearchResult, error) {
+	return c.getCachedList(ctx, "tmdb:trending_tv:week", "https://api.themoviedb.org/3/trending/tv/week", "tv")
+}
+
+func (c *TMDBClient) GetTopRatedMovies(ctx context.Context) ([]SearchResult, error) {
+	return c.getCachedList(ctx, "tmdb:top_rated:movie", "https://api.themoviedb.org/3/movie/top_rated", "movie")
+}
+
+func (c *TMDBClient) GetTopRatedTV(ctx context.Context) ([]SearchResult, error) {
+	return c.getCachedList(ctx, "tmdb:top_rated:tv", "https://api.themoviedb.org/3/tv/top_rated", "tv")
+}
+
+// getCachedList fetches a TMDB list endpoint with the same cache-aside +
+// singleflight pattern as GetTrending, mapping results to SearchResult.
+func (c *TMDBClient) getCachedList(ctx context.Context, cacheKey, url, mediaType string) ([]SearchResult, error) {
+	cachedData, err := c.redisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var results []SearchResult
+		if err = json.Unmarshal([]byte(cachedData), &results); err == nil {
+			return results, nil
+		}
+	}
+
+	val, err, _ := c.sfGroup.Do(cacheKey, func() (interface{}, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		q := req.URL.Query()
+		q.Add("api_key", c.APIKey)
+		req.URL.RawQuery = q.Encode()
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("TMDB list API error: %s", resp.Status)
+		}
+
+		type tmdbListItem struct {
+			ID           int     `json:"id"`
+			Title        string  `json:"title"`
+			Name         string  `json:"name"`
+			PosterPath   *string `json:"poster_path"`
+			ReleaseDate  string  `json:"release_date"`
+			FirstAirDate string  `json:"first_air_date"`
+			VoteAverage  float64 `json:"vote_average"`
+		}
+		type tmdbListResponse struct {
+			Results []tmdbListItem `json:"results"`
+		}
+
+		var listData tmdbListResponse
+		if err := json.NewDecoder(resp.Body).Decode(&listData); err != nil {
+			return nil, err
+		}
+
+		var items []SearchResult
+		for _, res := range listData.Results {
+			title := res.Title
+			date := res.ReleaseDate
+			if mediaType == "tv" {
+				title = res.Name
+				date = res.FirstAirDate
+			}
+			year := ""
+			if len(date) >= 4 {
+				year = date[:4]
+			}
+			items = append(items, SearchResult{
+				ID:          res.ID,
+				MediaType:   mediaType,
+				Title:       title,
+				PosterPath:  res.PosterPath,
+				Year:        year,
+				VoteAverage: res.VoteAverage,
+			})
+		}
+
+		// Cache in Redis for 1 hour
+		if data, err := json.Marshal(items); err == nil {
+			c.redisClient.Set(context.Background(), cacheKey, data, time.Hour)
+		}
+
+		return items, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return val.([]SearchResult), nil
+}

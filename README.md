@@ -69,6 +69,27 @@ reelstack/
 | `make lint` | go vet + eslint |
 | `make build-api` | Produces linux/amd64 binary |
 
+## Riley — AI movie agent
+
+Riley is Reelstack's in-app AI agent: a movie-news digest summarized from free RSS feeds (Variety, Deadline, THR, /Film, IndieWire), "Top Movies/Series Right Now" rails from TMDB trending, an LLM-curated Top 10 with one-line takes, and a chat companion. Lives at `/riley` in the web app.
+
+### How it works
+
+1. `POST /api/v1/cron/riley` (secured by `X-Cron-Secret`) regenerates everything: RSS → LLM digest, TMDB → top lists, candidates → LLM top-10. Schedule it every ~6 hours (same Railway cron pattern as `/cron/scores`).
+2. Artifacts persist in Postgres (`riley_artifacts`) with a 6h Redis read cache.
+3. Public reads: `GET /api/v1/riley/digest`, `GET /api/v1/riley/top`. Chat: `POST /api/v1/riley/chat` (JWT required).
+4. Chat budgets are calibrated to Groq's free tier (30 RPM / 1K req/day / 12K TPM / 100K TPD for llama-3.3-70b): **3/min and 10/day per user, 6/min and 50/day globally** (tokens-per-day is the binding constraint at ~2K tokens per chat turn). Constants live in `internal/riley/service.go`.
+
+### Configuration
+
+Riley uses any OpenAI-compatible LLM — free tiers work (Groq, Gemini AI Studio, OpenRouter):
+
+```bash
+LLM_API_KEY=          # leave empty to disable the digest/chat (top lists still work)
+LLM_BASE_URL=https://api.groq.com/openai/v1
+LLM_MODEL=llama-3.3-70b-versatile
+```
+
 ## Curator Reputation Score
 
 Each user has a reputation score (0–1000) based on four weighted dimensions:

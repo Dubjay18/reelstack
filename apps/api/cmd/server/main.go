@@ -17,6 +17,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/lists"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
 	"github.com/Dubjay18/reelstack/api/internal/queue"
+	"github.com/Dubjay18/reelstack/api/internal/riley"
 	"github.com/Dubjay18/reelstack/api/internal/saved_lists"
 	"github.com/Dubjay18/reelstack/api/internal/users"
 	"github.com/Dubjay18/reelstack/api/pkg/cache"
@@ -184,6 +185,14 @@ func main() {
 	contentSvc := content.NewService(tmdbClient, wmClient)
 	contentHandler := content.NewHandler(contentSvc)
 	contentHandler.RegisterRoutes(app)
+
+	// ── Wire: riley (AI agent) ──────────────────────────────────────────────
+	rileyLLM := riley.NewLLMClient(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMModel)
+	rileyRepo := riley.NewRepository(database)
+	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, redisClient.Redis())
+	rileyHandler := riley.NewHandler(rileySvc, cfg.CronSecret)
+	rileyHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+	rileyHandler.RegisterCronRoute(app)
 
 	// ── Wire: comments ────────────────────────────────────────────────────────
 	commentsRepo := comments.NewCommentRepository(database)

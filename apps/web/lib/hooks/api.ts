@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList, LeaderboardEntry } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyChatMessage, RileyChatResponse } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -426,5 +426,34 @@ export function useLeaderboard(limit = 20, offset = 0) {
       `/api/v1/curators/leaderboard?limit=${limit}&offset=${offset}`
     ),
     staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
+// 12. Riley Hooks
+export function useRileyDigest() {
+  return useQuery({
+    queryKey: ['riley', 'digest'],
+    queryFn: () => api.get<RileyDigest>('/api/v1/riley/digest'),
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    retry: (failureCount, error) => {
+      // 404 = no digest generated yet — don't hammer (APIError carries .status)
+      if ((error as { status?: number })?.status === 404) return false
+      return failureCount < 2
+    },
+  })
+}
+
+export function useRileyTop() {
+  return useQuery({
+    queryKey: ['riley', 'top'],
+    queryFn: () => api.get<RileyTopResponse>('/api/v1/riley/top'),
+    staleTime: 60 * 60 * 1000, // 1 hour — matches Redis cache TTL
+  })
+}
+
+export function useRileyChat() {
+  return useMutation({
+    mutationFn: (messages: RileyChatMessage[]) =>
+      api.post<RileyChatResponse>('/api/v1/riley/chat', { messages }),
   })
 }

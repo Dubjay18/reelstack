@@ -22,6 +22,9 @@ type Config struct {
 	RabbitMQURL        string
 	ResendAPIKey       string
 	CronSecret         string
+	LLMAPIKey          string
+	LLMBaseURL         string
+	LLMModel           string
 }
 
 func Load() (*Config, error) {
@@ -40,6 +43,9 @@ func Load() (*Config, error) {
 		RabbitMQURL:        getEnv("RABBITMQ_URL", "amqp://localhost:5672"),
 		ResendAPIKey:       os.Getenv("RESEND_API_KEY"),
 		CronSecret:         os.Getenv("CRON_SECRET"),
+		LLMAPIKey:          os.Getenv("LLM_API_KEY"),
+		LLMBaseURL:         getEnv("LLM_BASE_URL", "https://api.groq.com/openai/v1"),
+		LLMModel:           getEnv("LLM_MODEL", "llama-3.3-70b-versatile"),
 	}
 
 	// Required field validation
