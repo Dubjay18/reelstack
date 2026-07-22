@@ -2,6 +2,9 @@ package curators
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"log/slog"
 	"time"
 )
 
@@ -37,13 +40,11 @@ func (s *CuratorService) GetLeaderboard(ctx context.Context, limit, offset int) 
 		return nil, time.Time{}, err
 	}
 
-	// Get the computed_at from any row to report staleness
+	// Every row shares the same computed_at (one materialized view refresh);
+	// the query now selects it directly, so no second round-trip is needed.
 	var computedAt time.Time
 	if len(entries) > 0 {
-		score, err := s.repo.GetScore(ctx, entries[0].UserID.String())
-		if err == nil {
-			computedAt = score.ComputedAt
-		}
+		computedAt = entries[0].ComputedAt
 	}
 
 	return entries, computedAt, nil
@@ -52,8 +53,13 @@ func (s *CuratorService) GetLeaderboard(ctx context.Context, limit, offset int) 
 func (s *CuratorService) GetUserScore(ctx context.Context, userID string) (*CuratorScore, error) {
 	score, err := s.repo.GetScore(ctx, userID)
 	if err != nil {
-		// Return default zero score for users without a row
-		return &CuratorScore{}, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			// User has no score row yet (e.g. materialized view hasn't
+			// refreshed since they signed up) — that's a default zero, not a failure.
+			return &CuratorScore{}, nil
+		}
+		slog.Error("failed to get curator score", "error", err, "user_id", userID)
+		return nil, err
 	}
 	return score, nil
 }
@@ -61,8 +67,11 @@ func (s *CuratorService) GetUserScore(ctx context.Context, userID string) (*Cura
 func (s *CuratorService) GetUserScoreWithRank(ctx context.Context, userID string) (*CuratorScore, *int, error) {
 	score, rank, err := s.repo.GetScoreWithRank(ctx, userID)
 	if err != nil {
-		// Return default zero score for users without a row
-		return &CuratorScore{}, nil, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return &CuratorScore{}, nil, nil
+		}
+		slog.Error("failed to get curator score with rank", "error", err, "user_id", userID)
+		return nil, nil, err
 	}
 	return score, rank, nil
 }

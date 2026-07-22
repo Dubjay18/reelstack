@@ -170,13 +170,15 @@ export interface Notification {
   id: string
   user_id: string
   actor_id: string
-  type: 'new_follower' | 'list_created' | 'list_saved'
+  type: 'new_follower' | 'list_created' | 'list_saved' | 'comment_reply'
   entity_id?: string
   is_read: boolean
   created_at: string
   actor_username?: string
   actor_avatar_url?: string
   entity_title?: string
+  comment_tmdb_id?: number
+  comment_media_type?: string
 }
 
 export interface SaveStatusResponse {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"regexp"
 	"time"
 
@@ -119,6 +120,8 @@ func (s *UserService) GetPublicProfile(ctx context.Context, identifier string) (
 		if err == nil {
 			profile.Score = score
 			profile.Rank = rank
+		} else {
+			slog.Warn("failed to fetch curator score for profile", "error", err, "user_id", user.ID)
 		}
 	}
 

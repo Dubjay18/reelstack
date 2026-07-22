@@ -9,6 +9,7 @@ import {
   useMarkAllNotificationsRead,
 } from '@/lib/hooks/api'
 import { useAuth } from '@/components/providers/auth-provider'
+import { getNotificationCopy, timeAgo } from '@/lib/notifications'
 
 export function NotificationBell() {
   const { user } = useAuth()
@@ -82,17 +83,7 @@ export function NotificationBell() {
             ) : (
               notifications.map((n) => {
                 const isUnread = !n.is_read
-                let text = ''
-                let href = ''
-
-                if (n.type === 'new_follower') {
-                  text = `@${n.actor_username} started following you`
-                  href = `/${n.actor_username}`
-                } else if (n.type === 'list_created') {
-                  text = `@${n.actor_username} created a list: ${n.entity_title}`
-                  href = `/lists/${n.entity_id}`
-                }
-
+                const { text, href, Icon } = getNotificationCopy(n)
                 const avatarUrl = n.actor_avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${n.actor_username}`
 
                 return (
@@ -105,21 +96,19 @@ export function NotificationBell() {
                     }`}
                   >
                     <div className="flex items-start gap-sm">
-                      <img
-                        src={avatarUrl}
-                        alt={n.actor_username || 'avatar'}
-                        className="h-8 w-8 rounded-full object-cover shrink-0 border border-primary/20 bg-surface-container-high"
-                      />
+                      <div className="relative shrink-0">
+                        <img
+                          src={avatarUrl}
+                          alt={n.actor_username || 'avatar'}
+                          className="h-8 w-8 rounded-full object-cover border border-primary/20 bg-surface-container-high"
+                        />
+                        <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-surface-container border border-outline-variant/40">
+                          <Icon size={9} className="text-primary" strokeWidth={2.5} />
+                        </span>
+                      </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <p className="leading-snug break-words">{text}</p>
-                        <p className="text-[10px] font-mono text-on-surface-variant">
-                          {new Date(n.created_at).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
+                        <p className="text-[10px] font-mono text-on-surface-variant">{timeAgo(n.created_at)}</p>
                       </div>
                     </div>
                   </Link>

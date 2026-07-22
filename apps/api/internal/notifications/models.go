@@ -15,5 +15,10 @@ type Notification struct {
 	// Rich UI fields resolved via SQL Joins
 	ActorUsername  *string `json:"actor_username,omitempty" db:"actor_username"`
 	ActorAvatarURL *string `json:"actor_avatar_url,omitempty" db:"actor_avatar_url"`
-	EntityTitle    *string `json:"entity_title,omitempty" db:"entity_title"`
+	EntityTitle    *string `json:"entity_title,omitempty" db:"entity_title"` // list title, or comment body for comment_reply
+
+	// Populated only for type == "comment_reply", so the frontend can link
+	// back to the movie/show the reply was posted on.
+	CommentTMDBID    *int    `json:"comment_tmdb_id,omitempty" db:"comment_tmdb_id"`
+	CommentMediaType *string `json:"comment_media_type,omitempty" db:"comment_media_type"`
 }

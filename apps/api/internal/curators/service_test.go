@@ -3,6 +3,7 @@ package curators_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 	"time"
 
@@ -109,24 +110,28 @@ func TestGetLeaderboard_ReturnsEntries(t *testing.T) {
 	now := time.Now()
 	entries := []curators.LeaderboardEntry{
 		{
-			UserID:   uuid.New(),
-			Username: "alice",
-			Score:    850,
-			Rank:     1,
+			UserID:     uuid.New(),
+			Username:   "alice",
+			Score:      850,
+			Rank:       1,
+			ComputedAt: now,
 		},
 		{
-			UserID:   uuid.New(),
-			Username: "bob",
-			Score:    720,
-			Rank:     2,
+			UserID:     uuid.New(),
+			Username:   "bob",
+			Score:      720,
+			Rank:       2,
+			ComputedAt: now,
 		},
 	}
 
+	scoreFnCalled := false
 	repo := &mockRepo{
 		leaderboardFn: func(ctx context.Context, limit, offset int) ([]curators.LeaderboardEntry, error) {
 			return entries, nil
 		},
 		scoreFn: func(ctx context.Context, userID string) (*curators.CuratorScore, error) {
+			scoreFnCalled = true
 			return &curators.CuratorScore{ComputedAt: now}, nil
 		},
 	}
@@ -142,8 +147,11 @@ func TestGetLeaderboard_ReturnsEntries(t *testing.T) {
 	if result[0].Username != "alice" {
 		t.Errorf("expected first entry to be alice, got %s", result[0].Username)
 	}
-	if computedAt.IsZero() {
-		t.Error("expected non-zero computed_at")
+	if !computedAt.Equal(now) {
+		t.Errorf("expected computed_at to be read from the leaderboard row, got %v want %v", computedAt, now)
+	}
+	if scoreFnCalled {
+		t.Error("expected GetLeaderboard not to make a second GetScore round-trip for computed_at")
 	}
 }
 
@@ -208,6 +216,45 @@ func TestGetUserScore_NoScore(t *testing.T) {
 	}
 	if score.Score != 0 {
 		t.Errorf("expected default score 0, got %d", score.Score)
+	}
+}
+
+func TestGetUserScore_PropagatesRealError(t *testing.T) {
+	dbErr := errors.New("connection reset by peer")
+	repo := &mockRepo{
+		scoreFn: func(ctx context.Context, uid string) (*curators.CuratorScore, error) {
+			return nil, dbErr
+		},
+	}
+	svc := curators.NewCuratorService(repo)
+
+	score, err := svc.GetUserScore(context.Background(), uuid.New().String())
+	if err == nil {
+		t.Fatal("expected a real DB error to be propagated, got nil")
+	}
+	if !errors.Is(err, dbErr) {
+		t.Errorf("expected wrapped/matching error, got %v", err)
+	}
+	if score != nil {
+		t.Errorf("expected nil score on real error, got %v", score)
+	}
+}
+
+func TestGetUserScoreWithRank_PropagatesRealError(t *testing.T) {
+	dbErr := errors.New("connection reset by peer")
+	repo := &mockRepo{
+		scoreRankFn: func(ctx context.Context, uid string) (*curators.CuratorScore, *int, error) {
+			return nil, nil, dbErr
+		},
+	}
+	svc := curators.NewCuratorService(repo)
+
+	score, rank, err := svc.GetUserScoreWithRank(context.Background(), uuid.New().String())
+	if err == nil {
+		t.Fatal("expected a real DB error to be propagated, got nil")
+	}
+	if score != nil || rank != nil {
+		t.Errorf("expected nil score/rank on real error, got score=%v rank=%v", score, rank)
 	}
 }
 

@@ -34,6 +34,7 @@ func (r *CuratorRepository) GetLeaderboard(ctx context.Context, limit, offset in
 			u.avatar_url,
 			u.bio,
 			cs.score,
+			cs.computed_at,
 			RANK() OVER (ORDER BY cs.score DESC) AS rank,
 			COALESCE(fc.follower_count, 0) AS followers_count,
 			COALESCE(lc.list_count, 0) AS list_count

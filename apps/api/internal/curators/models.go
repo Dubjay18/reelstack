@@ -25,4 +25,5 @@ type LeaderboardEntry struct {
 	Rank          int       `json:"rank"           db:"rank"`
 	FollowersCount int      `json:"followers_count" db:"followers_count"`
 	ListCount     int       `json:"list_count"     db:"list_count"`
+	ComputedAt    time.Time `json:"computed_at"    db:"computed_at"`
 }

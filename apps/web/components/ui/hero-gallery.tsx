@@ -18,10 +18,23 @@ const collageDef: [number, string, string, number, number][] = [
   [ 4, '58%', '58%',  160, 240],
 ]
 
+// Hand-picked, recognizable posters for the marketing page — a fixed set
+// so the landing page renders instantly with no API call or loading state.
+// TMDB poster_path values looked up via the app's own content search.
+const collagePosters = [
+  { title: 'Dune: Part Two', posterPath: '/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg' },
+  { title: 'Oppenheimer', posterPath: '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg' },
+  { title: 'The Bear', posterPath: '/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg' },
+  { title: 'Severance', posterPath: '/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg' },
+  { title: 'Everything Everywhere All at Once', posterPath: '/u68AjlvlutfEIcpmbYpKcdi09ut.jpg' },
+  { title: 'Parasite', posterPath: '/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg' },
+]
+
 function CollageCard({
-  rot, left, top, w, h, index, floatDelay,
+  rot, left, top, w, h, index, floatDelay, title, posterPath,
 }: {
   rot: number; left: string; top: string; w: number; h: number; index: number; floatDelay: number
+  title: string; posterPath: string
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const mx = useMotionValue(0)
@@ -58,11 +71,19 @@ function CollageCard({
       className="cursor-pointer select-none"
     >
       <div
-        className="w-full h-full rounded-[14px] border border-outline-variant shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex items-center justify-center hover:border-primary/30 transition-colors"
+        className="w-full h-full rounded-[14px] border border-outline-variant shadow-[0_20px_40px_rgba(0,0,0,0.4)] relative overflow-hidden hover:border-primary/30 transition-colors"
         style={{ ...stripeStyle, transform: 'translateZ(16px)' }}
       >
-        <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-[0.12em]">
-          0{index + 1} / SCENE
+        <Image
+          src={`https://image.tmdb.org/t/p/w500${posterPath}`}
+          alt={title}
+          fill
+          sizes="190px"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+        <span className="absolute bottom-2 left-2.5 right-2.5 font-mono text-[10px] text-on-surface uppercase tracking-[0.08em] truncate">
+          {title}
         </span>
       </div>
     </motion.div>
@@ -90,6 +111,8 @@ export function HeroGallery() {
           h={h}
           index={i}
           floatDelay={i * 0.6}
+          title={collagePosters[i].title}
+          posterPath={collagePosters[i].posterPath}
         />
       ))}
     </div>
