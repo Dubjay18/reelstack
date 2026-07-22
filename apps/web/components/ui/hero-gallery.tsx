@@ -1,8 +1,10 @@
 "use client"
 
-import React, { useRef } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
+import { useRileyTop } from '@/lib/hooks/api'
+import type { RileyTopPick } from '@/types'
 
 // Diagonal-stripe placeholder style matching the design doc
 const stripeStyle = {
@@ -18,10 +20,10 @@ const collageDef: [number, string, string, number, number][] = [
   [ 4, '58%', '58%',  160, 240],
 ]
 
-// Hand-picked, recognizable posters for the marketing page — a fixed set
-// so the landing page renders instantly with no API call or loading state.
-// TMDB poster_path values looked up via the app's own content search.
-const collagePosters = [
+// Hand-picked posters used only as a fallback — before Riley's trending
+// data has loaded (or on a fresh install before its first cron run), so
+// the landing page never shows a broken or empty hero.
+const fallbackPosters = [
   { title: 'Dune: Part Two', posterPath: '/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg' },
   { title: 'Oppenheimer', posterPath: '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg' },
   { title: 'The Bear', posterPath: '/eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg' },
@@ -29,6 +31,43 @@ const collagePosters = [
   { title: 'Everything Everywhere All at Once', posterPath: '/u68AjlvlutfEIcpmbYpKcdi09ut.jpg' },
   { title: 'Parasite', posterPath: '/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg' },
 ]
+
+const COLLAGE_SIZE = 6
+
+// Fisher-Yates shuffle — doesn't mutate the input.
+function shuffle<T>(items: T[], seed: number): T[] {
+  const out = [...items]
+  let rand = seed
+  for (let i = out.length - 1; i > 0; i--) {
+    // Simple deterministic PRNG so the same seed always reshuffles the
+    // same way within a render, but each mount gets a fresh seed.
+    rand = (rand * 9301 + 49297) % 233280
+    const j = Math.floor((rand / 233280) * (i + 1))
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+// Picks up to COLLAGE_SIZE posters from trending movies + series, shuffled
+// fresh on every mount so the hero looks different each time the page
+// loads. Falls back to a curated static set when trending data isn't
+// available yet (loading, error, or too few posters with images).
+function usePosters(): { title: string; posterPath: string }[] {
+  const { data } = useRileyTop()
+  const [seed] = useState(() => Math.random() * 233280)
+
+  return useMemo(() => {
+    const pool: RileyTopPick[] = [...(data?.top_movies?.picks ?? []), ...(data?.top_series?.picks ?? [])]
+    const withPosters = pool.filter((p): p is RileyTopPick & { poster_path: string } => !!p.poster_path)
+
+    if (withPosters.length < COLLAGE_SIZE) {
+      return fallbackPosters
+    }
+    return shuffle(withPosters, seed)
+      .slice(0, COLLAGE_SIZE)
+      .map((p) => ({ title: p.title, posterPath: p.poster_path }))
+  }, [data, seed])
+}
 
 function CollageCard({
   rot, left, top, w, h, index, floatDelay, title, posterPath,
@@ -91,6 +130,8 @@ function CollageCard({
 }
 
 export function HeroGallery() {
+  const posters = usePosters()
+
   return (
     <div
       className="relative w-full min-h-[560px] [perspective:1000px]"
@@ -103,7 +144,7 @@ export function HeroGallery() {
 
       {collageDef.map(([rot, left, top, w, h], i) => (
         <CollageCard
-          key={i}
+          key={`${i}-${posters[i]?.posterPath}`}
           rot={rot}
           left={left}
           top={top}
@@ -111,8 +152,8 @@ export function HeroGallery() {
           h={h}
           index={i}
           floatDelay={i * 0.6}
-          title={collagePosters[i].title}
-          posterPath={collagePosters[i].posterPath}
+          title={posters[i]?.title ?? ''}
+          posterPath={posters[i]?.posterPath ?? ''}
         />
       ))}
     </div>

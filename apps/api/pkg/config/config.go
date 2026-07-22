@@ -25,6 +25,8 @@ type Config struct {
 	LLMAPIKey          string
 	LLMBaseURL         string
 	LLMModel           string
+	TavilyAPIKey       string
+	TavilyBaseURL      string
 }
 
 func Load() (*Config, error) {
@@ -46,6 +48,8 @@ func Load() (*Config, error) {
 		LLMAPIKey:          os.Getenv("LLM_API_KEY"),
 		LLMBaseURL:         getEnv("LLM_BASE_URL", "https://api.groq.com/openai/v1"),
 		LLMModel:           getEnv("LLM_MODEL", "llama-3.3-70b-versatile"),
+		TavilyAPIKey:       os.Getenv("TAVILY_API_KEY"),
+		TavilyBaseURL:      getEnv("TAVILY_BASE_URL", "https://api.tavily.com/search"),
 	}
 
 	// Required field validation

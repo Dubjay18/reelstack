@@ -3,6 +3,7 @@ package riley
 import (
 	"database/sql"
 	"errors"
+	"log/slog"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -33,6 +34,7 @@ func (h *Handler) GetDigest(c *fiber.Ctx) error {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fiber.NewError(fiber.StatusNotFound, "no digest yet")
 		}
+		slog.Error("riley: failed to fetch digest", "error", err)
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to fetch digest")
 	}
 	return c.JSON(digest)
@@ -41,6 +43,7 @@ func (h *Handler) GetDigest(c *fiber.Ctx) error {
 func (h *Handler) GetTop(c *fiber.Ctx) error {
 	top, err := h.svc.GetTop(c.UserContext())
 	if err != nil {
+		slog.Error("riley: failed to fetch top lists", "error", err)
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to fetch top lists")
 	}
 	return c.JSON(top)
@@ -80,6 +83,7 @@ func (h *Handler) Chat(c *fiber.Ctx) error {
 				"retry_after": retryAfter,
 			})
 		default:
+			slog.Error("riley: chat failed", "error", err, "user_id", userID)
 			return fiber.NewError(fiber.StatusInternalServerError, "Riley couldn't reply")
 		}
 	}

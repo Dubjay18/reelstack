@@ -1,6 +1,10 @@
 package riley
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -144,6 +148,111 @@ func TestBestMatch(t *testing.T) {
 
 	if got := bestMatch([]content.SearchResult{{ID: 9, MediaType: "person", Title: "X"}}, "X", "", "movie"); got != nil {
 		t.Errorf("expected nil when only person results, got ID %d", got.ID)
+	}
+}
+
+func TestRunWebSearch(t *testing.T) {
+	tests := []struct {
+		name       string
+		query      string
+		serverBody string
+		serverCode int
+		wantSubstr string
+	}{
+		{
+			name:       "no results",
+			query:      "obscure film",
+			serverCode: 200,
+			serverBody: `{"results":[]}`,
+			wantSubstr: "no results",
+		},
+		{
+			name:       "search error",
+			query:      "anything",
+			serverCode: 500,
+			wantSubstr: "failed",
+		},
+		{
+			name:       "results formatted",
+			query:      "dune part three release date",
+			serverCode: 200,
+			serverBody: `{"results":[{"title":"Dune: Part Three","content":"Coming Dec 2026","url":"https://x.com/d3"}]}`,
+			wantSubstr: "Dune: Part Three",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.serverCode)
+				if tt.serverBody != "" {
+					_, _ = w.Write([]byte(tt.serverBody))
+				}
+			}))
+			defer server.Close()
+
+			svc := &Service{search: NewSearchClient(server.URL, "test-key")}
+			got := svc.runWebSearch(context.Background(), tt.query)
+			if got.Role != "user" {
+				t.Errorf("expected role %q, got %q", "user", got.Role)
+			}
+			if !strings.Contains(strings.ToLower(got.Content), strings.ToLower(tt.wantSubstr)) {
+				t.Errorf("runWebSearch() content = %q, want substring %q", got.Content, tt.wantSubstr)
+			}
+		})
+	}
+}
+
+func TestParseChatReply(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		wantOK  bool
+		wantSQ  string
+		wantRep string
+	}{
+		{
+			name:    "valid reply with search_query",
+			raw:     `{"reply":"Let me check on that.","recommendations":[],"search_query":"spider-man brand new day release date"}`,
+			wantOK:  true,
+			wantSQ:  "spider-man brand new day release date",
+			wantRep: "Let me check on that.",
+		},
+		{
+			name:   "empty reply is invalid",
+			raw:    `{"reply":"","search_query":""}`,
+			wantOK: false,
+		},
+		{
+			name:   "malformed json is invalid",
+			raw:    `not json at all`,
+			wantOK: false,
+		},
+		{
+			name:    "no search_query defaults to empty",
+			raw:     `{"reply":"Hey there!","recommendations":[]}`,
+			wantOK:  true,
+			wantSQ:  "",
+			wantRep: "Hey there!",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parsed, ok := parseChatReply(tt.raw)
+			if ok != tt.wantOK {
+				t.Fatalf("parseChatReply() ok = %v, want %v", ok, tt.wantOK)
+			}
+			if !ok {
+				return
+			}
+			if parsed.SearchQuery != tt.wantSQ {
+				t.Errorf("SearchQuery = %q, want %q", parsed.SearchQuery, tt.wantSQ)
+			}
+			if parsed.Reply != tt.wantRep {
+				t.Errorf("Reply = %q, want %q", parsed.Reply, tt.wantRep)
+			}
+		})
 	}
 }
 

@@ -188,8 +188,9 @@ func main() {
 
 	// ── Wire: riley (AI agent) ──────────────────────────────────────────────
 	rileyLLM := riley.NewLLMClient(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMModel)
+	rileySearch := riley.NewSearchClient(cfg.TavilyBaseURL, cfg.TavilyAPIKey)
 	rileyRepo := riley.NewRepository(database)
-	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, redisClient.Redis())
+	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, rileySearch, redisClient.Redis())
 	rileyHandler := riley.NewHandler(rileySvc, cfg.CronSecret)
 	rileyHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 	rileyHandler.RegisterCronRoute(app)

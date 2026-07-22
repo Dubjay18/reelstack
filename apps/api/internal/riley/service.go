@@ -44,12 +44,13 @@ type Service struct {
 	repo    IRepository
 	llm     *LLMClient
 	tmdb    *content.TMDBClient
+	search  *SearchClient
 	redis   *redis.Client
 	sfGroup *singleflight.Group
 }
 
-func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, rdb *redis.Client) *Service {
-	return &Service{repo: repo, llm: llm, tmdb: tmdb, redis: rdb, sfGroup: &singleflight.Group{}}
+func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client) *Service {
+	return &Service{repo: repo, llm: llm, tmdb: tmdb, search: search, redis: rdb, sfGroup: &singleflight.Group{}}
 }
 
 // ── Refresh (cron) ──────────────────────────────────────────────────────────
@@ -396,22 +397,87 @@ func (s *Service) Chat(ctx context.Context, userID string, msgs []ChatMessage) (
 		return nil, err
 	}
 
-	var parsed struct {
-		Reply           string `json:"reply"`
-		Recommendations []struct {
-			Title     string `json:"title"`
-			Year      string `json:"year"`
-			MediaType string `json:"media_type"`
-			Reason    string `json:"reason"`
-		} `json:"recommendations"`
+	return s.buildChatResult(ctx, full, raw), nil
+}
+
+// runWebSearch executes a search and formats the results (or a graceful
+// failure note) as a user-role message to feed back to the model.
+func (s *Service) runWebSearch(ctx context.Context, query string) ChatMessage {
+	results, err := s.search.Search(ctx, query)
+	if err != nil {
+		slog.Warn("riley: web search failed", "query", query, "error", err)
+		return ChatMessage{
+			Role: "user",
+			Content: fmt.Sprintf("Web search for %q failed. Answer from what you already know, "+
+				"be upfront that you couldn't confirm it live, and leave search_query empty this time. "+
+				"Respond with the same JSON contract.", query),
+		}
 	}
-	if err := json.Unmarshal([]byte(raw), &parsed); err != nil || parsed.Reply == "" {
-		// Model drifted from the contract — degrade to plain text.
-		return &ChatResult{Reply: raw, Recommendations: []TopPick{}}, nil
+	if len(results) == 0 {
+		return ChatMessage{
+			Role: "user",
+			Content: fmt.Sprintf("Web search for %q returned no results. Say you couldn't find that, "+
+				"and leave search_query empty this time. Respond with the same JSON contract.", query),
+		}
 	}
 
-	// Resolve recommended titles to real TMDB entries so the UI gets posters.
-	// Unresolvable titles are dropped rather than shown as broken cards.
+	var b strings.Builder
+	fmt.Fprintf(&b, "Web search results for %q:\n", query)
+	for _, r := range results {
+		fmt.Fprintf(&b, "- %s: %s (%s)\n", r.Title, r.Description, r.URL)
+	}
+	b.WriteString("Use these to answer. Respond with the same JSON contract; leave search_query empty this time.")
+	return ChatMessage{Role: "user", Content: b.String()}
+}
+
+type parsedChatReply struct {
+	Reply           string `json:"reply"`
+	SearchQuery     string `json:"search_query"`
+	Recommendations []struct {
+		Title     string `json:"title"`
+		Year      string `json:"year"`
+		MediaType string `json:"media_type"`
+		Reason    string `json:"reason"`
+	} `json:"recommendations"`
+}
+
+// parseChatReply parses the model's JSON contract. ok is false when the
+// model drifted from the contract (missing/invalid JSON, empty reply).
+func parseChatReply(raw string) (parsedChatReply, bool) {
+	var parsed parsedChatReply
+	if err := json.Unmarshal([]byte(raw), &parsed); err != nil || parsed.Reply == "" {
+		return parsedChatReply{}, false
+	}
+	return parsed, true
+}
+
+// buildChatResult parses the model's reply and, if it asked to search the
+// web (search_query set) and search is configured, runs one search and
+// asks for a final answer using the results — at most one extra LLM call
+// per chat turn. Resolves any recommended titles to real TMDB entries so
+// the UI gets posters. Never errors: a malformed reply degrades to plain
+// text, and unresolvable recommendations are dropped rather than shown as
+// broken cards.
+func (s *Service) buildChatResult(ctx context.Context, full []ChatMessage, raw string) *ChatResult {
+	parsed, ok := parseChatReply(raw)
+	if !ok {
+		return &ChatResult{Reply: raw, Recommendations: []TopPick{}}
+	}
+
+	if parsed.SearchQuery != "" && s.search.Enabled() {
+		full = append(full,
+			ChatMessage{Role: "assistant", Content: raw},
+			s.runWebSearch(ctx, parsed.SearchQuery),
+		)
+		if raw2, err := s.llm.Complete(ctx, full, true); err == nil {
+			if parsed2, ok2 := parseChatReply(raw2); ok2 {
+				parsed = parsed2
+			}
+		} else {
+			slog.Warn("riley: chat follow-up after search failed", "error", err)
+		}
+	}
+
 	recs := make([]TopPick, 0, maxChatRecs)
 	for _, rec := range parsed.Recommendations {
 		if len(recs) == maxChatRecs {
@@ -435,7 +501,7 @@ func (s *Service) Chat(ctx context.Context, userID string, msgs []ChatMessage) (
 		}
 	}
 
-	return &ChatResult{Reply: parsed.Reply, Recommendations: recs}, nil
+	return &ChatResult{Reply: parsed.Reply, Recommendations: recs}
 }
 
 // bestMatch scores TMDB multi-search results against what the LLM asked for:

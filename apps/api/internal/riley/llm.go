@@ -58,6 +58,14 @@ type chatCompletionResponse struct {
 // Complete sends the messages and returns the assistant's reply text.
 // jsonMode asks the provider to return a valid JSON object.
 // Retries once on 429/5xx.
+//
+// Note: web search is deliberately NOT implemented via OpenAI-style
+// function/tool calling here — Groq's llama-3.3-70b-versatile tool-use
+// implementation conflicts with also enforcing a strict custom JSON reply
+// contract in the same turn (observed: "tool_use_failed" 400s). Instead,
+// the chat contract itself carries an optional "search_query" field the
+// model can set; the service layer runs the search server-side and asks
+// again. See service.go's buildChatResult.
 func (c *LLMClient) Complete(ctx context.Context, msgs []ChatMessage, jsonMode bool) (string, error) {
 	if !c.Enabled() {
 		return "", ErrLLMDisabled
