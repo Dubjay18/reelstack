@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
-import { ServerWakeGate } from '@/components/providers/server-wake-gate'
 import { RouteTransitionLoader } from '@/components/providers/route-transition-loader'
 import { AppErrorBoundary } from '@/components/error-boundary/error-boundary'
 import { ToastProvider } from '@/components/providers/toast-provider'
@@ -46,17 +45,15 @@ export default function RootLayout({
       <body className="min-h-dvh bg-background text-on-surface antialiased overflow-x-hidden relative">
         <AmbientBackground />
         <RouteTransitionLoader />
-        <ServerWakeGate>
-          <AppErrorBoundary>
-            <ToastProvider>
-              <QueryProvider>
-                <AuthProvider>
-                  {children}
-                </AuthProvider>
-              </QueryProvider>
-            </ToastProvider>
-          </AppErrorBoundary>
-        </ServerWakeGate>
+        <AppErrorBoundary>
+          <ToastProvider>
+            <QueryProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </QueryProvider>
+          </ToastProvider>
+        </AppErrorBoundary>
       </body>
     </html>
   )

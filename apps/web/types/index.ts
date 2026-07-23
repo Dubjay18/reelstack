@@ -250,10 +250,3 @@ export interface RileyChatResponse {
   reply: string
   recommendations: RileyTopPick[]
 }
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-declare global {
-  interface Window {
-    __wakeGate?: () => void
-  }
-}

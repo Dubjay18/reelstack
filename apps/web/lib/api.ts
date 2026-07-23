@@ -56,11 +56,6 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(new APIError(status, message))
     }
 
-    // Network error — server may be sleeping on Render free tier
-    if (typeof window !== 'undefined') {
-      window.__wakeGate?.()
-    }
-
     return Promise.reject(new APIError(500, error.message || 'Network error'))
   }
 )

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Dubjay18/reelstack/api/internal/auth"
 	"github.com/Dubjay18/reelstack/api/internal/comments"
@@ -27,6 +28,7 @@ import (
 	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
@@ -96,8 +98,33 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// ── Rate limiting ─────────────────────────────────────────────────────────
+	// Per-IP cap across the whole API to blunt basic DDoS / abusive traffic
+	// (e.g. a misbehaving client stuck retrying an endpoint in a tight loop).
+	app.Use(limiter.New(limiter.Config{
+		Max:        300,
+		Expiration: time.Minute,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"success": false,
+				"error":   "too many requests",
+			})
+		},
+	}))
+
 	// ── Health ──────────────────────────────────────────────────────────────
-	app.Get("/health", func(c *fiber.Ctx) error {
+	// Tighter limit than the global default: legitimate health checks (platform
+	// probes, our own monitoring) never need more than a handful of hits a minute.
+	app.Get("/health", limiter.New(limiter.Config{
+		Max:        30,
+		Expiration: time.Minute,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"success": false,
+				"error":   "too many requests",
+			})
+		},
+	}), func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "ok",
 			"version": "0.1.0",
