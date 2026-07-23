@@ -21,4 +21,9 @@ type Notification struct {
 	// back to the movie/show the reply was posted on.
 	CommentTMDBID    *int    `json:"comment_tmdb_id,omitempty" db:"comment_tmdb_id"`
 	CommentMediaType *string `json:"comment_media_type,omitempty" db:"comment_media_type"`
+
+	// Populated only for type == "list_comment", so the frontend can link
+	// back to the list and distinguish a comment from a suggestion.
+	CommentListID   *string `json:"comment_list_id,omitempty" db:"comment_list_id"`
+	ListCommentType *string `json:"list_comment_type,omitempty" db:"list_comment_type"`
 }

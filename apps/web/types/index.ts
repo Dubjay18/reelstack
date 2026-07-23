@@ -166,11 +166,25 @@ export interface Comment {
   replies?: Comment[]
 }
 
+export interface ListComment {
+  id: string
+  list_id: string
+  user_id: string
+  type: 'comment' | 'suggestion'
+  body: string
+  parent_id: string | null
+  created_at: string
+  updated_at: string
+  username?: string
+  avatar_url?: string | null
+  replies?: ListComment[]
+}
+
 export interface Notification {
   id: string
   user_id: string
   actor_id: string
-  type: 'new_follower' | 'list_created' | 'list_saved' | 'comment_reply'
+  type: 'new_follower' | 'list_created' | 'list_saved' | 'comment_reply' | 'list_comment'
   entity_id?: string
   is_read: boolean
   created_at: string
@@ -179,6 +193,8 @@ export interface Notification {
   entity_title?: string
   comment_tmdb_id?: number
   comment_media_type?: string
+  comment_list_id?: string
+  list_comment_type?: 'comment' | 'suggestion'
 }
 
 export interface SaveStatusResponse {

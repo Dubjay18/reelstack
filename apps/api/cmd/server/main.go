@@ -14,6 +14,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/email"
 	"github.com/Dubjay18/reelstack/api/internal/embed"
 	"github.com/Dubjay18/reelstack/api/internal/follows"
+	"github.com/Dubjay18/reelstack/api/internal/list_comments"
 	"github.com/Dubjay18/reelstack/api/internal/lists"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
 	"github.com/Dubjay18/reelstack/api/internal/queue"
@@ -173,6 +174,17 @@ func main() {
 	// ── Wire: embed ─────────────────────────────────────────────────────────
 	embedHandler := embed.NewHandler(userRepo, listsRepo)
 	embedHandler.RegisterRoutes(app)
+
+	// ── Wire: list_comments ──────────────────────────────────────────────────
+	// Registered before `lists` below: lists.RegisterRoutes mounts a
+	// catch-all auth-required middleware on the "/api/v1/lists" prefix
+	// (Fiber Group middleware matches by path prefix across the whole
+	// router, not just routes added through that specific Group object),
+	// which would otherwise 401 our public GET route if registered after it.
+	listCommentsRepo := list_comments.NewListCommentRepository(database)
+	listCommentsSvc := list_comments.NewListCommentService(listCommentsRepo, listsRepo, queueSvc)
+	listCommentsHandler := list_comments.NewHandler(listCommentsSvc)
+	listCommentsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret), auth.OptionalFiberAuthMiddleware(cfg.JWTSecret))
 
 	// ── Wire: lists ──────────────────────────────────────────────────────────
 	listsSvc := lists.NewListService(listsRepo, &followerFetcherAdapter{followsSvc: followsSvc}, queueSvc)

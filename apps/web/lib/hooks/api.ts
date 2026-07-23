@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyChatMessage, RileyChatResponse } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyChatMessage, RileyChatResponse } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -299,6 +299,46 @@ export function useDeleteComment() {
       api.delete<void>(`/api/v1/content/${mediaType}/${tmdbId}/comments/${commentId}`),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.tmdbId, variables.mediaType] })
+    },
+  })
+}
+
+// 7b. List Comment Hooks
+export function useListComments(listId: string) {
+  return useQuery({
+    queryKey: ['list-comments', listId],
+    queryFn: () => api.get<ListComment[]>(`/api/v1/lists/${listId}/comments`),
+    enabled: !!listId,
+  })
+}
+
+export function useCreateListComment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      listId,
+      body,
+      type,
+      parentId,
+    }: {
+      listId: string
+      body: string
+      type?: 'comment' | 'suggestion'
+      parentId?: string
+    }) => api.post<ListComment>(`/api/v1/lists/${listId}/comments`, { body, type, parent_id: parentId }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['list-comments', data.list_id] })
+    },
+  })
+}
+
+export function useDeleteListComment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ commentId, listId }: { commentId: string; listId: string }) =>
+      api.delete<void>(`/api/v1/lists/${listId}/comments/${commentId}`),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['list-comments', variables.listId] })
     },
   })
 }

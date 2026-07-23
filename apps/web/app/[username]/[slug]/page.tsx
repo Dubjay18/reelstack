@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useEmbedList, useContentDetails } from '@/lib/hooks/api'
 import { SaveButton } from '@/components/save-button'
+import { ListCommentSection } from '@/components/list-comments'
 import { CheckCircle2, Loader2, Share2, Info, Film } from 'lucide-react'
 import type { ListItem } from '@/types'
 
@@ -199,6 +200,11 @@ export default function PublicListPage() {
             ))}
           </div>
         )}
+
+        {/* Comments & suggestions */}
+        <div className="border-t border-outline-variant pt-8">
+          <ListCommentSection listId={list.id} />
+        </div>
       </main>
 
       {/* Footer */}

@@ -40,6 +40,14 @@ export function getNotificationCopy(n: Notification): NotificationCopy {
         n.comment_tmdb_id != null ? `/movie/${n.comment_tmdb_id}?type=${n.comment_media_type ?? 'movie'}` : '/'
       return { text: `@${n.actor_username} replied to your comment${preview}`, href, Icon: MessageCircle }
     }
+    case 'list_comment': {
+      const isSuggestion = n.list_comment_type === 'suggestion'
+      return {
+        text: `@${n.actor_username} ${isSuggestion ? 'suggested an addition to' : 'commented on'} your list: ${n.entity_title}`,
+        href: n.comment_list_id ? `/lists/${n.comment_list_id}` : '/',
+        Icon: MessageCircle,
+      }
+    }
     default:
       return { text: `@${n.actor_username} did something`, href: '/', Icon: Bell }
   }
