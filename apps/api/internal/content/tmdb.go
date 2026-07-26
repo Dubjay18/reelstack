@@ -513,6 +513,15 @@ func (c *TMDBClient) GetTopRatedTV(ctx context.Context) ([]SearchResult, error) 
 	return c.getCachedList(ctx, "tmdb:top_rated:tv", "https://api.themoviedb.org/3/tv/top_rated", "tv")
 }
 
+// GetRecommendations returns TMDB's own "similar titles" for a movie or TV
+// show, cached per title (shared across every user who watched it, so cost
+// stays flat regardless of how many users request recommendations).
+func (c *TMDBClient) GetRecommendations(ctx context.Context, mediaType string, tmdbID int) ([]SearchResult, error) {
+	cacheKey := fmt.Sprintf("tmdb:recs:%s:%d", mediaType, tmdbID)
+	url := fmt.Sprintf("https://api.themoviedb.org/3/%s/%d/recommendations", mediaType, tmdbID)
+	return c.getCachedList(ctx, cacheKey, url, mediaType)
+}
+
 // getCachedList fetches a TMDB list endpoint with the same cache-aside +
 // singleflight pattern as GetTrending, mapping results to SearchResult.
 func (c *TMDBClient) getCachedList(ctx context.Context, cacheKey, url, mediaType string) ([]SearchResult, error) {

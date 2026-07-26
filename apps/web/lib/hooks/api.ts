@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyChatMessage, RileyChatResponse } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyTopList, RileyChatMessage, RileyChatResponse, RileyProposedList, RileyConfirmedList, McpToken, McpTokenCreateResponse } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -491,9 +491,50 @@ export function useRileyTop() {
   })
 }
 
+export function useRileyForYou() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['riley', 'foryou', user?.id],
+    queryFn: () => api.get<RileyTopList>('/api/v1/riley/foryou'),
+    enabled: !!user,
+    staleTime: 30 * 60 * 1000, // 30 minutes — matches the backend's 1h Redis cache
+  })
+}
+
 export function useRileyChat() {
   return useMutation({
     mutationFn: (messages: RileyChatMessage[]) =>
       api.post<RileyChatResponse>('/api/v1/riley/chat', { messages }),
+  })
+}
+
+export function useConfirmRileyList() {
+  return useMutation({
+    mutationFn: (proposal: RileyProposedList) =>
+      api.post<RileyConfirmedList>('/api/v1/riley/lists/confirm', proposal),
+  })
+}
+
+// 13. MCP (Model Context Protocol) token hooks — settings page
+export function useMcpTokens() {
+  return useQuery({
+    queryKey: ['mcp-tokens'],
+    queryFn: () => api.get<{ tokens: McpToken[] }>('/api/v1/mcp-tokens'),
+  })
+}
+
+export function useCreateMcpToken() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => api.post<McpTokenCreateResponse>('/api/v1/mcp-tokens', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mcp-tokens'] }),
+  })
+}
+
+export function useRevokeMcpToken() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/api/v1/mcp-tokens/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mcp-tokens'] }),
   })
 }

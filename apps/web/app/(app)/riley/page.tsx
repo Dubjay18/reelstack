@@ -1,7 +1,7 @@
 'use client'
 
 import { Sparkles } from 'lucide-react'
-import { useRileyDigest, useRileyTop } from '@/lib/hooks/api'
+import { useRileyDigest, useRileyTop, useRileyForYou } from '@/lib/hooks/api'
 import { MovieCard } from '@/components/movie-card'
 import { DigestCard, DigestCardSkeleton } from '@/components/riley/digest-card'
 import { TopTen } from '@/components/riley/top-ten'
@@ -49,6 +49,7 @@ function relativeTime(iso: string): string {
 export default function Page() {
   const { data: digest, isLoading: digestLoading, error: digestError } = useRileyDigest()
   const { data: top, isLoading: topLoading } = useRileyTop()
+  const { data: forYou, isLoading: forYouLoading } = useRileyForYou()
 
   const digestMissing = !digestLoading && (digestError != null || !digest)
   const nothingGenerated =
@@ -105,6 +106,19 @@ export default function Page() {
                     <p className="text-on-surface-variant text-[14px]">No news digest yet.</p>
                   )}
                 </section>
+
+                {forYouLoading || (forYou && forYou.picks.length > 0) ? (
+                  <Rail title="For You" list={forYou} loading={forYouLoading} />
+                ) : forYou ? (
+                  <section>
+                    <h2 className="font-mono text-[12px] uppercase tracking-[0.1em] text-on-surface-variant mb-4">
+                      For You
+                    </h2>
+                    <p className="text-on-surface-variant text-[14px]">
+                      Mark a few titles as watched and Riley will start personalizing this.
+                    </p>
+                  </section>
+                ) : null}
 
                 <Rail title="Top Movies Right Now" list={top?.top_movies} loading={topLoading} />
                 <Rail title="Top Series Right Now" list={top?.top_series} loading={topLoading} />

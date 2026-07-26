@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,13 +32,29 @@ const (
 	globalChatPerMin = 6 // ~12K TPM / ~2K tokens per call
 	userChatPerDay   = 10
 	globalChatPerDay = 50 // ~100K TPD minus cron headroom
+
+	// For You: no LLM involved (see GetForYou), so these aren't bound by
+	// the Groq budget above — just kept small to keep TMDB fan-out cheap.
+	forYouSeedLimit = 5
+	forYouSize      = 15
+	forYouCacheTTL  = time.Hour
+	chatWatchedCtx  = 8 // titles surfaced to the chat system prompt
+
+	maxProposedListItems = 20
+
+	// List creation goes through the MCP server, not the LLM, so it isn't
+	// bound by the Groq budget — this just caps how often chat can be used
+	// to spam list creation.
+	userListCreatePerDay = 10
 )
 
 type IService interface {
 	Refresh(ctx context.Context) (map[string]string, error)
 	GetDigest(ctx context.Context) (*Digest, error)
 	GetTop(ctx context.Context) (*TopResponse, error)
+	GetForYou(ctx context.Context, userID string) (*TopList, error)
 	Chat(ctx context.Context, userID string, msgs []ChatMessage) (*ChatResult, error)
+	ConfirmListProposal(ctx context.Context, userID string, proposal ProposedList) (*ConfirmedList, error)
 }
 
 type Service struct {
@@ -47,10 +64,18 @@ type Service struct {
 	search  *SearchClient
 	redis   *redis.Client
 	sfGroup *singleflight.Group
+	mcp     *mcpClient
 }
 
-func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client) *Service {
-	return &Service{repo: repo, llm: llm, tmdb: tmdb, search: search, redis: rdb, sfGroup: &singleflight.Group{}}
+// NewService constructs Riley's service. mcpBaseURL/mcpJWTSecret point at
+// the MCP server (internal/mcp) Riley uses to create/modify lists once a
+// user has approved a proposed list in chat — see ConfirmListProposal.
+func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client, mcpBaseURL, mcpJWTSecret string) *Service {
+	return &Service{
+		repo: repo, llm: llm, tmdb: tmdb, search: search, redis: rdb,
+		sfGroup: &singleflight.Group{},
+		mcp:     newMCPClient(mcpBaseURL, mcpJWTSecret),
+	}
 }
 
 // ── Refresh (cron) ──────────────────────────────────────────────────────────
@@ -339,6 +364,93 @@ func (s *Service) GetTop(ctx context.Context) (*TopResponse, error) {
 	return resp, nil
 }
 
+// GetForYou builds a personalized recommendation rail from TMDB's own
+// "recommendations" endpoint, seeded by the user's most recently watched
+// titles and excluding anything already on one of their lists. Deliberately
+// LLM-free: it only needs TMDB calls (cached per-title, cheap to fan out),
+// so it doesn't compete with the tight Groq chat budget above. Returns an
+// empty list (not an error) when the user has no watch history yet.
+func (s *Service) GetForYou(ctx context.Context, userID string) (*TopList, error) {
+	cacheKey := "riley:foryou:" + userID
+	var cached TopList
+	if raw, err := s.redis.Get(ctx, cacheKey).Result(); err == nil {
+		if json.Unmarshal([]byte(raw), &cached) == nil {
+			return &cached, nil
+		}
+	}
+
+	seeds, err := s.repo.WatchedTitles(ctx, userID, forYouSeedLimit)
+	if err != nil {
+		return nil, err
+	}
+	if len(seeds) == 0 {
+		return &TopList{GeneratedAt: time.Now().UTC(), Picks: []TopPick{}}, nil
+	}
+
+	listed, err := s.repo.AllListedTitles(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	exclude := make(map[candidateKey]bool, len(listed))
+	for _, t := range listed {
+		exclude[candidateKey{t.TMDBID, t.MediaType}] = true
+	}
+
+	scores := make(map[candidateKey]int)
+	items := make(map[candidateKey]content.SearchResult)
+	for _, seed := range seeds {
+		recs, err := s.tmdb.GetRecommendations(ctx, seed.MediaType, seed.TMDBID)
+		if err != nil {
+			slog.Warn("riley: for-you recommendations fetch failed",
+				"tmdb_id", seed.TMDBID, "media_type", seed.MediaType, "error", err)
+			continue
+		}
+		for _, r := range recs {
+			key := candidateKey{r.ID, r.MediaType}
+			if exclude[key] {
+				continue
+			}
+			scores[key]++
+			if _, ok := items[key]; !ok {
+				items[key] = r
+			}
+		}
+	}
+
+	type ranked struct {
+		key   candidateKey
+		item  content.SearchResult
+		score int
+	}
+	all := make([]ranked, 0, len(items))
+	for key, item := range items {
+		all = append(all, ranked{key, item, scores[key]})
+	}
+	sort.Slice(all, func(i, j int) bool {
+		if all[i].score != all[j].score {
+			return all[i].score > all[j].score
+		}
+		return all[i].item.VoteAverage > all[j].item.VoteAverage
+	})
+	if len(all) > forYouSize {
+		all = all[:forYouSize]
+	}
+
+	picks := make([]TopPick, 0, len(all))
+	for _, r := range all {
+		picks = append(picks, TopPick{
+			TMDBID: r.item.ID, MediaType: r.item.MediaType, Title: r.item.Title,
+			PosterPath: r.item.PosterPath, Year: r.item.Year, VoteAverage: r.item.VoteAverage,
+		})
+	}
+
+	result := TopList{GeneratedAt: time.Now().UTC(), Picks: picks}
+	if data, err := json.Marshal(result); err == nil {
+		s.redis.Set(ctx, cacheKey, data, forYouCacheTTL)
+	}
+	return &result, nil
+}
+
 func cacheKeyFor(kind string) string { return "riley:latest:" + kind }
 
 func (s *Service) getArtifact(ctx context.Context, kind string, dest any) error {
@@ -384,7 +496,7 @@ func (s *Service) Chat(ctx context.Context, userID string, msgs []ChatMessage) (
 	}
 
 	full := make([]ChatMessage, 0, len(msgs)+1)
-	full = append(full, ChatMessage{Role: "system", Content: fmt.Sprintf(chatSystemPrompt, s.chatContext(ctx))})
+	full = append(full, ChatMessage{Role: "system", Content: fmt.Sprintf(chatSystemPrompt, s.chatContext(ctx, userID))})
 	for _, m := range msgs {
 		if m.Role != "user" && m.Role != "assistant" {
 			continue // never let clients inject system messages
@@ -398,6 +510,21 @@ func (s *Service) Chat(ctx context.Context, userID string, msgs []ChatMessage) (
 	}
 
 	return s.buildChatResult(ctx, full, raw), nil
+}
+
+// ConfirmListProposal actually creates a list Riley proposed in chat, once
+// the user has approved it in the UI. It never involves the LLM — it calls
+// Riley's own MCP server (see mcp_client.go), the same tool surface
+// external MCP clients use, so ownership/validation logic lives in exactly
+// one place (lists.IListService).
+func (s *Service) ConfirmListProposal(ctx context.Context, userID string, proposal ProposedList) (*ConfirmedList, error) {
+	if proposal.Title == "" {
+		return nil, fmt.Errorf("riley: proposed list has no title")
+	}
+	if err := s.checkListCreateLimit(ctx, userID); err != nil {
+		return nil, err
+	}
+	return s.mcp.CreateList(ctx, userID, proposal)
 }
 
 // runWebSearch executes a search and formats the results (or a graceful
@@ -439,6 +566,16 @@ type parsedChatReply struct {
 		MediaType string `json:"media_type"`
 		Reason    string `json:"reason"`
 	} `json:"recommendations"`
+	ProposeList *struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		IsPublic    bool   `json:"is_public"`
+		Items       []struct {
+			Title     string `json:"title"`
+			Year      string `json:"year"`
+			MediaType string `json:"media_type"`
+		} `json:"items"`
+	} `json:"propose_list"`
 }
 
 // parseChatReply parses the model's JSON contract. ok is false when the
@@ -501,7 +638,36 @@ func (s *Service) buildChatResult(ctx context.Context, full []ChatMessage, raw s
 		}
 	}
 
-	return &ChatResult{Reply: parsed.Reply, Recommendations: recs}
+	var proposed *ProposedList
+	if parsed.ProposeList != nil && parsed.ProposeList.Title != "" {
+		items := make([]TopPick, 0, len(parsed.ProposeList.Items))
+		for _, item := range parsed.ProposeList.Items {
+			if len(items) == maxProposedListItems {
+				break
+			}
+			results, err := s.tmdb.Search(ctx, item.Title)
+			if err != nil {
+				slog.Warn("riley: proposed list item search failed", "title", item.Title, "error", err)
+				continue
+			}
+			if match := bestMatch(results, item.Title, item.Year, item.MediaType); match != nil {
+				items = append(items, TopPick{
+					TMDBID: match.ID, MediaType: match.MediaType, Title: match.Title,
+					PosterPath: match.PosterPath, Year: match.Year, VoteAverage: match.VoteAverage,
+				})
+			}
+		}
+		if len(items) > 0 {
+			proposed = &ProposedList{
+				Title:       parsed.ProposeList.Title,
+				Description: parsed.ProposeList.Description,
+				IsPublic:    parsed.ProposeList.IsPublic,
+				Items:       items,
+			}
+		}
+	}
+
+	return &ChatResult{Reply: parsed.Reply, Recommendations: recs, ProposedList: proposed}
 }
 
 // bestMatch scores TMDB multi-search results against what the LLM asked for:
@@ -532,9 +698,39 @@ func bestMatch(results []content.SearchResult, title, year, mediaType string) *c
 	return best
 }
 
-// chatContext summarizes the latest digest + top lists for the system prompt.
-func (s *Service) chatContext(ctx context.Context) string {
+// resolveTitle looks up a title's display name via the same cached TMDB
+// detail lookups the content package already exposes.
+func (s *Service) resolveTitle(mediaType string, tmdbID int) (string, bool) {
+	if mediaType == "tv" {
+		details, err := s.tmdb.GetTVShowDetails(tmdbID)
+		if err != nil || details == nil {
+			return "", false
+		}
+		return details.Name, true
+	}
+	details, err := s.tmdb.GetMovieDetails(tmdbID)
+	if err != nil || details == nil {
+		return "", false
+	}
+	return details.Title, true
+}
+
+// chatContext summarizes the latest digest + top lists, plus this user's
+// own watch history when available, for the system prompt.
+func (s *Service) chatContext(ctx context.Context, userID string) string {
 	var b strings.Builder
+
+	if watched, err := s.repo.WatchedTitles(ctx, userID, chatWatchedCtx); err == nil && len(watched) > 0 {
+		var titles []string
+		for _, w := range watched {
+			if title, ok := s.resolveTitle(w.MediaType, w.TMDBID); ok {
+				titles = append(titles, title)
+			}
+		}
+		if len(titles) > 0 {
+			fmt.Fprintf(&b, "This user has recently watched: %s\n", strings.Join(titles, ", "))
+		}
+	}
 
 	if digest, err := s.GetDigest(ctx); err == nil {
 		b.WriteString("Latest news digest:\n")
@@ -600,6 +796,25 @@ func (s *Service) checkRateLimit(ctx context.Context, userID string) error {
 		if count > int64(w.limit) {
 			return w.errOut
 		}
+	}
+	return nil
+}
+
+// checkListCreateLimit caps how many lists a user can create via Riley
+// chat per day — this guards against chat being used to spam list
+// creation, not the Groq budget (list creation never touches the LLM).
+func (s *Service) checkListCreateLimit(ctx context.Context, userID string) error {
+	day := time.Now().UTC().Format("20060102")
+	key := fmt.Sprintf("riley:list-create:day:%s:%s", userID, day)
+	count, err := s.redis.Incr(ctx, key).Result()
+	if err != nil {
+		return nil // Redis down — fail open rather than block the confirm action
+	}
+	if count == 1 {
+		s.redis.Expire(ctx, key, 26*time.Hour)
+	}
+	if count > int64(userListCreatePerDay) {
+		return ErrListCreateLimited
 	}
 	return nil
 }

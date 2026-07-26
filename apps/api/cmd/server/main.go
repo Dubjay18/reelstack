@@ -17,6 +17,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/follows"
 	"github.com/Dubjay18/reelstack/api/internal/list_comments"
 	"github.com/Dubjay18/reelstack/api/internal/lists"
+	appmcp "github.com/Dubjay18/reelstack/api/internal/mcp"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
 	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/Dubjay18/reelstack/api/internal/riley"
@@ -27,6 +28,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/pkg/db"
 	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -218,6 +220,19 @@ func main() {
 	listsHandler := lists.NewHandler(listsSvc)
 	listsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret), auth.OptionalFiberAuthMiddleware(cfg.JWTSecret))
 
+	// ── Wire: mcp (Model Context Protocol server + personal access tokens) ──
+	// Lets external MCP clients (Claude Desktop, Claude Code, etc.) and
+	// Riley's own chat companion create/modify a user's lists through the
+	// same authenticated, ownership-checked tools — see internal/mcp.
+	mcpTokensRepo := appmcp.NewTokenRepository(database)
+	mcpTokensSvc := appmcp.NewTokenService(mcpTokensRepo)
+	mcpTokensHandler := appmcp.NewTokensHandler(mcpTokensSvc)
+	mcpTokensHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
+	mcpHTTPHandler := appmcp.NewHTTPHandler(listsSvc, cfg.AppURL)
+	mcpAuthedHandler := appmcp.AuthMiddleware(cfg.JWTSecret, mcpTokensSvc)(mcpHTTPHandler)
+	app.All("/mcp", adaptor.HTTPHandler(mcpAuthedHandler))
+
 	// ── Wire: content ────────────────────────────────────────────────────────
 	tmdbClient := content.NewTMDBClient(cfg.TMDBAPIKey, redisClient.Redis())
 	wmClient := content.NewWatchmodeClient(cfg.WatchmodeAPIKey, database)
@@ -229,7 +244,10 @@ func main() {
 	rileyLLM := riley.NewLLMClient(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMModel)
 	rileySearch := riley.NewSearchClient(cfg.TavilyBaseURL, cfg.TavilyAPIKey)
 	rileyRepo := riley.NewRepository(database)
-	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, rileySearch, redisClient.Redis())
+	// Riley calls its own MCP server over loopback once a user approves a
+	// proposed list in chat — see riley.Service.ConfirmListProposal.
+	mcpLoopbackURL := "http://127.0.0.1:" + cfg.Port + "/mcp"
+	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, rileySearch, redisClient.Redis(), mcpLoopbackURL, cfg.JWTSecret)
 	rileyHandler := riley.NewHandler(rileySvc, cfg.CronSecret)
 	rileyHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 	rileyHandler.RegisterCronRoute(app)
