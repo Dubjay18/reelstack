@@ -56,6 +56,7 @@ function Sidebar() {
   const isNotificationsPage = pathname.startsWith('/notifications')
   const isRileyPage = pathname.startsWith('/riley')
   const isDashboardPage = pathname === '/dashboard'
+  const isSettingsPage = pathname.startsWith('/settings')
 
   return (
     <>
@@ -82,10 +83,7 @@ function Sidebar() {
         </div>
 
         <div className="mt-auto px-sm flex flex-col gap-sm">
-          <button className="w-full text-left flex items-center gap-sm text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-surface-container transition-colors rounded-lg font-heading text-body-sm font-medium">
-            <Settings size={19} strokeWidth={1.75} />
-            Settings
-          </button>
+          <NavItem href="/settings/mcp" icon={Settings} label="Settings" active={isSettingsPage} />
           <button
             onClick={logout}
             className="w-full text-left flex items-center gap-sm text-on-surface-variant hover:text-error hover:bg-error-container/10 px-md py-sm transition-colors rounded-lg font-heading text-body-sm font-medium"

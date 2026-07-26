@@ -246,7 +246,38 @@ export interface RileyChatMessage {
   content: string
 }
 
+export interface RileyProposedList {
+  title: string
+  description: string
+  is_public: boolean
+  items: RileyTopPick[]
+}
+
+export interface RileyConfirmedList {
+  id: string
+  slug: string
+  url: string
+  item_count: number
+}
+
 export interface RileyChatResponse {
   reply: string
   recommendations: RileyTopPick[]
+  proposed_list?: RileyProposedList | null
+}
+
+// MCP (Model Context Protocol) Personal Access Tokens — used to connect
+// external MCP clients (Claude Desktop, Claude Code, etc.) to Reelstack.
+export interface McpToken {
+  id: string
+  name: string
+  created_at: string
+  last_used_at: string | null
+}
+
+export interface McpTokenCreateResponse {
+  token: string
+  id: string
+  name: string
+  created_at: string
 }
