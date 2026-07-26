@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyChatMessage, RileyChatResponse } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyTopList, RileyChatMessage, RileyChatResponse } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -488,6 +488,16 @@ export function useRileyTop() {
     queryKey: ['riley', 'top'],
     queryFn: () => api.get<RileyTopResponse>('/api/v1/riley/top'),
     staleTime: 60 * 60 * 1000, // 1 hour — matches Redis cache TTL
+  })
+}
+
+export function useRileyForYou() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['riley', 'foryou', user?.id],
+    queryFn: () => api.get<RileyTopList>('/api/v1/riley/foryou'),
+    enabled: !!user,
+    staleTime: 30 * 60 * 1000, // 30 minutes — matches the backend's 1h Redis cache
   })
 }
 
