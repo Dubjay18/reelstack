@@ -4,8 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { Send, Sparkles, Star } from 'lucide-react'
-import { useRileyChat } from '@/lib/hooks/api'
-import type { RileyChatMessage, RileyTopPick } from '@/types'
+import { useRileyChat, useConfirmRileyList } from '@/lib/hooks/api'
+import type { RileyChatMessage, RileyTopPick, RileyProposedList, RileyConfirmedList } from '@/types'
+import { ListProposalCard, type ListProposalStatus } from './list-proposal-card'
 
 const suggestedPrompts = [
   'What should I watch tonight?',
@@ -14,9 +15,14 @@ const suggestedPrompts = [
 ]
 
 // A chat entry is a wire message plus, for assistant turns, resolved
-// recommendation cards. Only role/content are sent back to the API.
+// recommendation cards and a possible list proposal. Only role/content are
+// sent back to the API.
 interface ChatEntry extends RileyChatMessage {
   recommendations?: RileyTopPick[]
+  proposedList?: RileyProposedList
+  listStatus?: ListProposalStatus
+  createdList?: RileyConfirmedList
+  listError?: string
 }
 
 const stripeStyle = {
@@ -71,6 +77,7 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
   const chat = useRileyChat()
+  const confirmList = useConfirmRileyList()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -88,7 +95,13 @@ export function ChatPanel() {
       onSuccess: (data) => {
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: data.reply, recommendations: data.recommendations },
+          {
+            role: 'assistant',
+            content: data.reply,
+            recommendations: data.recommendations,
+            proposedList: data.proposed_list ?? undefined,
+            listStatus: data.proposed_list ? 'pending' : undefined,
+          },
         ])
       },
       onError: (err) => {
@@ -99,6 +112,27 @@ export function ChatPanel() {
         else setError("Riley couldn't reply. Try again?")
       },
     })
+  }
+
+  const updateMessageAt = (index: number, patch: Partial<ChatEntry>) => {
+    setMessages((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)))
+  }
+
+  const approveList = (index: number, proposal: RileyProposedList) => {
+    updateMessageAt(index, { listStatus: 'creating', listError: undefined })
+    confirmList.mutate(proposal, {
+      onSuccess: (created) => {
+        updateMessageAt(index, { listStatus: 'created', createdList: created })
+      },
+      onError: (err) => {
+        const message = err instanceof Error ? err.message : "Couldn't create that list. Try again?"
+        updateMessageAt(index, { listStatus: 'pending', listError: message })
+      },
+    })
+  }
+
+  const cancelList = (index: number) => {
+    updateMessageAt(index, { listStatus: 'cancelled' })
   }
 
   return (
@@ -149,6 +183,16 @@ export function ChatPanel() {
                 </div>
                 {msg.recommendations && msg.recommendations.length > 0 && (
                   <RecCards picks={msg.recommendations} />
+                )}
+                {msg.proposedList && msg.listStatus && (
+                  <ListProposalCard
+                    proposal={msg.proposedList}
+                    status={msg.listStatus}
+                    createdList={msg.createdList}
+                    errorMessage={msg.listError}
+                    onApprove={() => approveList(i, msg.proposedList!)}
+                    onCancel={() => cancelList(i)}
+                  />
                 )}
               </div>
             </div>
