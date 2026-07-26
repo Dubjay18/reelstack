@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/Dubjay18/reelstack/api/pkg/llm"
 )
 
 // Config holds all environment variables.
@@ -27,6 +29,11 @@ type Config struct {
 	LLMModel           string
 	TavilyAPIKey       string
 	TavilyBaseURL      string
+
+	// LLMProviders is the resolved provider chain for the LLM gateway, in
+	// priority order. Empty means Riley's LLM features are disabled — that
+	// is a supported state, not a startup error.
+	LLMProviders []llm.ProviderConfig
 }
 
 func Load() (*Config, error) {
@@ -51,6 +58,10 @@ func Load() (*Config, error) {
 		TavilyAPIKey:       os.Getenv("TAVILY_API_KEY"),
 		TavilyBaseURL:      getEnv("TAVILY_BASE_URL", "https://api.tavily.com/search"),
 	}
+
+	// Resolved here so env reading stays confined to this package. Falls back
+	// to the legacy single-provider LLM_* vars when no per-provider keys are set.
+	cfg.LLMProviders = llm.ParseProviders(os.Getenv)
 
 	// Required field validation
 	required := map[string]string{

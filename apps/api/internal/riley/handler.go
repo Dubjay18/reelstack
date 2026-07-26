@@ -85,6 +85,12 @@ func (h *Handler) Chat(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, ErrLLMDisabled):
 			return fiber.NewError(fiber.StatusServiceUnavailable, "Riley is offline")
+		case errors.Is(err, ErrAllProvidersExhausted):
+			// Server-side capacity, not this user overspending — their own
+			// budget is enforced separately by checkRateLimit. 503 reuses the
+			// "Riley is offline" shape the frontend already handles.
+			c.Set("Retry-After", "300")
+			return fiber.NewError(fiber.StatusServiceUnavailable, "Riley is over capacity — try again shortly")
 		case errors.Is(err, ErrRateLimited):
 			c.Set("Retry-After", "60")
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{

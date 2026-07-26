@@ -3,10 +3,19 @@ package riley
 import (
 	"errors"
 	"time"
+
+	"github.com/Dubjay18/reelstack/api/pkg/llm"
 )
 
-// ErrLLMDisabled is returned when no LLM API key is configured.
-var ErrLLMDisabled = errors.New("riley: LLM is not configured")
+// ErrLLMDisabled is returned when no LLM provider is configured. Aliased to
+// the gateway's sentinel so errors.Is keeps matching across the boundary and
+// the handler's 503 mapping is unchanged.
+var ErrLLMDisabled = llm.ErrDisabled
+
+// ErrAllProvidersExhausted is returned when every LLM provider is out of
+// quota or cooling down. Distinct from ErrLLMDisabled: Riley is configured
+// and working, it's just temporarily out of capacity.
+var ErrAllProvidersExhausted = llm.ErrAllProvidersExhausted
 
 // ErrRateLimited is returned when a per-minute chat budget is exhausted.
 var ErrRateLimited = errors.New("riley: rate limited")

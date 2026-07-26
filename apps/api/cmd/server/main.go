@@ -27,6 +27,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/pkg/config"
 	"github.com/Dubjay18/reelstack/api/pkg/db"
 	apperrors "github.com/Dubjay18/reelstack/api/pkg/errors"
+	"github.com/Dubjay18/reelstack/api/pkg/llm"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -241,7 +242,14 @@ func main() {
 	contentHandler.RegisterRoutes(app)
 
 	// ── Wire: riley (AI agent) ──────────────────────────────────────────────
-	rileyLLM := riley.NewLLMClient(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMModel)
+	// The LLM gateway fans out across providers (Groq → OpenRouter → Gemini)
+	// so one free tier stops being the ceiling on Riley's usage.
+	rileyLLM := llm.NewGateway(cfg.LLMProviders, llm.NewRedisQuota(redisClient.Redis()))
+	if rileyLLM.Enabled() {
+		slog.Info("riley: LLM gateway ready", "providers", rileyLLM.Providers())
+	} else {
+		slog.Warn("riley: no LLM provider configured — digest and chat are disabled")
+	}
 	rileySearch := riley.NewSearchClient(cfg.TavilyBaseURL, cfg.TavilyAPIKey)
 	rileyRepo := riley.NewRepository(database)
 	// Riley calls its own MCP server over loopback once a user approves a

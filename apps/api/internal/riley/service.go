@@ -23,15 +23,19 @@ const (
 	topListSize    = 20
 	maxChatRecs    = 5
 
-	// Chat budget calibrated to Groq's free tier for llama-3.3-70b-versatile:
-	// 30 req/min, 1K req/day, 12K tokens/min, 100K tokens/day. A chat turn
-	// costs ~1.5-2K tokens (system prompt + history + reply), so tokens-per-day
-	// is the binding constraint: ~50-60 chat calls/day total. The cron refresh
-	// spends ~8 calls/day; the rest is the global chat budget below.
-	userChatPerMin   = 3
-	globalChatPerMin = 6 // ~12K TPM / ~2K tokens per call
-	userChatPerDay   = 10
-	globalChatPerDay = 50 // ~100K TPD minus cron headroom
+	// Per-user limits are abuse controls: they stop one account monopolising
+	// Riley regardless of how much provider capacity exists.
+	userChatPerMin = 3
+	userChatPerDay = 10
+
+	// Global limits used to be provider-capacity controls, calibrated to
+	// Groq's free tier alone (100K tokens/day ≈ 50 chat calls). Provider
+	// capacity is now the LLM gateway's job — it pools Groq, OpenRouter and
+	// Gemini and reports ErrAllProvidersExhausted when they're genuinely
+	// spent (see pkg/llm). These remain only as a coarse backstop against
+	// runaway traffic, so they can sit well above any single free tier.
+	globalChatPerMin = 20
+	globalChatPerDay = 200
 
 	// For You: no LLM involved (see GetForYou), so these aren't bound by
 	// the Groq budget above — just kept small to keep TMDB fan-out cheap.
@@ -59,7 +63,7 @@ type IService interface {
 
 type Service struct {
 	repo    IRepository
-	llm     *LLMClient
+	llm     ILLM
 	tmdb    *content.TMDBClient
 	search  *SearchClient
 	redis   *redis.Client
@@ -70,7 +74,7 @@ type Service struct {
 // NewService constructs Riley's service. mcpBaseURL/mcpJWTSecret point at
 // the MCP server (internal/mcp) Riley uses to create/modify lists once a
 // user has approved a proposed list in chat — see ConfirmListProposal.
-func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client, mcpBaseURL, mcpJWTSecret string) *Service {
+func NewService(repo IRepository, llm ILLM, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client, mcpBaseURL, mcpJWTSecret string) *Service {
 	return &Service{
 		repo: repo, llm: llm, tmdb: tmdb, search: search, redis: rdb,
 		sfGroup: &singleflight.Group{},

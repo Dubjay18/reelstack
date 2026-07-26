@@ -117,6 +117,14 @@ func stripHTML(s string) string {
 	return strings.TrimSpace(spaceRe.ReplaceAllString(htmlTagRe.ReplaceAllString(s, " "), " "))
 }
 
+// truncate caps a feed summary, appending an ellipsis when it cuts.
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "…"
+}
+
 // normalizeTitle lowercases and strips punctuation so near-identical
 // headlines from different outlets collapse to the same key.
 func normalizeTitle(title string) string {
