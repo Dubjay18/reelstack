@@ -21,6 +21,7 @@ func NewHandler(svc IService, cronSecret string) *Handler {
 func (h *Handler) RegisterRoutes(r fiber.Router, authMW fiber.Handler) {
 	r.Get("/api/v1/riley/digest", h.GetDigest)
 	r.Get("/api/v1/riley/top", h.GetTop)
+	r.Get("/api/v1/riley/foryou", authMW, h.GetForYou)
 	r.Post("/api/v1/riley/chat", authMW, h.Chat)
 }
 
@@ -47,6 +48,20 @@ func (h *Handler) GetTop(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to fetch top lists")
 	}
 	return c.JSON(top)
+}
+
+func (h *Handler) GetForYou(c *fiber.Ctx) error {
+	userID, _ := c.Locals("userID").(string)
+	if userID == "" {
+		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
+	}
+
+	forYou, err := h.svc.GetForYou(c.UserContext(), userID)
+	if err != nil {
+		slog.Error("riley: failed to fetch for-you list", "error", err, "user_id", userID)
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to fetch recommendations")
+	}
+	return c.JSON(forYou)
 }
 
 type chatRequest struct {

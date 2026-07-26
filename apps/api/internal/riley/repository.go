@@ -10,6 +10,14 @@ import (
 type IRepository interface {
 	SaveArtifact(ctx context.Context, kind string, payload any) error
 	LatestArtifact(ctx context.Context, kind string, dest any) error
+	WatchedTitles(ctx context.Context, userID string, limit int) ([]WatchedTitle, error)
+	AllListedTitles(ctx context.Context, userID string) ([]WatchedTitle, error)
+}
+
+// WatchedTitle identifies a title a user has added to one of their lists.
+type WatchedTitle struct {
+	TMDBID    int    `db:"tmdb_id"`
+	MediaType string `db:"media_type"`
 }
 
 type Repository struct {
@@ -40,4 +48,37 @@ func (r *Repository) LatestArtifact(ctx context.Context, kind string, dest any) 
 		return err
 	}
 	return json.Unmarshal(raw, dest)
+}
+
+// WatchedTitles returns the user's most recently watched titles across all
+// their lists, newest first. Used to seed personalized recommendations.
+func (r *Repository) WatchedTitles(ctx context.Context, userID string, limit int) ([]WatchedTitle, error) {
+	var titles []WatchedTitle
+	err := r.db.SelectContext(ctx, &titles, `
+		SELECT li.tmdb_id, li.media_type
+		FROM list_items li
+		JOIN lists l ON l.id = li.list_id
+		WHERE l.user_id = $1 AND li.watched = true
+		ORDER BY li.watched_at DESC NULLS LAST
+		LIMIT $2`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	return titles, nil
+}
+
+// AllListedTitles returns every title the user has added to any of their
+// lists (watched or not), used to exclude titles they already know about
+// from personalized recommendations.
+func (r *Repository) AllListedTitles(ctx context.Context, userID string) ([]WatchedTitle, error) {
+	var titles []WatchedTitle
+	err := r.db.SelectContext(ctx, &titles, `
+		SELECT DISTINCT li.tmdb_id, li.media_type
+		FROM list_items li
+		JOIN lists l ON l.id = li.list_id
+		WHERE l.user_id = $1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	return titles, nil
 }
