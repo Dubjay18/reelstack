@@ -4,52 +4,48 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	sdk "github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/Dubjay18/reelstack/api/internal/lists"
 	appmcp "github.com/Dubjay18/reelstack/api/internal/mcp"
 )
 
 // mcpClient is Riley's own client for its MCP server (internal/mcp) — the
 // same tool surface external MCP clients (Claude Desktop, Claude Code,
 // etc.) use, so list-creation logic lives in exactly one place. Riley only
-// ever calls this after a user has approved a proposed list in chat, and
-// authenticates with a short-lived internal token rather than a
-// long-lived Personal Access Token (see appmcp.MintInternalToken).
+// ever calls this after a user has approved a proposed list in chat.
+//
+// It connects to a Server built directly in-process over an in-memory
+// transport rather than looping back over HTTP: fasthttp/Fiber's
+// adaptor.HTTPHandler (used to mount /mcp) buffers the whole net/http
+// response and only flushes it once the handler returns, so a real HTTP
+// round trip to our own streamable-HTTP MCP endpoint never completes and
+// hangs forever — which is what caused the Approve button's infinite
+// loading spinner.
 type mcpClient struct {
-	baseURL   string
-	jwtSecret string
+	listsSvc lists.IListService
+	appURL   string
 }
 
-func newMCPClient(baseURL, jwtSecret string) *mcpClient {
-	return &mcpClient{baseURL: baseURL, jwtSecret: jwtSecret}
-}
-
-// bearerRoundTripper attaches a Bearer token to every outgoing request.
-type bearerRoundTripper struct {
-	token string
-}
-
-func (rt bearerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req = req.Clone(req.Context())
-	req.Header.Set("Authorization", "Bearer "+rt.token)
-	return http.DefaultTransport.RoundTrip(req)
+func newMCPClient(listsSvc lists.IListService, appURL string) *mcpClient {
+	return &mcpClient{listsSvc: listsSvc, appURL: appURL}
 }
 
 // CreateList calls the MCP server's create_list tool as userID.
 func (c *mcpClient) CreateList(ctx context.Context, userID string, proposal ProposedList) (*ConfirmedList, error) {
-	token, err := appmcp.MintInternalToken(userID, c.jwtSecret)
+	server := appmcp.NewToolServer(userID, c.listsSvc, c.appURL)
+
+	clientTransport, serverTransport := sdk.NewInMemoryTransports()
+
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
 	if err != nil {
-		return nil, fmt.Errorf("mint internal mcp token: %w", err)
+		return nil, fmt.Errorf("connect mcp server: %w", err)
 	}
+	defer serverSession.Wait() //nolint:errcheck // best-effort cleanup
 
 	client := sdk.NewClient(&sdk.Implementation{Name: "riley", Version: "1.0.0"}, nil)
-	transport := &sdk.StreamableClientTransport{
-		Endpoint:   c.baseURL,
-		HTTPClient: &http.Client{Transport: bearerRoundTripper{token: token}},
-	}
-	session, err := client.Connect(ctx, transport, nil)
+	session, err := client.Connect(ctx, clientTransport, nil)
 	if err != nil {
 		return nil, fmt.Errorf("connect to mcp server: %w", err)
 	}

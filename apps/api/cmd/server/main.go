@@ -244,10 +244,9 @@ func main() {
 	rileyLLM := riley.NewLLMClient(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMModel)
 	rileySearch := riley.NewSearchClient(cfg.TavilyBaseURL, cfg.TavilyAPIKey)
 	rileyRepo := riley.NewRepository(database)
-	// Riley calls its own MCP server over loopback once a user approves a
+	// Riley connects to its own MCP server in-process once a user approves a
 	// proposed list in chat — see riley.Service.ConfirmListProposal.
-	mcpLoopbackURL := "http://127.0.0.1:" + cfg.Port + "/mcp"
-	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, rileySearch, redisClient.Redis(), mcpLoopbackURL, cfg.JWTSecret)
+	rileySvc := riley.NewService(rileyRepo, rileyLLM, tmdbClient, rileySearch, redisClient.Redis(), listsSvc, cfg.AppURL)
 	rileyHandler := riley.NewHandler(rileySvc, cfg.CronSecret)
 	rileyHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 	rileyHandler.RegisterCronRoute(app)

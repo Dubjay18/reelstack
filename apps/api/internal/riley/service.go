@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/Dubjay18/reelstack/api/internal/content"
+	"github.com/Dubjay18/reelstack/api/internal/lists"
 	"github.com/Dubjay18/reelstack/api/pkg/singleflight"
 )
 
@@ -67,14 +68,14 @@ type Service struct {
 	mcp     *mcpClient
 }
 
-// NewService constructs Riley's service. mcpBaseURL/mcpJWTSecret point at
-// the MCP server (internal/mcp) Riley uses to create/modify lists once a
-// user has approved a proposed list in chat — see ConfirmListProposal.
-func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client, mcpBaseURL, mcpJWTSecret string) *Service {
+// NewService constructs Riley's service. listsSvc/appURL build the MCP
+// server (internal/mcp) Riley connects to in-process to create/modify lists
+// once a user has approved a proposed list in chat — see ConfirmListProposal.
+func NewService(repo IRepository, llm *LLMClient, tmdb *content.TMDBClient, search *SearchClient, rdb *redis.Client, listsSvc lists.IListService, appURL string) *Service {
 	return &Service{
 		repo: repo, llm: llm, tmdb: tmdb, search: search, redis: rdb,
 		sfGroup: &singleflight.Group{},
-		mcp:     newMCPClient(mcpBaseURL, mcpJWTSecret),
+		mcp:     newMCPClient(listsSvc, appURL),
 	}
 }
 
