@@ -6,6 +6,7 @@ import { Colors, Radius, Typography, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from '@/lib/hooks/api';
+import { getNotificationRoute, getNotificationText } from '@/lib/notificationRouting';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function NotificationsScreen() {
@@ -39,17 +40,9 @@ export default function NotificationsScreen() {
       markRead.mutate(item.id);
     }
 
-    // Navigate based on type
-    if (item.type === 'new_follower') {
-      router.push({
-        pathname: '/[username]',
-        params: { username: item.actor_username }
-      });
-    } else if (item.type === 'list_created') {
-      router.push({
-        pathname: '/(tabs)/lists/[id]',
-        params: { id: item.entity_id }
-      });
+    const route = getNotificationRoute(item);
+    if (route) {
+      router.push(route);
     }
   };
 
@@ -89,12 +82,7 @@ export default function NotificationsScreen() {
           const avatarUrl = item.actor_avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${item.actor_username}`;
           const isUnread = !item.is_read;
 
-          let notifText = '';
-          if (item.type === 'new_follower') {
-            notifText = `@${item.actor_username} started following you`;
-          } else if (item.type === 'list_created') {
-            notifText = `@${item.actor_username} created a list: ${item.entity_title || 'Untitled'}`;
-          }
+          const notifText = getNotificationText(item);
 
           return (
             <Pressable

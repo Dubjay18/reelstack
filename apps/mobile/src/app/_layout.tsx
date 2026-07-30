@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { MovieDetailProvider } from '@/contexts/MovieDetailContext';
 import { ServerWakeGate } from '@/components/ServerWakeGate';
+import { PushNotificationHandler } from '@/components/PushNotificationHandler';
 import { Colors } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 import { AppErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
@@ -62,6 +63,7 @@ function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; font
   return (
     <ServerWakeGate>
       <AppErrorBoundary>
+        <PushNotificationHandler />
         <Stack
           screenOptions={{
             headerShown: false,
