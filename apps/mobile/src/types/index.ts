@@ -170,11 +170,15 @@ export interface Notification {
   id: string
   user_id: string
   actor_id: string
-  type: 'new_follower' | 'list_created'
+  type: 'new_follower' | 'comment_reply' | 'list_comment' | 'list_saved'
   entity_id?: string
   is_read: boolean
   created_at: string
   actor_username?: string
   actor_avatar_url?: string
   entity_title?: string
+  comment_tmdb_id?: number
+  comment_media_type?: string
+  comment_list_id?: string
+  list_comment_type?: string
 }

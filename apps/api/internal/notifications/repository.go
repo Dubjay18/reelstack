@@ -2,12 +2,15 @@ package notifications
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type INotificationRepository interface {
 	CreateNotification(ctx context.Context, notif *Notification) error
+	GetNotificationByID(ctx context.Context, id string) (*Notification, error)
 	GetNotifications(ctx context.Context, userID string) ([]*Notification, error)
 	GetUnreadGroupedByUser(ctx context.Context) (map[string][]*Notification, error)
 	MarkAsRead(ctx context.Context, notificationID, userID string) error
@@ -30,6 +33,30 @@ func (r *NotificationRepository) CreateNotification(ctx context.Context, notif *
 		VALUES (:id, :user_id, :actor_id, :type, :entity_id, :is_read, NOW())`
 	_, err := r.db.NamedExecContext(ctx, query, notif)
 	return err
+}
+
+func (r *NotificationRepository) GetNotificationByID(ctx context.Context, id string) (*Notification, error) {
+	var notif Notification
+	query := `
+		SELECT n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
+		       u.username AS actor_username, u.avatar_url AS actor_avatar_url,
+		       COALESCE(l.title, c.body, cl.title) AS entity_title,
+		       c.tmdb_id AS comment_tmdb_id, c.media_type AS comment_media_type,
+		       lc.list_id AS comment_list_id, lc.type AS list_comment_type
+		FROM notifications n
+		JOIN users u ON n.actor_id = u.id
+		LEFT JOIN lists l ON n.entity_id = l.id AND (n.type = 'list_created' OR n.type = 'list_saved')
+		LEFT JOIN comments c ON n.entity_id = c.id AND n.type = 'comment_reply'
+		LEFT JOIN list_comments lc ON n.entity_id = lc.id AND n.type = 'list_comment'
+		LEFT JOIN lists cl ON lc.list_id = cl.id
+		WHERE n.id = $1`
+	if err := r.db.GetContext(ctx, &notif, query, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &notif, nil
 }
 
 func (r *NotificationRepository) GetNotifications(ctx context.Context, userID string) ([]*Notification, error) {

@@ -84,8 +84,8 @@ export const api = {
     return res.data;
   },
 
-  delete: async <T>(path: string): Promise<T> => {
-    const res = await axiosInstance.delete<T>(path);
+  delete: async <T>(path: string, body?: unknown): Promise<T> => {
+    const res = await axiosInstance.delete<T>(path, body !== undefined ? { data: body } : undefined);
     return res.data;
   },
 };

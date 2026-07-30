@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import type { User } from '@/types';
 
 const TOKEN_KEY = 'rs_token';
+const PUSH_TOKEN_KEY = 'rs_push_token';
 
 interface JWTClaims {
   user_id: string;
@@ -54,6 +55,20 @@ export async function storeToken(token: string): Promise<void> {
 
 export async function clearToken(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
+}
+
+// Caches the device's registered Expo push token, so logout can unregister
+// it from the server without re-prompting for permission.
+export async function getStoredPushToken(): Promise<string | null> {
+  return await SecureStore.getItemAsync(PUSH_TOKEN_KEY);
+}
+
+export async function storePushToken(token: string): Promise<void> {
+  await SecureStore.setItemAsync(PUSH_TOKEN_KEY, token);
+}
+
+export async function clearPushToken(): Promise<void> {
+  await SecureStore.deleteItemAsync(PUSH_TOKEN_KEY);
 }
 
 export async function getCurrentUser(): Promise<Pick<User, 'id' | 'username'> | null> {
