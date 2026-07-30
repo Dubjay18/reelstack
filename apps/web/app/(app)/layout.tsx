@@ -38,7 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh">
       {showSidebar && <Sidebar />}
-      <main className={showSidebar ? "flex-1 md:ml-[--sidebar-width]" : "flex-1 w-full"}>
+      <main className={showSidebar ? "flex-1 md:ml-[--sidebar-width] transition-[margin] duration-200 ease-spring" : "flex-1 w-full"}>
         {children}
       </main>
     </div>
