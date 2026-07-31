@@ -11,6 +11,12 @@ var ErrNotFound = errors.New("notification not found")
 
 type INotificationService interface {
 	CreateNotification(ctx context.Context, userID, actorID, notifType string, entityID *string) error
+	// CreateNotificationReturningID behaves like CreateNotification but also
+	// returns the created row's ID (empty string, nil error if skipped as a
+	// self-notification) — used by the push fan-out to look the row back up
+	// with its resolved actor/entity fields.
+	CreateNotificationReturningID(ctx context.Context, userID, actorID, notifType string, entityID *string) (string, error)
+	GetNotificationByID(ctx context.Context, id string) (*Notification, error)
 	GetNotifications(ctx context.Context, userID string) ([]*Notification, error)
 	GetUnreadGroupedByUser(ctx context.Context) (map[string][]*Notification, error)
 	MarkAsRead(ctx context.Context, notificationID, userID string) error
@@ -42,6 +48,29 @@ func (s *NotificationService) CreateNotification(ctx context.Context, userID, ac
 		IsRead:   false,
 	}
 	return s.repo.CreateNotification(ctx, notif)
+}
+
+func (s *NotificationService) CreateNotificationReturningID(ctx context.Context, userID, actorID, notifType string, entityID *string) (string, error) {
+	if userID == actorID {
+		return "", nil
+	}
+
+	notif := &Notification{
+		ID:       uuid.NewString(),
+		UserID:   userID,
+		ActorID:  actorID,
+		Type:     notifType,
+		EntityID: entityID,
+		IsRead:   false,
+	}
+	if err := s.repo.CreateNotification(ctx, notif); err != nil {
+		return "", err
+	}
+	return notif.ID, nil
+}
+
+func (s *NotificationService) GetNotificationByID(ctx context.Context, id string) (*Notification, error) {
+	return s.repo.GetNotificationByID(ctx, id)
 }
 
 func (s *NotificationService) GetNotifications(ctx context.Context, userID string) ([]*Notification, error) {

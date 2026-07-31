@@ -338,6 +338,23 @@ export function useMarkAllNotificationsRead() {
   });
 }
 
+export function useRegisterPushToken() {
+  return useMutation({
+    mutationFn: (params: { token: string; platform: 'android' | 'ios' }) =>
+      api.post<{ success: boolean }>('/api/v1/push-tokens', params),
+    // Silent background sync — never surface the global error toast for this.
+    onError: () => {},
+  });
+}
+
+export function useUnregisterPushToken() {
+  return useMutation({
+    mutationFn: (token: string) => api.delete<{ success: boolean }>('/api/v1/push-tokens', { token }),
+    // Silent background sync — never surface the global error toast for this.
+    onError: () => {},
+  });
+}
+
 // 8. Saved Lists Hooks
 export function useSaveList(listId: string) {
   const queryClient = useQueryClient();

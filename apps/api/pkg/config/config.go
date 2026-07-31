@@ -27,6 +27,7 @@ type Config struct {
 	LLMModel           string
 	TavilyAPIKey       string
 	TavilyBaseURL      string
+	ExpoAccessToken    string
 }
 
 func Load() (*Config, error) {
@@ -50,6 +51,7 @@ func Load() (*Config, error) {
 		LLMModel:           getEnv("LLM_MODEL", "llama-3.3-70b-versatile"),
 		TavilyAPIKey:       os.Getenv("TAVILY_API_KEY"),
 		TavilyBaseURL:      getEnv("TAVILY_BASE_URL", "https://api.tavily.com/search"),
+		ExpoAccessToken:    os.Getenv("EXPO_ACCESS_TOKEN"),
 	}
 
 	// Required field validation

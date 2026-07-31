@@ -167,12 +167,24 @@ export default function Page() {
             )}
           </div>
 
+          {/* Watch Now */}
+          <Link
+            href={`/watch/${tmdbId}?type=${mediaType}`}
+            className="mt-4 w-full bg-primary text-on-primary font-semibold py-2.5 px-3 rounded-[10px] text-[13px] flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+          >
+            <Play size={14} strokeWidth={2.5} fill="currentColor" />
+            Watch Now
+          </Link>
+          <div className="mt-1.5 text-center font-mono text-[10px] uppercase tracking-[0.08em] text-on-surface-variant">
+            via Reelplay
+          </div>
+
           {/* Save + Share buttons */}
-          <div className="flex gap-2.5 mt-4">
+          <div className="flex gap-2.5 mt-2.5">
             <button
               onClick={() => setShowListSelector(!showListSelector)}
               disabled={addingToListId !== null}
-              className="flex-1 bg-primary text-on-primary font-semibold py-2.5 px-3 rounded-[10px] text-[13px] flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="flex-1 bg-surface border border-outline-variant text-on-surface font-semibold py-2.5 px-3 rounded-[10px] text-[13px] flex items-center justify-center gap-1.5 hover:bg-surface-container transition-colors disabled:opacity-60"
             >
               {addingToListId !== null ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} strokeWidth={2.5} />}
               Save

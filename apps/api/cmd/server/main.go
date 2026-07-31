@@ -19,6 +19,8 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/lists"
 	appmcp "github.com/Dubjay18/reelstack/api/internal/mcp"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
+	"github.com/Dubjay18/reelstack/api/internal/pushnotify"
+	"github.com/Dubjay18/reelstack/api/internal/pushtokens"
 	"github.com/Dubjay18/reelstack/api/internal/queue"
 	"github.com/Dubjay18/reelstack/api/internal/riley"
 	"github.com/Dubjay18/reelstack/api/internal/saved_lists"
@@ -192,7 +194,16 @@ func main() {
 	notificationsHandler := notifications.NewHandler(notificationsSvc)
 	notificationsHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
-	queueSvc.RegisterHandler(queue.JobTypeSendNotification, queue.NewSendNotificationHandler(notificationsSvc))
+	// ── Wire: push tokens + push notifications ──────────────────────────────
+	pushTokensRepo := pushtokens.NewPushTokenRepository(database)
+	pushTokensSvc := pushtokens.NewPushTokenService(pushTokensRepo)
+	pushTokensHandler := pushtokens.NewHandler(pushTokensSvc)
+	pushTokensHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
+	expoClient := pushnotify.NewExpoClient(cfg.ExpoAccessToken)
+	pushSvc := pushnotify.NewService(expoClient, pushTokensRepo, notificationsSvc)
+
+	queueSvc.RegisterHandler(queue.JobTypeSendNotification, queue.NewSendNotificationHandler(notificationsSvc, pushSvc))
 
 	// ── Wire: follows ───────────────────────────────────────────────────────
 	followsRepo := follows.NewFollowRepository(database)

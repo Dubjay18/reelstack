@@ -7,9 +7,15 @@ import (
 
 	"github.com/Dubjay18/reelstack/api/internal/email"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
+	"github.com/Dubjay18/reelstack/api/internal/pushnotify"
 )
 
-func NewSendNotificationHandler(notifSvc *notifications.NotificationService) JobHandler {
+// NewSendNotificationHandler writes the in-app notification row and, on
+// success, fans out a push notification to the recipient's registered
+// devices. Push delivery is best-effort (pushSvc never returns an error to
+// this handler) so a transient Expo API hiccup never causes the queue to
+// retry — and never undoes the already-written in-app notification.
+func NewSendNotificationHandler(notifSvc *notifications.NotificationService, pushSvc *pushnotify.Service) JobHandler {
 	return func(ctx context.Context, job *Job) error {
 		var payload SendNotificationPayload
 		if err := json.Unmarshal(job.Payload, &payload); err != nil {
@@ -20,13 +26,22 @@ func NewSendNotificationHandler(notifSvc *notifications.NotificationService) Job
 			return nil
 		}
 
-		notifSvc.CreateNotification(ctx, payload.UserID, payload.ActorID, payload.Type, payload.EntityID)
+		id, err := notifSvc.CreateNotificationReturningID(ctx, payload.UserID, payload.ActorID, payload.Type, payload.EntityID)
+		if err != nil {
+			slog.Error("failed to create notification", "error", err, "user_id", payload.UserID, "type", payload.Type)
+			return nil
+		}
 
 		slog.Debug("notification created",
 			"user_id", payload.UserID,
 			"actor_id", payload.ActorID,
 			"type", payload.Type,
 		)
+
+		if id != "" {
+			pushSvc.NotifyFromNotification(ctx, id, payload.UserID)
+		}
+
 		return nil
 	}
 }

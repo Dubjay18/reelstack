@@ -45,7 +45,8 @@ module.exports = {
         }
       ],
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-notifications"
     ],
     experiments: {
       typedRoutes: true,

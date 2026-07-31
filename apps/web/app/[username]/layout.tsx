@@ -10,7 +10,7 @@ export default function PublicProfileLayout({ children }: { children: React.Reac
   return (
     <div className="flex min-h-dvh">
       {isLoggedIn && <Sidebar />}
-      <main className={isLoggedIn ? 'flex-1 w-full md:ml-[--sidebar-width]' : 'w-full'}>{children}</main>
+      <main className={isLoggedIn ? 'flex-1 w-full md:ml-[--sidebar-width] transition-[margin] duration-200 ease-spring' : 'w-full'}>{children}</main>
     </div>
   )
 }
