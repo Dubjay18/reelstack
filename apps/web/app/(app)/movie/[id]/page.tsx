@@ -159,7 +159,7 @@ export default function Page() {
         <div className="w-full md:w-[220px] flex-shrink-0">
           {/* Poster overlapping the banner (desktop only) */}
           <div
-            className="w-[140px] h-[210px] md:w-[220px] md:h-[330px] mx-auto md:mx-0 rounded-[14px] -mt-[70px] md:-mt-[110px] relative z-10 border border-outline-variant shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden"
+            className="w-[140px] h-[210px] md:w-[220px] md:h-[330px] mx-auto md:mx-0 rounded-[14px] mt-4 md:mt-0 md:-mt-[110px] relative z-10 border border-outline-variant shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden"
             style={posterUrl ? undefined : STRIPE_STYLE}
           >
             {posterUrl && (

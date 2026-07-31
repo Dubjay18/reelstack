@@ -1,4 +1,5 @@
-// Auth layout — split screen: left = form, right = textured panel with pull quote
+// Auth layout — split screen: left = form, right = poster collage with pull quote
+import { HeroGallery } from '@/components/ui/hero-gallery'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,13 +9,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {children}
       </div>
 
-      {/* Right: textured decorative panel */}
-      <div
-        className="hidden lg:flex flex-1 relative overflow-hidden"
-        style={{
-          background: 'repeating-linear-gradient(120deg, #31261a 0px, #31261a 16px, #241c15 16px, #241c15 32px)',
-        }}
-      >
+      {/* Right: poster collage panel */}
+      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-[#17120e]">
+        <HeroGallery />
         {/* Gradient fade toward the form side */}
         <div
           className="absolute inset-0 pointer-events-none"
