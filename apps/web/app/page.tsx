@@ -1,11 +1,14 @@
 "use client"
 
+import { useRef } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion'
 import { FloatingNav } from '@/components/ui/floating-nav'
 import { HeroGallery } from '@/components/ui/hero-gallery'
 import { BentoShowcase } from '@/components/ui/bento-showcase'
-import { Film, BarChart2, Share2, Smartphone, Download } from 'lucide-react'
+import { AnimatedCounter } from '@/components/ui/animated-counter'
+import { RileyChatDemo } from '@/components/ui/riley-chat-demo'
+import { Film, BarChart2, Share2, Smartphone, Download, Sparkles, UserPlus, Bell, MessageSquare, ArrowUpRight } from 'lucide-react'
 
 const ANDROID_APK_URL =
   process.env.NEXT_PUBLIC_ANDROID_APK_URL ||
@@ -15,21 +18,41 @@ const features = [
   {
     icon: Film,
     title: "Curate, don't scroll",
-    desc: 'Build ranked lists instead of feeding a feed no one controls.',
+    desc: 'Build ranked lists instead of feeding a feed no one controls — plus a Watchlist and saved copies of lists you follow.',
+    span: 'lg',
   },
   {
     icon: BarChart2,
     title: 'A living taste score',
-    desc: 'Every save, follow and list you publish moves your Curator Score.',
+    desc: 'Every save, follow and list you publish moves your Curator Score and your spot on the leaderboard.',
+    span: 'sm',
   },
   {
     icon: Share2,
     title: 'One link, your whole shelf',
-    desc: 'Share a single profile page instead of screenshotting your history.',
+    desc: 'A public profile page — and an embeddable widget you can drop into any site you already own.',
+    span: 'sm',
   },
 ]
 
+const rileyPoints = [
+  'A movie-news digest, summarized from Variety, Deadline, THR and more',
+  '"Right Now" trending rails and an LLM-curated Top 10, refreshed on a cron',
+  'A chat companion that can build you a list — but only after you say yes',
+]
+
+const socialLayer = [
+  { icon: UserPlus, label: 'Follow curators whose taste you trust' },
+  { icon: Bell, label: 'Get notified when they publish' },
+  { icon: MessageSquare, label: 'Comment on the lists you save' },
+]
+
 export default function LandingPage() {
+  const heroRef = useRef<HTMLDivElement>(null)
+  const prefersReducedMotion = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const galleryY = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? [0, 0] : [0, 80])
+
   return (
     <div className="text-on-surface min-h-[100dvh] flex flex-col font-sans relative overflow-x-hidden bg-background">
       {/* Sticky Nav */}
@@ -38,7 +61,7 @@ export default function LandingPage() {
       <main className="flex-grow flex flex-col relative z-10">
 
         {/* Hero */}
-        <section className="w-full max-w-[1280px] mx-auto px-12 min-h-[80vh] flex items-center gap-14 pt-28 lg:pt-0">
+        <section ref={heroRef} className="w-full max-w-[1280px] mx-auto px-12 min-h-[80vh] flex items-center gap-14 pt-28 lg:pt-0">
 
           {/* Left: copy + CTAs */}
           <motion.div
@@ -88,15 +111,18 @@ export default function LandingPage() {
                 { value: 'Zero', label: 'Ads or algorithm' },
               ].map((s) => (
                 <div key={s.label}>
-                  <div className="text-[20px] font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>{s.value}</div>
+                  <div className="text-[20px] font-bold text-on-surface" style={{ letterSpacing: '-0.02em' }}>
+                    <AnimatedCounter value={s.value} />
+                  </div>
                   <div className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] mt-1 font-mono">{s.label}</div>
                 </div>
               ))}
             </div>
           </motion.div>
 
-          {/* Right: poster collage */}
+          {/* Right: poster collage, drifts on scroll */}
           <motion.div
+            style={{ y: galleryY }}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 80, damping: 16, delay: 0.25 }}
@@ -141,7 +167,7 @@ export default function LandingPage() {
           <div className="h-px bg-outline-variant" />
         </div>
 
-        {/* Features section */}
+        {/* Features section — asymmetric bento, not a flat 3-card row */}
         <section className="max-w-[1280px] mx-auto px-12 py-20 w-full">
           <div className="font-mono text-[12px] tracking-[0.1em] text-primary uppercase mb-3">Why Reelstack</div>
           <h2
@@ -150,16 +176,87 @@ export default function LandingPage() {
           >
             A shelf you actually own.
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {features.map((f) => (
-              <div
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+            {features.map((f, i) => (
+              <motion.div
                 key={f.title}
-                className="bg-surface border border-outline-variant rounded-2xl p-7"
+                initial={{ opacity: 0, y: i === 0 ? 24 : 0, x: i === 0 ? 0 : (i % 2 ? 24 : -24) }}
+                whileInView={{ opacity: 1, y: 0, x: 0 }}
+                viewport={{ once: true, margin: '-10%' }}
+                transition={{ type: 'spring', stiffness: 90, damping: 18, delay: i * 0.08 }}
+                className={`bg-surface border border-outline-variant rounded-2xl p-7 ${
+                  f.span === 'lg' ? 'md:col-span-3 md:row-span-2 flex flex-col justify-between' : 'md:col-span-2'
+                }`}
               >
-                <f.icon size={26} className="text-primary mb-[18px]" strokeWidth={1.75} />
-                <h3 className="font-semibold text-[19px] text-on-surface mb-2" style={{ letterSpacing: '-0.01em' }}>{f.title}</h3>
-                <p className="text-[14px] leading-[1.6] text-on-surface-variant">{f.desc}</p>
+                <div>
+                  <f.icon size={f.span === 'lg' ? 32 : 26} className="text-primary mb-[18px]" strokeWidth={1.75} />
+                  <h3 className={`font-semibold text-on-surface mb-2 ${f.span === 'lg' ? 'text-[22px]' : 'text-[19px]'}`} style={{ letterSpacing: '-0.01em' }}>
+                    {f.title}
+                  </h3>
+                  <p className="text-[14px] leading-[1.6] text-on-surface-variant">{f.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* Riley showcase */}
+        <section className="max-w-[1280px] mx-auto px-12 py-16 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-10%' }}
+              transition={{ type: 'spring', stiffness: 90, damping: 18 }}
+            >
+              <div className="font-mono text-[12px] tracking-[0.1em] text-primary uppercase mb-3 flex items-center gap-2">
+                <Sparkles size={14} /> Meet Riley
               </div>
+              <h2 className="font-bold text-[32px] text-on-surface mb-5 max-w-[18ch]" style={{ letterSpacing: '-0.02em' }}>
+                Your own movie agent, not another feed.
+              </h2>
+              <ul className="flex flex-col gap-3 mb-8">
+                {rileyPoints.map((point) => (
+                  <li key={point} className="flex items-start gap-3 text-[14px] leading-[1.6] text-on-surface-variant">
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/riley"
+                className="inline-flex items-center gap-1.5 text-primary font-semibold text-[15px] hover:gap-2.5 transition-all"
+              >
+                Talk to Riley <ArrowUpRight size={16} />
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-10%' }}
+              transition={{ type: 'spring', stiffness: 90, damping: 18, delay: 0.1 }}
+            >
+              <RileyChatDemo />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Social layer strip */}
+        <section className="max-w-[1280px] mx-auto px-12 w-full">
+          <div className="border-t border-outline-variant pt-8 pb-4 flex flex-wrap gap-x-10 gap-y-4">
+            {socialLayer.map((item, i) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-10%' }}
+                transition={{ delay: i * 0.08 }}
+                className="flex items-center gap-2.5 text-[13px] text-on-surface-variant"
+              >
+                <item.icon size={16} className="text-primary" strokeWidth={1.75} />
+                {item.label}
+              </motion.div>
             ))}
           </div>
         </section>

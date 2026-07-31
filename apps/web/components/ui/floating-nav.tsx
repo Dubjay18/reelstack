@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion, useMotionValue, useSpring } from 'framer-motion'
-import { Compass, Search, LogIn, ArrowRight } from 'lucide-react'
+import { Compass, Trophy, Sparkles, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { LogoMark } from '@/components/ui/logo'
 
@@ -41,7 +41,8 @@ export function FloatingNav() {
 
   const navItems = [
     { name: 'Explore', href: '/search', Icon: Compass },
-    { name: 'Leaderboard', href: '/leaderboard', Icon: Search },
+    { name: 'Riley', href: '/riley', Icon: Sparkles },
+    { name: 'Leaderboard', href: '/leaderboard', Icon: Trophy },
   ]
 
   return (
