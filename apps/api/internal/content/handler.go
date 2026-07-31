@@ -21,6 +21,8 @@ func (h *Handler) RegisterRoutes(r fiber.Router) {
 	content.Get("/trending", h.GetTrending)
 	content.Get("/search", h.Search)
 	content.Get("/:type/:tmdbId", h.GetDetails)
+
+	r.Get("/api/v1/stream/embed", h.GetEmbedSources)
 }
 
 func (h *Handler) GetStreamingAvailability(c *fiber.Ctx) error {
@@ -90,4 +92,36 @@ func (h *Handler) GetDetails(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(details)
+}
+
+func (h *Handler) GetEmbedSources(c *fiber.Ctx) error {
+	tmdbID := c.QueryInt("tmdbId")
+	if tmdbID <= 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid tmdbId")
+	}
+	mediaType := c.Query("type")
+	if mediaType != "movie" && mediaType != "tv" {
+		return fiber.NewError(fiber.StatusBadRequest, "type must be 'movie' or 'tv'")
+	}
+
+	season := c.QueryInt("season")
+	episode := c.QueryInt("episode")
+	if mediaType == "tv" {
+		if season < 1 {
+			season = 1
+		}
+		if episode < 1 {
+			episode = 1
+		}
+	}
+
+	sources, err := h.svc.GetEmbedSources(c.Context(), mediaType, tmdbID, season, episode)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to resolve embed sources")
+	}
+	if sources == nil {
+		sources = []EmbedSource{}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"sources": sources})
 }

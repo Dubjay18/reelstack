@@ -98,7 +98,7 @@ func TestContentService_GetListAvailability(t *testing.T) {
 
 	tmdbClient := NewTMDBClient("dummy_key", nil)
 
-	svc := NewService(tmdbClient, wmClient)
+	svc := NewService(tmdbClient, wmClient, nil)
 
 	// Create 15 items
 	items := make([]ContentItem, 15)

@@ -14,6 +14,7 @@ type IContentService interface {
 	SearchPeople(ctx context.Context, query string) ([]PersonSearchResult, error)
 	GetTrending(ctx context.Context) ([]SearchResult, error)
 	GetDetails(ctx context.Context, mediaType string, tmdbID int) (interface{}, error)
+	GetEmbedSources(ctx context.Context, mediaType string, tmdbID, season, episode int) ([]EmbedSource, error)
 }
 type PersonKnownFor struct {
 	ID         int     `json:"id"`
@@ -48,12 +49,14 @@ type SearchResult struct {
 type ContentService struct {
 	tmdbClient      *TMDBClient
 	watchmodeClient *WatchmodeClient
+	embedClient     *EmbedSourceClient
 }
 
-func NewService(tmdb *TMDBClient, wm *WatchmodeClient) *ContentService {
+func NewService(tmdb *TMDBClient, wm *WatchmodeClient, embed *EmbedSourceClient) *ContentService {
 	return &ContentService{
 		tmdbClient:      tmdb,
 		watchmodeClient: wm,
+		embedClient:     embed,
 	}
 }
 
@@ -120,4 +123,15 @@ func (s *ContentService) GetDetails(ctx context.Context, mediaType string, tmdbI
 		return s.tmdbClient.GetTVShowDetails(tmdbID)
 	}
 	return nil, fmt.Errorf("invalid media type")
+}
+
+// GetEmbedSources resolves the ordered list of playable embed sources for a
+// title (see EmbedSourceClient). It never fails the request: if the embed
+// client is unavailable it returns an empty list and the web player falls
+// back to its built-in primary source.
+func (s *ContentService) GetEmbedSources(ctx context.Context, mediaType string, tmdbID, season, episode int) ([]EmbedSource, error) {
+	if s.embedClient == nil {
+		return []EmbedSource{}, nil
+	}
+	return s.embedClient.GetSources(ctx, mediaType, tmdbID, season, episode)
 }

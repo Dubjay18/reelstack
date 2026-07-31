@@ -247,7 +247,8 @@ func main() {
 	// ── Wire: content ────────────────────────────────────────────────────────
 	tmdbClient := content.NewTMDBClient(cfg.TMDBAPIKey, redisClient.Redis())
 	wmClient := content.NewWatchmodeClient(cfg.WatchmodeAPIKey, database)
-	contentSvc := content.NewService(tmdbClient, wmClient)
+	embedClient := content.NewEmbedSourceClient(redisClient.Redis())
+	contentSvc := content.NewService(tmdbClient, wmClient, embedClient)
 	contentHandler := content.NewHandler(contentSvc)
 	contentHandler.RegisterRoutes(app)
 

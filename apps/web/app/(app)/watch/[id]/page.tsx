@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useContentDetails } from '@/lib/hooks/api'
 import { getProgress, setProgress } from '@/lib/watch-progress'
-import { VidkingPlayer, type VidkingPlayerEvent } from '@/components/vidking-player'
+import { MultiSourcePlayer, type VidkingPlayerEvent } from '@/components/multi-source-player'
 import { EpisodeSelector } from '@/components/episode-selector'
 import { ArrowLeft, Info, Loader2, Star, TriangleAlert } from 'lucide-react'
 
@@ -80,7 +80,7 @@ export default function WatchPage() {
     router.replace(`/watch/${tmdbId}?type=tv&season=${newSeason}&episode=${newEpisode}`)
   }, [router, tmdbId])
 
-  if (!Number.isFinite(tmdbId) || movieLoading) {
+  if (!Number.isFinite(tmdbId)) {
     return (
       <div className="text-on-surface min-h-screen flex items-center justify-center bg-background">
         <Loader2 size={36} className="text-primary animate-spin" />
@@ -88,24 +88,14 @@ export default function WatchPage() {
     )
   }
 
-  if (!movie) {
-    return (
-      <div className="text-on-surface min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Title Not Found</h1>
-          <Link href="/dashboard" className="text-primary hover:underline">Back to Dashboard</Link>
-        </div>
-      </div>
-    )
-  }
-
-  const isMovieType = 'release_date' in movie
-  const title = isMovieType ? movie.title : (movie as any).name
-  const releaseDate = isMovieType ? movie.release_date : (movie as any).first_air_date
-  const releaseYear = releaseDate ? releaseDate.substring(0, 4) : 'Unknown'
-  const seasonCount = !isMovieType ? (movie as any).number_of_seasons : undefined
-  const backdropUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : null
-  const rating = movie.vote_average ?? 0
+  const isMovieType = movie ? 'release_date' in movie : false
+  const title = movie ? (isMovieType ? (movie as any).title : (movie as any).name) : null
+  const releaseDate = movie ? (isMovieType ? (movie as any).release_date : (movie as any).first_air_date) : null
+  const releaseYear = releaseDate ? releaseDate.substring(0, 4) : null
+  const seasonCount = movie && !isMovieType ? (movie as any).number_of_seasons : undefined
+  const backdropUrl = movie?.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : null
+  const rating = movie?.vote_average ?? 0
+  const detailsUnavailable = !movieLoading && !movie
 
   return (
     <div className="text-on-surface min-h-screen font-sans bg-background selection:bg-primary/30 selection:text-primary pb-16">
@@ -115,7 +105,7 @@ export default function WatchPage() {
         {backdropUrl && (
           <Image
             src={backdropUrl}
-            alt={title}
+            alt={title ?? ''}
             fill
             priority
             className="object-cover object-center"
@@ -135,38 +125,53 @@ export default function WatchPage() {
 
         <div className="absolute bottom-4 sm:bottom-5 left-4 right-4 sm:left-10 sm:right-10 flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 bg-primary/15 border border-primary/30 rounded-full px-2.5 py-1 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-primary">Now Playing on Reelplay</span>
-            </div>
-            <h1 className="font-bold text-xl sm:text-2xl md:text-[32px] text-on-surface break-words" style={{ letterSpacing: '-0.02em' }}>
-              {title}
-            </h1>
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-on-surface-variant text-[13px] mt-1">
-              <span>{releaseYear}</span>
-              {mediaType === 'tv' && <><span>·</span><span>S{season} · E{episode}</span></>}
-              {rating > 0 && (
-                <span className="inline-flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded-md">
-                  <Star size={12} className="text-primary" fill="currentColor" />
-                  <span className="font-mono text-[11px] text-on-surface">{rating.toFixed(1)}</span>
-                </span>
-              )}
-            </div>
+            {movieLoading ? (
+              <div className="space-y-2.5">
+                <div className="w-40 h-4 rounded-full bg-white/10 animate-pulse" />
+                <div className="w-64 sm:w-80 h-8 rounded-lg bg-white/10 animate-pulse" />
+              </div>
+            ) : (
+              movie && (
+                <>
+                  <div className="inline-flex items-center gap-1.5 bg-primary/15 border border-primary/30 rounded-full px-2.5 py-1 mb-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-primary">Now Playing on Reelplay</span>
+                  </div>
+                  <h1 className="font-bold text-xl sm:text-2xl md:text-[32px] text-on-surface break-words" style={{ letterSpacing: '-0.02em' }}>
+                    {title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-on-surface-variant text-[13px] mt-1">
+                    {releaseYear && <span>{releaseYear}</span>}
+                    {mediaType === 'tv' && <><span>·</span><span>S{season} · E{episode}</span></>}
+                    {rating > 0 && (
+                      <span className="inline-flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded-md">
+                        <Star size={12} className="text-primary" fill="currentColor" />
+                        <span className="font-mono text-[11px] text-on-surface">{rating.toFixed(1)}</span>
+                      </span>
+                    )}
+                  </div>
+                </>
+              )
+            )}
           </div>
 
-          <Link
-            href={`/movie/${tmdbId}?type=${mediaType}`}
-            className="hidden sm:inline-flex items-center gap-1.5 flex-shrink-0 bg-surface/80 backdrop-blur-sm border border-outline-variant text-on-surface-variant hover:text-on-surface text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors"
-          >
-            <Info size={13} strokeWidth={2} />
-            Details
-          </Link>
+          {movie && (
+            <Link
+              href={`/movie/${tmdbId}?type=${mediaType}`}
+              className="hidden sm:inline-flex items-center gap-1.5 flex-shrink-0 bg-surface/80 backdrop-blur-sm border border-outline-variant text-on-surface-variant hover:text-on-surface text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Info size={13} strokeWidth={2} />
+              Details
+            </Link>
+          )}
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-[980px] mx-auto px-4 sm:px-6 md:px-10 py-7">
-        <VidkingPlayer
+        {/* The player mounts immediately — it only needs the URL params, so it
+            never waits on the movie-details roundtrip. */}
+        <MultiSourcePlayer
           tmdbId={tmdbId}
           mediaType={mediaType}
           season={mediaType === 'tv' ? season : undefined}
@@ -175,10 +180,11 @@ export default function WatchPage() {
           nextEpisode
           episodeSelector={false}
           progress={initialProgress ?? undefined}
+          placeholder={backdropUrl}
           onEvent={handlePlayerEvent}
         />
 
-        {mediaType === 'tv' && (
+        {mediaType === 'tv' && movie && (
           <div className="mt-4">
             <EpisodeSelector
               currentSeason={season}
@@ -186,6 +192,15 @@ export default function WatchPage() {
               seasonCount={seasonCount}
               onChange={handleEpisodeChange}
             />
+          </div>
+        )}
+
+        {detailsUnavailable && (
+          <div className="mt-4 bg-surface border border-outline-variant rounded-xl px-4 py-3">
+            <p className="text-[12px] text-on-surface-variant leading-relaxed">
+              We couldn&apos;t load the details for this title.{' '}
+              <Link href="/dashboard" className="text-primary hover:underline">Back to Dashboard</Link>
+            </p>
           </div>
         )}
 
