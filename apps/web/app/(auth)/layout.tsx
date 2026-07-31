@@ -1,5 +1,5 @@
-// Auth layout — split screen: left = form, right = poster collage with pull quote
-import { HeroGallery } from '@/components/ui/hero-gallery'
+// Auth layout — split screen: left = form, right = full-bleed poster carousel with pull quote
+import { AuthBackdropCarousel } from '@/components/ui/auth-backdrop-carousel'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,9 +9,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {children}
       </div>
 
-      {/* Right: poster collage panel */}
-      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-[#17120e]">
-        <HeroGallery />
+      {/* Right: full-bleed poster carousel panel */}
+      <div className="hidden lg:block flex-1 relative overflow-hidden bg-[#17120e]">
+        <AuthBackdropCarousel />
         {/* Gradient fade toward the form side */}
         <div
           className="absolute inset-0 pointer-events-none"

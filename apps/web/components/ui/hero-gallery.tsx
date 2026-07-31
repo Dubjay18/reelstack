@@ -52,7 +52,7 @@ function shuffle<T>(items: T[], seed: number): T[] {
 // fresh on every mount so the hero looks different each time the page
 // loads. Falls back to a curated static set when trending data isn't
 // available yet (loading, error, or too few posters with images).
-function usePosters(): { title: string; posterPath: string }[] {
+export function usePosters(): { title: string; posterPath: string }[] {
   const { data } = useRileyTop()
   const [seed] = useState(() => Math.random() * 233280)
 
