@@ -64,7 +64,7 @@ func TestGetPublicProfile_Integration(t *testing.T) {
 
 	// Insert public and private lists
 	listsRepo := lists.NewListRepository(database)
-	
+
 	publicList := &lists.List{
 		ID:       uuid.NewString(),
 		UserID:   userA,

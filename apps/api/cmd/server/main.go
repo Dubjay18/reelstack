@@ -159,10 +159,14 @@ func main() {
 	if emailClient != nil {
 		queueSvc.RegisterHandler(queue.JobTypeSendEmail, queue.NewSendEmailHandler(emailClient))
 		queueSvc.RegisterHandler(queue.JobTypeSendWelcomeEmail, queue.NewSendWelcomeEmailHandler(emailClient))
+		queueSvc.RegisterHandler(queue.JobTypeSendPasswordResetEmail, queue.NewSendPasswordResetEmailHandler(emailClient))
+		queueSvc.RegisterHandler(queue.JobTypeSendVerificationEmail, queue.NewSendVerificationEmailHandler(emailClient))
 	}
 
 	// ── Wire: auth ────────────────────────────────────────────────────────────
 	userRepo := users.NewUserRepository(database)
+	passwordResetTokenRepo := auth.NewPasswordResetTokenRepository(database)
+	emailVerificationTokenRepo := auth.NewEmailVerificationTokenRepository(database)
 	authSvc := auth.NewAuthService(
 		userRepo,
 		cfg.JWTSecret,
@@ -170,9 +174,12 @@ func main() {
 		cfg.GoogleClientSecret,
 		cfg.GoogleRedirectURL,
 		queueSvc,
+		passwordResetTokenRepo,
+		emailVerificationTokenRepo,
 	)
 	authHandler := auth.NewHandler(authSvc, cfg.AppURL)
 	authHandler.RegisterRoutes(app)
+	authHandler.RegisterAuthedRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
 	// ── Wire: users ─────────────────────────────────────────────────────────
 	listsRepo := lists.NewListRepository(database)
@@ -305,8 +312,13 @@ func main() {
 				if n.EntityTitle != nil {
 					entityTitle = *n.EntityTitle
 				}
+				subType := ""
+				if n.ListCommentType != nil {
+					subType = *n.ListCommentType
+				}
 				items = append(items, email.DigestItem{
 					Type:        n.Type,
+					SubType:     subType,
 					ActorName:   actorName,
 					EntityTitle: entityTitle,
 					CreatedAt:   n.CreatedAt.Format("Jan 2"),
@@ -447,5 +459,3 @@ func (a *scoreFetcherAdapter) GetUserScoreWithRank(ctx context.Context, userID s
 	}
 	return score.Score, rank, nil
 }
-
-

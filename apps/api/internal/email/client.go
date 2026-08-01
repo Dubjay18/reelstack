@@ -49,6 +49,22 @@ func (c *Client) SendWelcome(ctx context.Context, email, username string) error 
 	return c.Send(ctx, subject, html, text, email)
 }
 
+func (c *Client) SendPasswordReset(ctx context.Context, email, username, token string) error {
+	subject := "Reset your Reelstack password"
+	resetURL := fmt.Sprintf("%s/reset-password?token=%s", c.appURL, token)
+	html := passwordResetHTML(username, resetURL)
+	text := passwordResetPlainText(username, resetURL)
+	return c.Send(ctx, subject, html, text, email)
+}
+
+func (c *Client) SendVerification(ctx context.Context, email, username, token string) error {
+	subject := "Verify your Reelstack email"
+	verifyURL := fmt.Sprintf("%s/verify-email?token=%s", c.appURL, token)
+	html := verificationHTML(username, verifyURL)
+	text := verificationPlainText(username, verifyURL)
+	return c.Send(ctx, subject, html, text, email)
+}
+
 func (c *Client) SendDigest(ctx context.Context, email, username string, notifs []DigestItem) error {
 	subject := fmt.Sprintf("Your Reelstack Weekly Digest (%d unread)", len(notifs))
 	html := digestHTML(username, notifs, c.appURL)
@@ -57,10 +73,11 @@ func (c *Client) SendDigest(ctx context.Context, email, username string, notifs 
 }
 
 type DigestItem struct {
-	Type         string
-	ActorName    string
-	EntityTitle  string
-	CreatedAt    string
+	Type        string
+	SubType     string
+	ActorName   string
+	EntityTitle string
+	CreatedAt   string
 }
 
 func (c *Client) FromAddress() string {

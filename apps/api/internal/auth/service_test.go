@@ -18,6 +18,15 @@ type mockEnqueuer struct{}
 
 func (m *mockEnqueuer) Enqueue(_ context.Context, _ string, _ any) error { return nil }
 
+type mockTokenRepo struct{}
+
+func (m *mockTokenRepo) Create(_ context.Context, userID string) (string, error) {
+	return "test-token-" + userID, nil
+}
+func (m *mockTokenRepo) Consume(_ context.Context, plaintext string) (string, error) {
+	return "", auth.ErrTokenInvalid
+}
+
 // ── Mock repository ───────────────────────────────────────────────────────────
 
 type mockUserRepo struct {
@@ -29,7 +38,7 @@ type mockUserRepo struct {
 	upsertGoogleFn      func(u *users.User) error
 }
 
-func (m *mockUserRepo) CreateUser(u *users.User) error          { return m.createFn(u) }
+func (m *mockUserRepo) CreateUser(u *users.User) error { return m.createFn(u) }
 func (m *mockUserRepo) GetUserByEmail(email string) (*users.User, error) {
 	return m.getByEmailFn(email)
 }
@@ -45,8 +54,10 @@ func (m *mockUserRepo) GetUserByUsername(username string) (*users.User, error) {
 func (m *mockUserRepo) GetUserByGoogleID(googleID string) (*users.User, error) {
 	return m.getByGoogleIDFn(googleID)
 }
-func (m *mockUserRepo) UpsertGoogleUser(u *users.User) error { return m.upsertGoogleFn(u) }
-func (m *mockUserRepo) UpdateUser(u *users.User) error { return nil }
+func (m *mockUserRepo) UpsertGoogleUser(u *users.User) error                 { return m.upsertGoogleFn(u) }
+func (m *mockUserRepo) UpdateUser(u *users.User) error                       { return nil }
+func (m *mockUserRepo) UpdatePasswordHash(userID, passwordHash string) error { return nil }
+func (m *mockUserRepo) SetEmailVerified(userID string, verified bool) error  { return nil }
 func (m *mockUserRepo) GetFollowCounts(userID string) (followers int, following int, err error) {
 	return 0, 0, nil
 }
@@ -67,7 +78,7 @@ const (
 )
 
 func newService(repo users.IUserRepository) *auth.AuthService {
-	return auth.NewAuthService(repo, testSecret, testClientID, testClientSecret, testRedirectURL, &mockEnqueuer{})
+	return auth.NewAuthService(repo, testSecret, testClientID, testClientSecret, testRedirectURL, &mockEnqueuer{}, &mockTokenRepo{}, &mockTokenRepo{})
 }
 
 // mockGoogleServer starts a local HTTP server that returns a fixed userinfo JSON.

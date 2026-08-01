@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
@@ -26,14 +26,33 @@ type IAuthService interface {
 	LoginUser(email, password string) (string, error)
 	GoogleRedirectURL(state string) string
 	GoogleCallback(ctx context.Context, code string) (string, error)
+	RequestPasswordReset(ctx context.Context, email string) error
+	ResetPassword(ctx context.Context, token, newPassword string) error
+	VerifyEmail(ctx context.Context, token string) error
+	ResendVerification(ctx context.Context, userID string) error
+}
+
+// IPasswordResetTokenRepository and IEmailVerificationTokenRepository let
+// AuthService issue/consume tokens without depending on the sqlx-backed
+// implementations directly.
+type IPasswordResetTokenRepository interface {
+	Create(ctx context.Context, userID string) (string, error)
+	Consume(ctx context.Context, plaintext string) (userID string, err error)
+}
+
+type IEmailVerificationTokenRepository interface {
+	Create(ctx context.Context, userID string) (string, error)
+	Consume(ctx context.Context, plaintext string) (userID string, err error)
 }
 
 // AuthService implements IAuthService.
 type AuthService struct {
-	userRepo    users.IUserRepository
-	secret      string
-	oauthConfig *oauth2.Config
-	enqueuer    queue.Enqueuer
+	userRepo     users.IUserRepository
+	secret       string
+	oauthConfig  *oauth2.Config
+	enqueuer     queue.Enqueuer
+	resetTokens  IPasswordResetTokenRepository
+	verifyTokens IEmailVerificationTokenRepository
 }
 
 // NewAuthService wires all dependencies into the service.
@@ -41,6 +60,8 @@ func NewAuthService(
 	userRepo users.IUserRepository,
 	secret, clientID, clientSecret, redirectURL string,
 	enqueuer queue.Enqueuer,
+	resetTokens IPasswordResetTokenRepository,
+	verifyTokens IEmailVerificationTokenRepository,
 ) *AuthService {
 	oauthCfg := &oauth2.Config{
 		ClientID:     clientID,
@@ -50,10 +71,12 @@ func NewAuthService(
 		Endpoint:     google.Endpoint,
 	}
 	return &AuthService{
-		userRepo:    userRepo,
-		secret:      secret,
-		oauthConfig: oauthCfg,
-		enqueuer:    enqueuer,
+		userRepo:     userRepo,
+		secret:       secret,
+		oauthConfig:  oauthCfg,
+		enqueuer:     enqueuer,
+		resetTokens:  resetTokens,
+		verifyTokens: verifyTokens,
 	}
 }
 
@@ -88,6 +111,7 @@ func (s *AuthService) RegisterUser(email, password, username string) (*users.Use
 	}
 
 	s.enqueueWelcomeEmail(context.Background(), newUser.Email, newUser.Username)
+	s.enqueueVerificationEmail(context.Background(), newUser.ID.String(), newUser.Email, newUser.Username)
 
 	return newUser, nil
 }
@@ -206,4 +230,98 @@ func (s *AuthService) enqueueWelcomeEmail(ctx context.Context, email, username s
 		Email:    email,
 		Username: username,
 	})
+}
+
+// ── Password reset ────────────────────────────────────────────────────────────
+
+// RequestPasswordReset issues a reset token and emails it, if the address
+// belongs to a password-based account. It always returns nil so callers
+// can't use it to enumerate registered emails.
+func (s *AuthService) RequestPasswordReset(ctx context.Context, email string) error {
+	user, err := s.userRepo.GetUserByEmail(email)
+	if err != nil {
+		return err
+	}
+	if user == nil || user.PasswordHash == nil {
+		return nil
+	}
+
+	token, err := s.resetTokens.Create(ctx, user.ID.String())
+	if err != nil {
+		return fmt.Errorf("create reset token: %w", err)
+	}
+
+	if s.enqueuer != nil {
+		_ = s.enqueuer.Enqueue(ctx, queue.JobTypeSendPasswordResetEmail, queue.SendPasswordResetEmailPayload{
+			Email:    user.Email,
+			Username: user.Username,
+			Token:    token,
+		})
+	}
+	return nil
+}
+
+// ResetPassword consumes a reset token and sets a new password for its owner.
+func (s *AuthService) ResetPassword(ctx context.Context, token, newPassword string) error {
+	userID, err := s.resetTokens.Consume(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil || user == nil {
+		return ErrTokenInvalid
+	}
+
+	hash, err := hashPassword(newPassword)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
+	return s.userRepo.UpdatePasswordHash(user.ID.String(), hash)
+}
+
+// ── Email verification ────────────────────────────────────────────────────────
+
+func (s *AuthService) enqueueVerificationEmail(ctx context.Context, userID, email, username string) {
+	if s.enqueuer == nil || s.verifyTokens == nil {
+		return
+	}
+	token, err := s.verifyTokens.Create(ctx, userID)
+	if err != nil {
+		return
+	}
+	_ = s.enqueuer.Enqueue(ctx, queue.JobTypeSendVerificationEmail, queue.SendVerificationEmailPayload{
+		Email:    email,
+		Username: username,
+		Token:    token,
+	})
+}
+
+// VerifyEmail consumes a verification token and marks its owner's email verified.
+func (s *AuthService) VerifyEmail(ctx context.Context, token string) error {
+	userID, err := s.verifyTokens.Consume(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil || user == nil {
+		return ErrTokenInvalid
+	}
+
+	return s.userRepo.SetEmailVerified(user.ID.String(), true)
+}
+
+// ResendVerification re-issues a verification email for an already
+// authenticated (but unverified) user.
+func (s *AuthService) ResendVerification(ctx context.Context, userID string) error {
+	user, err := s.userRepo.GetUserByID(userID)
+	if err != nil || user == nil {
+		return ErrInvalidCredentials
+	}
+	if user.EmailVerified {
+		return nil
+	}
+	s.enqueueVerificationEmail(ctx, user.ID.String(), user.Email, user.Username)
+	return nil
 }

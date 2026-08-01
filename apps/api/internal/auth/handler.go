@@ -34,9 +34,16 @@ func (h *Handler) RegisterRoutes(r fiber.Router) {
 	auth.Post("/login", h.Login)
 	auth.Get("/google", h.GoogleRedirect)
 	auth.Get("/google/callback", h.GoogleCallback)
+	auth.Post("/forgot-password", h.ForgotPassword)
+	auth.Post("/reset-password", h.ResetPassword)
+	auth.Post("/verify-email", h.VerifyEmail)
 }
 
-
+// RegisterAuthedRoutes mounts auth routes that require an authenticated user.
+func (h *Handler) RegisterAuthedRoutes(r fiber.Router, authMiddleware fiber.Handler) {
+	auth := r.Group("/api/v1/auth", authMiddleware)
+	auth.Post("/resend-verification", h.ResendVerification)
+}
 
 type registerRequest struct {
 	Email    string `json:"email"`
@@ -90,7 +97,6 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	})
 }
 
-
 type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -131,18 +137,17 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	})
 }
 
-
 // GoogleRedirect generates a CSRF state token, stores it in a short-lived
 // cookie, and redirects the browser to Google's consent screen.
 //
 // Optional query parameter:
 //
-//	- redirect_uri: the URL the API should redirect back to after a successful
-//	  Google login. Both web (http://...) and mobile deep-link (reelstack://...)
-//	  schemes are accepted. When provided, it is Base64-encoded and appended to
-//	  the OAuth state string (separated by "___") so it survives the round-trip
-//	  through Google's servers. When omitted, the API falls back to its
-//	  configured APP_URL + "/auth/callback".
+//   - redirect_uri: the URL the API should redirect back to after a successful
+//     Google login. Both web (http://...) and mobile deep-link (reelstack://...)
+//     schemes are accepted. When provided, it is Base64-encoded and appended to
+//     the OAuth state string (separated by "___") so it survives the round-trip
+//     through Google's servers. When omitted, the API falls back to its
+//     configured APP_URL + "/auth/callback".
 func (h *Handler) GoogleRedirect(c *fiber.Ctx) error {
 	state, err := generateState()
 	if err != nil {
@@ -172,7 +177,6 @@ func (h *Handler) GoogleRedirect(c *fiber.Ctx) error {
 	redirectURL := h.svc.GoogleRedirectURL(oAuthState)
 	return c.Redirect(redirectURL, fiber.StatusTemporaryRedirect)
 }
-
 
 // GoogleCallback validates the CSRF state, exchanges the code for a Google
 // profile, upserts the user, issues a signed JWT, and redirects the client.
@@ -243,6 +247,99 @@ func (h *Handler) GoogleCallback(c *fiber.Ctx) error {
 	return c.Redirect(redirectDest, fiber.StatusTemporaryRedirect)
 }
 
+type forgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+// ForgotPassword always returns 200 regardless of whether the email is
+// registered, so this endpoint can't be used to enumerate accounts.
+func (h *Handler) ForgotPassword(c *fiber.Ctx) error {
+	var req forgotPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if req.Email == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "email is required")
+	}
+
+	if err := h.svc.RequestPasswordReset(c.UserContext(), req.Email); err != nil {
+		slog.Error("failed to request password reset", "error", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to process request")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "If that email is registered, a reset link has been sent.",
+	})
+}
+
+type resetPasswordRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+func (h *Handler) ResetPassword(c *fiber.Ctx) error {
+	var req resetPasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if req.Token == "" || req.NewPassword == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "token and new_password are required")
+	}
+
+	if err := h.svc.ResetPassword(c.UserContext(), req.Token, req.NewPassword); err != nil {
+		switch {
+		case errors.Is(err, ErrTokenInvalid), errors.Is(err, ErrTokenUsed), errors.Is(err, ErrTokenExpired):
+			return fiber.NewError(fiber.StatusBadRequest, "invalid or expired reset link")
+		default:
+			slog.Error("failed to reset password", "error", err)
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to reset password")
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
+}
+
+type verifyEmailRequest struct {
+	Token string `json:"token"`
+}
+
+func (h *Handler) VerifyEmail(c *fiber.Ctx) error {
+	var req verifyEmailRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if req.Token == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "token is required")
+	}
+
+	if err := h.svc.VerifyEmail(c.UserContext(), req.Token); err != nil {
+		switch {
+		case errors.Is(err, ErrTokenInvalid), errors.Is(err, ErrTokenUsed), errors.Is(err, ErrTokenExpired):
+			return fiber.NewError(fiber.StatusBadRequest, "invalid or expired verification link")
+		default:
+			slog.Error("failed to verify email", "error", err)
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to verify email")
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
+}
+
+// ResendVerification re-sends the verification email for the authenticated user.
+func (h *Handler) ResendVerification(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(string)
+	if !ok || userID == "" {
+		return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+	}
+
+	if err := h.svc.ResendVerification(c.UserContext(), userID); err != nil {
+		slog.Error("failed to resend verification email", "error", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to resend verification email")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
+}
 
 // generateState produces a cryptographically random, URL-safe base64 string.
 func generateState() (string, error) {

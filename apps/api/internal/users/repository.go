@@ -22,6 +22,8 @@ type IUserRepository interface {
 	GetUserByGoogleID(googleID string) (*User, error)
 	UpsertGoogleUser(user *User) error
 	UpdateUser(user *User) error
+	UpdatePasswordHash(userID, passwordHash string) error
+	SetEmailVerified(userID string, verified bool) error
 	GetFollowCounts(userID string) (followers int, following int, err error)
 	SearchUsers(ctx context.Context, query string, limit int) ([]UserSearchResult, error)
 	GetAllUsers(ctx context.Context) ([]*User, error)
@@ -161,6 +163,19 @@ func (r *UserRepository) UpdateUser(user *User) error {
 		return err
 	}
 	return nil
+}
+
+// UpdatePasswordHash sets a new bcrypt password hash for the user (used by
+// the password-reset flow).
+func (r *UserRepository) UpdatePasswordHash(userID, passwordHash string) error {
+	_, err := r.db.Exec(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, passwordHash, userID)
+	return err
+}
+
+// SetEmailVerified marks (or unmarks) a user's email as verified.
+func (r *UserRepository) SetEmailVerified(userID string, verified bool) error {
+	_, err := r.db.Exec(`UPDATE users SET email_verified = $1, updated_at = NOW() WHERE id = $2`, verified, userID)
+	return err
 }
 
 // SearchUsers returns users whose username ILIKE matches the query, ordered by follower count.

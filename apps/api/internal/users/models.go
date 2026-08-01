@@ -11,29 +11,29 @@ import (
 // PasswordHash is nil for OAuth-only accounts.
 // GoogleID is nil for password-only accounts.
 type User struct {
-	ID           uuid.UUID  `json:"id"         db:"id"`
-	Username     string     `json:"username"   db:"username"`
-	Email        string     `json:"email"      db:"email"`
-	PasswordHash *string    `json:"-"          db:"password_hash"`
-	AvatarURL    *string    `json:"avatar_url" db:"avatar_url"`
-	Bio          *string    `json:"bio"        db:"bio"`
-	GoogleID     *string    `json:"-"          db:"google_id"`
-	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
+	ID            uuid.UUID `json:"id"         db:"id"`
+	Username      string    `json:"username"   db:"username"`
+	Email         string    `json:"email"      db:"email"`
+	PasswordHash  *string   `json:"-"          db:"password_hash"`
+	AvatarURL     *string   `json:"avatar_url" db:"avatar_url"`
+	Bio           *string   `json:"bio"        db:"bio"`
+	GoogleID      *string   `json:"-"          db:"google_id"`
+	EmailVerified bool      `json:"email_verified" db:"email_verified"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
 
-
 type PublicProfile struct {
-	ID             uuid.UUID `json:"id"`
-	Username       string    `json:"username"`
-	AvatarURL      *string   `json:"avatar_url,omitempty"`
-	Bio            *string   `json:"bio,omitempty"`
+	ID             uuid.UUID     `json:"id"`
+	Username       string        `json:"username"`
+	AvatarURL      *string       `json:"avatar_url,omitempty"`
+	Bio            *string       `json:"bio,omitempty"`
 	PublicLinks    []*lists.List `json:"public_links,omitempty"`
-	ItemCount      int       `json:"item_count,omitempty"`
-	FollowersCount int       `json:"followers_count"`
-	FollowingCount int       `json:"following_count"`
-	Score          int       `json:"score"`
-	Rank           *int      `json:"rank,omitempty"`
+	ItemCount      int           `json:"item_count,omitempty"`
+	FollowersCount int           `json:"followers_count"`
+	FollowingCount int           `json:"following_count"`
+	Score          int           `json:"score"`
+	Rank           *int          `json:"rank,omitempty"`
 }
 
 func (u *User) ToPublicProfile() PublicProfile {

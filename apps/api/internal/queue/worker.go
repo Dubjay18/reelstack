@@ -84,3 +84,35 @@ func NewSendWelcomeEmailHandler(emailClient *email.Client) JobHandler {
 		return nil
 	}
 }
+
+func NewSendPasswordResetEmailHandler(emailClient *email.Client) JobHandler {
+	return func(ctx context.Context, job *Job) error {
+		var payload SendPasswordResetEmailPayload
+		if err := json.Unmarshal(job.Payload, &payload); err != nil {
+			return err
+		}
+
+		if err := emailClient.SendPasswordReset(ctx, payload.Email, payload.Username, payload.Token); err != nil {
+			return err
+		}
+
+		slog.Debug("password reset email sent", "to", payload.Email)
+		return nil
+	}
+}
+
+func NewSendVerificationEmailHandler(emailClient *email.Client) JobHandler {
+	return func(ctx context.Context, job *Job) error {
+		var payload SendVerificationEmailPayload
+		if err := json.Unmarshal(job.Payload, &payload); err != nil {
+			return err
+		}
+
+		if err := emailClient.SendVerification(ctx, payload.Email, payload.Username, payload.Token); err != nil {
+			return err
+		}
+
+		slog.Debug("verification email sent", "to", payload.Email)
+		return nil
+	}
+}

@@ -37,6 +37,18 @@ func (m *mockAuthService) GoogleRedirectURL(state string) string {
 func (m *mockAuthService) GoogleCallback(ctx context.Context, code string) (string, error) {
 	return m.googleCallbackFn(ctx, code)
 }
+func (m *mockAuthService) RequestPasswordReset(ctx context.Context, email string) error {
+	return nil
+}
+func (m *mockAuthService) ResetPassword(ctx context.Context, token, newPassword string) error {
+	return nil
+}
+func (m *mockAuthService) VerifyEmail(ctx context.Context, token string) error {
+	return nil
+}
+func (m *mockAuthService) ResendVerification(ctx context.Context, userID string) error {
+	return nil
+}
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
 

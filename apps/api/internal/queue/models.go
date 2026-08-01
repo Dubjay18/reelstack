@@ -14,9 +14,11 @@ type Enqueuer interface {
 type JobHandler func(ctx context.Context, job *Job) error
 
 const (
-	JobTypeSendNotification  = "send_notification"
-	JobTypeSendEmail         = "send_email"
-	JobTypeSendWelcomeEmail  = "send_welcome_email"
+	JobTypeSendNotification       = "send_notification"
+	JobTypeSendEmail              = "send_email"
+	JobTypeSendWelcomeEmail       = "send_welcome_email"
+	JobTypeSendPasswordResetEmail = "send_password_reset_email"
+	JobTypeSendVerificationEmail  = "send_verification_email"
 )
 
 type SendNotificationPayload struct {
@@ -37,4 +39,16 @@ type SendEmailPayload struct {
 type SendWelcomeEmailPayload struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
+}
+
+type SendPasswordResetEmailPayload struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+}
+
+type SendVerificationEmailPayload struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
 }
