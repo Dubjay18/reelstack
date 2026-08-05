@@ -166,6 +166,27 @@ export interface AuthResponse {
   user: User
 }
 
+export interface RileyTopPick {
+  tmdb_id: number
+  media_type: string
+  title: string
+  poster_path: string | null
+  year: string
+  vote_average: number
+  blurb: string
+}
+
+export interface RileyTopList {
+  generated_at: string
+  picks: RileyTopPick[]
+}
+
+export interface RileyTopResponse {
+  top_movies: RileyTopList | null
+  top_series: RileyTopList | null
+  top_ten: RileyTopList | null
+}
+
 export interface Notification {
   id: string
   user_id: string

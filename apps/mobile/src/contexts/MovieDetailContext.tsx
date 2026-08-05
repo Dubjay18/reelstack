@@ -218,8 +218,19 @@ export const MovieDetailProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     </View>
                   </View>
 
-                  {/* Actions (Trailer + Add to List) */}
+                  {/* Actions (Watch + Trailer + Add to List) */}
                   <View style={styles.actionsRow}>
+                    <Pressable
+                      style={styles.watchButton}
+                      onPress={() => {
+                        setShowDetailSheet(false);
+                        const { router } = require('expo-router');
+                        router.push(`/watch/${selectedMedia.media_type}/${selectedMedia.id}`);
+                      }}
+                    >
+                      <MaterialIcons name="play-arrow" size={20} color={Colors.onPrimary} />
+                      <Text style={[Typography.bodySm, styles.watchButtonText]}>Watch Now</Text>
+                    </Pressable>
                     {movieDetails && (movieDetails as any).trailer_key && (
                       <Pressable
                         style={styles.trailerButton}
@@ -414,6 +425,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.surfaceContainerLow,
     paddingTop: Spacing.md,
+  },
+  watchButton: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+    ...Shadow.card,
+  },
+  watchButtonText: {
+    color: Colors.onPrimary,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   trailerButton: {
     backgroundColor: 'transparent',

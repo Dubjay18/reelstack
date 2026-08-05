@@ -78,6 +78,7 @@ function RootNavigation({ fontsLoaded, fontError }: { fontsLoaded: boolean; font
           <Stack.Screen name="notifications" />
           <Stack.Screen name="leaderboard" />
           <Stack.Screen name="comments/[type]/[tmdbId]" />
+          <Stack.Screen name="watch/[type]/[tmdbId]" />
         </Stack>
       </AppErrorBoundary>
     </ServerWakeGate>
