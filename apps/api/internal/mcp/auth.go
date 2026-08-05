@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/Dubjay18/reelstack/api/internal/oauth"
 )
 
 // internalAudience marks a short-lived JWT minted by Riley's own backend to
@@ -65,15 +67,25 @@ func resolveInternalToken(tokenString, secret string) (string, error) {
 
 // AuthMiddleware resolves the Bearer token on every MCP request to a user
 // ID and stores it in the request context, rejecting the request with 401
-// otherwise. Two token kinds are accepted: a short-lived internal JWT
-// (Riley's own backend, see MintInternalToken) or a long-lived Personal
-// Access Token (external MCP clients, see TokenService.CreateToken).
-func AuthMiddleware(jwtSecret string, tokens *TokenService) func(http.Handler) http.Handler {
+// otherwise. Three token kinds are accepted: a short-lived internal JWT
+// (Riley's own backend, see MintInternalToken), a long-lived Personal
+// Access Token (external MCP clients, see TokenService.CreateToken), or an
+// OAuth access token issued by internal/oauth's authorization-code flow
+// (spec-compliant MCP clients like Claude Desktop's "Add custom connector").
+// apiBaseURL is used to advertise the OAuth discovery document on 401s via
+// WWW-Authenticate, per RFC 9728 — that's what lets an OAuth-only client
+// bootstrap the flow on its very first, tokenless request.
+func AuthMiddleware(jwtSecret string, tokens *TokenService, oauthTokens *oauth.TokenService, apiBaseURL string) func(http.Handler) http.Handler {
+	unauthorized := func(w http.ResponseWriter, msg string) {
+		w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer resource_metadata="%s/.well-known/oauth-protected-resource"`, apiBaseURL))
+		http.Error(w, msg, http.StatusUnauthorized)
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-				http.Error(w, "missing or malformed Authorization header", http.StatusUnauthorized)
+				unauthorized(w, "missing or malformed Authorization header")
 				return
 			}
 			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
@@ -83,8 +95,10 @@ func AuthMiddleware(jwtSecret string, tokens *TokenService) func(http.Handler) h
 				userID = id
 			} else if id, err := tokens.ResolveUserID(r.Context(), tokenString); err == nil {
 				userID = id
+			} else if id, err := oauthTokens.ResolveAccessToken(tokenString); err == nil {
+				userID = id
 			} else {
-				http.Error(w, "invalid or revoked token", http.StatusUnauthorized)
+				unauthorized(w, "invalid or revoked token")
 				return
 			}
 

@@ -260,10 +260,24 @@ export interface RileyConfirmedList {
   item_count: number
 }
 
+export interface RileyAddToListProposal {
+  list_id: string
+  list_title: string
+  items: RileyTopPick[]
+}
+
+export interface RileyAddToListResult {
+  list_id: string
+  list_title: string
+  added: number
+  url: string
+}
+
 export interface RileyChatResponse {
   reply: string
   recommendations: RileyTopPick[]
   proposed_list?: RileyProposedList | null
+  add_to_list?: RileyAddToListProposal | null
 }
 
 // MCP (Model Context Protocol) Personal Access Tokens — used to connect
@@ -280,4 +294,23 @@ export interface McpTokenCreateResponse {
   id: string
   name: string
   created_at: string
+}
+
+// OAuth 2.1 consent — approving a dynamically-registered MCP client (e.g.
+// Claude Desktop's "Add custom connector" flow) at /oauth/authorize.
+export interface OAuthConsentRequest {
+  client_id: string
+  redirect_uri: string
+  code_challenge: string
+  code_challenge_method: string
+  state?: string
+}
+
+export interface OAuthConsentResponse {
+  redirect_to: string
+}
+
+export interface OAuthClientInfo {
+  client_name: string
+  redirect_uris: string[]
 }
