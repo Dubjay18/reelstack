@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, LeaderboardEntry, Comment, SavedList, SaveStatusResponse, UserProfile } from '@/types';
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, StreamingProvider, Movie, TVShow, Notification, LeaderboardEntry, Comment, SavedList, SaveStatusResponse, UserProfile, RileyTopResponse } from '@/types';
 
 // Auth Input Types
 export interface LoginCredentials {
@@ -241,6 +241,37 @@ export function useTrendingContent() {
   return useQuery({
     queryKey: ['trending'],
     queryFn: () => api.get<SearchResult[]>('/api/v1/content/trending'),
+    staleTime: 60 * 60 * 1000, // 1 hour — matches Redis cache TTL
+  });
+}
+
+export interface EmbedSource {
+  id: string;
+  label: string;
+  url: string;
+  ttfbs_ms?: number;
+}
+
+export function useEmbedSources(mediaType: 'movie' | 'tv', tmdbId: number, season?: number, episode?: number) {
+  return useQuery({
+    queryKey: ['embed-sources', mediaType, tmdbId, season, episode],
+    queryFn: () => {
+      const params = new URLSearchParams({ type: mediaType, tmdbId: String(tmdbId) });
+      if (mediaType === 'tv') {
+        params.set('season', String(season ?? 1));
+        params.set('episode', String(episode ?? 1));
+      }
+      return api.get<{ sources: EmbedSource[] }>(`/api/v1/stream/embed?${params.toString()}`);
+    },
+    enabled: !!tmdbId,
+    retry: false, // the component's own failover logic handles unreliability, not react-query retry
+  });
+}
+
+export function useRileyTop() {
+  return useQuery({
+    queryKey: ['riley', 'top'],
+    queryFn: () => api.get<RileyTopResponse>('/api/v1/riley/top'),
     staleTime: 60 * 60 * 1000, // 1 hour — matches Redis cache TTL
   });
 }

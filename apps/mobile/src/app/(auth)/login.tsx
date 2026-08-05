@@ -6,6 +6,7 @@ import { useLogin } from '@/lib/hooks/api';
 import { useToast } from '@/contexts/ToastContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import { GoogleButton } from '@/components/ui/GoogleButton';
+import { AuthBackdropCarousel } from '@/components/ui/AuthBackdropCarousel';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -36,6 +37,10 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.heroWrap}>
+          <AuthBackdropCarousel height={300} />
+        </View>
+
         {/* Back Button */}
         <Pressable onPress={() => router.replace('/')} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={Colors.onSurface} />
@@ -131,6 +136,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 40,
   },
+  heroWrap: {
+    height: 300,
+    marginTop: -40,
+    marginHorizontal: -Spacing.gutter,
+    overflow: 'hidden',
+  },
   backButton: {
     position: 'absolute',
     top: 40,
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: Spacing.xl,
-    marginTop: 60,
+    marginTop: 20,
   },
   title: {
     color: Colors.onSurface,

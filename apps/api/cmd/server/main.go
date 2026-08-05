@@ -19,6 +19,7 @@ import (
 	"github.com/Dubjay18/reelstack/api/internal/lists"
 	appmcp "github.com/Dubjay18/reelstack/api/internal/mcp"
 	"github.com/Dubjay18/reelstack/api/internal/notifications"
+	"github.com/Dubjay18/reelstack/api/internal/oauth"
 	"github.com/Dubjay18/reelstack/api/internal/pushnotify"
 	"github.com/Dubjay18/reelstack/api/internal/pushtokens"
 	"github.com/Dubjay18/reelstack/api/internal/queue"
@@ -247,8 +248,20 @@ func main() {
 	mcpTokensHandler := appmcp.NewTokensHandler(mcpTokensSvc)
 	mcpTokensHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
 
+	// ── Wire: oauth (OAuth 2.1 authorization server for MCP clients) ────────
+	// Lets spec-compliant MCP clients (Claude Desktop's "Add custom
+	// connector" flow) discover, dynamically register, and obtain Bearer
+	// tokens for /mcp via RFC 8414/7591/9728 + PKCE — additive to the
+	// existing Personal Access Token scheme above, see internal/oauth.
+	oauthClientsRepo := oauth.NewClientRepository(database)
+	oauthClientsSvc := oauth.NewClientService(oauthClientsRepo)
+	oauthRefreshRepo := oauth.NewRefreshTokenRepository(database)
+	oauthTokensSvc := oauth.NewTokenService(oauthRefreshRepo, cfg.JWTSecret)
+	oauthHandler := oauth.NewHandler(oauthClientsSvc, oauthTokensSvc, cfg.JWTSecret, cfg.APIBaseURL, cfg.AppURL)
+	oauthHandler.RegisterRoutes(app, auth.FiberAuthMiddleware(cfg.JWTSecret))
+
 	mcpHTTPHandler := appmcp.NewHTTPHandler(listsSvc, cfg.AppURL)
-	mcpAuthedHandler := appmcp.AuthMiddleware(cfg.JWTSecret, mcpTokensSvc)(mcpHTTPHandler)
+	mcpAuthedHandler := appmcp.AuthMiddleware(cfg.JWTSecret, mcpTokensSvc, oauthTokensSvc, cfg.APIBaseURL)(mcpHTTPHandler)
 	app.All("/mcp", adaptor.HTTPHandler(mcpAuthedHandler))
 
 	// ── Wire: content ────────────────────────────────────────────────────────

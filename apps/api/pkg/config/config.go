@@ -19,6 +19,7 @@ type Config struct {
 	GoogleRedirectURL  string
 	AllowedOrigins     string
 	AppURL             string
+	APIBaseURL         string
 	RabbitMQURL        string
 	ResendAPIKey       string
 	CronSecret         string
@@ -43,6 +44,7 @@ func Load() (*Config, error) {
 		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/auth/google/callback"),
 		AllowedOrigins:     getEnv("ALLOWED_ORIGINS", "http://localhost:3001"),
 		AppURL:             getEnv("APP_URL", "http://localhost:3000"),
+		APIBaseURL:         getEnv("API_BASE_URL", "http://localhost:8080"),
 		RabbitMQURL:        getEnv("RABBITMQ_URL", "amqp://localhost:5672"),
 		ResendAPIKey:       os.Getenv("RESEND_API_KEY"),
 		CronSecret:         os.Getenv("CRON_SECRET"),

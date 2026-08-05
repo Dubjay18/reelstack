@@ -2,13 +2,14 @@
 
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLogin } from '@/lib/hooks/api'
 import { GoogleButton } from '@/components/auth/google-button'
 import { LogoMark } from '@/components/ui/logo'
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +23,10 @@ export function LoginForm() {
       { email, password },
       {
         onSuccess: () => {
-          router.push('/dashboard')
+          const redirect = searchParams.get('redirect')
+          // Only ever follow an internal path — never let this become an
+          // open redirect to an attacker-controlled origin.
+          router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard')
         },
         onError: (err: any) => {
           setError(err.message || 'Something went wrong. Please try again.')

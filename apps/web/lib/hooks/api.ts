@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { storeToken } from '@/lib/auth'
 import { useAuth } from '@/components/providers/auth-provider'
-import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyTopList, RileyChatMessage, RileyChatResponse, RileyProposedList, RileyConfirmedList, McpToken, McpTokenCreateResponse } from '@/types'
+import type { User, List, ListItem, SearchResult, PersonSearchResult, UserSearchResult, UserProfile, StreamingProvider, Movie, TVShow, Notification, Comment, ListComment, SaveStatusResponse, SavedList, LeaderboardEntry, RileyDigest, RileyTopResponse, RileyTopList, RileyChatMessage, RileyChatResponse, RileyProposedList, RileyConfirmedList, RileyAddToListProposal, RileyAddToListResult, McpToken, McpTokenCreateResponse, OAuthConsentRequest, OAuthConsentResponse, OAuthClientInfo } from '@/types'
 
 // Auth Input Types
 interface LoginCredentials {
@@ -515,6 +515,13 @@ export function useConfirmRileyList() {
   })
 }
 
+export function useAddToRileyList() {
+  return useMutation({
+    mutationFn: (proposal: RileyAddToListProposal) =>
+      api.post<RileyAddToListResult>('/api/v1/riley/lists/add-items', proposal),
+  })
+}
+
 // 13. MCP (Model Context Protocol) token hooks — settings page
 export function useMcpTokens() {
   return useQuery({
@@ -536,5 +543,22 @@ export function useRevokeMcpToken() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/api/v1/mcp-tokens/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mcp-tokens'] }),
+  })
+}
+
+// 14. OAuth consent hooks — /oauth/authorize page, approving a
+// dynamically-registered MCP client
+export function useOAuthClient(clientId: string) {
+  return useQuery({
+    queryKey: ['oauth-client', clientId],
+    queryFn: () => api.get<OAuthClientInfo>(`/api/v1/oauth/clients/${clientId}`),
+    enabled: !!clientId,
+    retry: false,
+  })
+}
+
+export function useOAuthConsent() {
+  return useMutation({
+    mutationFn: (body: OAuthConsentRequest) => api.post<OAuthConsentResponse>('/api/v1/oauth/consent', body),
   })
 }
