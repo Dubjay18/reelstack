@@ -140,11 +140,21 @@ func NewToolServer(userID string, listsSvc lists.IListService, appURL string) *s
 // transport, building a fresh per-request Server scoped to whichever user
 // AuthMiddleware resolved the request's Bearer token to. Wrap the returned
 // handler with AuthMiddleware before serving it.
+//
+// Stateless is required here: the SDK's default (non-stateless) mode keeps
+// MCP session state in a per-process in-memory map, but this API can run as
+// more than one instance, and nothing guarantees that two requests in the
+// same MCP session land on the same one — a client's `initialize` and its
+// following `tools/call` hitting different instances otherwise fails with
+// "session not found". Stateless mode is safe here specifically because
+// none of our tools depend on anything carried in MCP session state: every
+// call is independently authenticated per-request via the Bearer token,
+// resolved fresh each time into UserIDFromContext by AuthMiddleware below.
 func NewHTTPHandler(listsSvc lists.IListService, appURL string) http.Handler {
 	return sdk.NewStreamableHTTPHandler(func(r *http.Request) *sdk.Server {
 		userID, _ := UserIDFromContext(r.Context())
 		return NewToolServer(userID, listsSvc, appURL)
-	}, nil)
+	}, &sdk.StreamableHTTPOptions{Stateless: true})
 }
 
 func boolPtr(b bool) *bool { return &b }
